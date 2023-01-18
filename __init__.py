@@ -15,4 +15,4 @@ import src.config as config
 
 import numpy as np
 
-import scipyg
+import scipy
