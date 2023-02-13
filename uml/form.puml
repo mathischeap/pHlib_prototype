@@ -1,0 +1,72 @@
+@startuml
+
+Domain *-- Manifold
+Domain *-- CoordinateSystem
+Mesh *-- Domain
+Mesh --+ ChainComplex
+
+FormSpace *-- Mesh
+
+Form *-- FormSpace
+
+enum Operators {
++
+-
+*
+exterior derivative
+wedge
+L2 inner product
+...
+}
+
+class Manifold {
+}
+
+class Domain {
+- manifold
+- coordinate_system
+- interpolation
++ __init__(manifold, coordinate_system, interpolation)
+}
+
+Domain *-- Interpolation
+
+class Interpolation {
+}
+
+class CoordinateSystem {
+}
+
+class Mesh {
+- domain
+- chain_complex
++ __init__(domain)
+}
+
+abstract ChainComplex {
+- mesh
++ __init__(mesh)
+}
+
+class FormSpace {
+- mesh
+- k
++ __init__(mesh, k)
+}
+
+class Form {
+- form_space
+- cochain
++ __init__(form_space)
++ reduce()
++ reconstruct()
++ export_vtk()
+}
+
+Form --+ Cochain
+abstract Cochain {
+- form
++ __init__(form)
+}
+
+@enduml

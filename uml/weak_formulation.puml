@@ -1,0 +1,12 @@
+@startuml
+
+class WeakFormulation {
+- terms
++ __init__()
++ export_latex()
+}
+
+
+
+
+@enduml

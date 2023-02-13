@@ -11,17 +11,23 @@ Collection <|-- AbstractCollection
 
 Collection <|- List
 AbstractCollection <|- AbstractList
+AbstractCollection <|- asavbasd
 AbstractList <|-- ArrayList
+AbstractList <|-- Asbv
 
 class ArrayList {
 Object[] elementData
 size()
 }
 
-enum TimeUnit {
-DAYS
-HOURS
-MINUTES
+class Asbv {
+Object[] elementData
+size()
+}
+
+enum Operators {
+exterior derivative
+wedge
 }
 
 @enduml

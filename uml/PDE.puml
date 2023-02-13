@@ -1,0 +1,29 @@
+@startuml
+
+
+
+Expression <|-- Interpreter
+
+PartialDifferentialEquations *-- Expression
+PartialDifferentialEquations --+ Term
+
+
+class PartialDifferentialEquations {
+- term
++ __init__(expression)
++ export_latex()
+}
+
+abstract Term {
+}
+
+class Expression {
++ __init__(interpreter)
+}
+
+class Interpreter {
++ __init__(variables, indicators, symbols)
+}
+
+
+@enduml
