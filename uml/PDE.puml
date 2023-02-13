@@ -1,7 +1,5 @@
 @startuml
 
-
-
 Expression <|-- Interpreter
 
 PartialDifferentialEquations *-- Expression
