@@ -46,7 +46,11 @@ class PartialDifferentialEquations(Frozen):
 
     def _parse_expression(self, expression, interpreter):
         """"""
-        print(interpreter)
+        self._symbolic_representation = None  # TODO: to be continued.
+
+    @property
+    def symbolic_representation(self):
+        return self._symbolic_representation
 
 
 if __name__ == '__main__':
@@ -54,7 +58,7 @@ if __name__ == '__main__':
     from src.form import w, u, wXu, du, dsu, dsP, du_dt
     from src.form import list_forms
 
-    wXu.print_representations()
+    # wXu.print_representations()
 
     exp = [
         'du_dt + wXu + dsP = 0',
@@ -62,7 +66,6 @@ if __name__ == '__main__':
         'du = 0'
     ]
 
-
     pde = PartialDifferentialEquations(exp, globals())
 
-    list_forms(globals())
+    # list_forms(globals())

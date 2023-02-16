@@ -94,18 +94,22 @@ class Form(Frozen):
         plt.show()
 
     def isroot(self):
+        """"""
         return self._isroot
 
     @property
     def space(self):
+        """"""
         return self._space
 
     @property
     def symbolic_representation(self):
+        """"""
         return self._symbolic_representation
 
     @property
     def linguistic_representation(self):
+        """"""
         return self._linguistic_representation
 
     def __repr__(self):
