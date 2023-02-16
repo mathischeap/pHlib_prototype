@@ -5,6 +5,14 @@ created at: 2/16/2023 12:16 PM
 """
 
 from abc import ABC
+import matplotlib.pyplot as plt
+import matplotlib
+plt.rcParams.update({
+    "text.usetex": True,
+    "font.family": "DejaVu Sans",
+    "text.latex.preamble": r"\usepackage{amsmath}"
+})
+matplotlib.use('TkAgg')
 
 
 class FrozenError(Exception):

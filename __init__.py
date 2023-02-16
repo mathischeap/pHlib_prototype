@@ -13,6 +13,3 @@ if absolute_path not in sys.path:
 
 import src.config as config
 
-import numpy as np
-
-import scipy
