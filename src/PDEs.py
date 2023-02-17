@@ -32,6 +32,9 @@ class PartialDifferentialEquations(Frozen):
             for i, exp in enumerate(expression):
                 assert isinstance(exp, str), f"expression[{i}] = {exp} is not a string."
                 assert len(exp) > 0, f"expression[{i}] is empty."
+        for i, equation in enumerate(expression):
+            assert equation.count('=') == 1, f"expression[{i}]={equation} is wrong, can only have one '='."
+
         return expression
 
     def _filter_interpreter(self, interpreter):
@@ -45,27 +48,42 @@ class PartialDifferentialEquations(Frozen):
         return new_interpreter
 
     def _parse_expression(self, expression, interpreter):
-        """"""
+        """Keep upgrading this method to let it understand more equations."""
+        Left = list()
+        Right = list()
+        for equation in expression:
+            equation = equation.replace(' ', '')  # remove all spaces
+            left, right = equation.split('=')  # we already checked there is only one '=' in it
+
+
+        self._expression = expression
         self._symbolic_representation = None  # TODO: to be continued.
 
-    @property
-    def symbolic_representation(self):
-        return self._symbolic_representation
+
+    def print_equations(self):
+        """"""
+        for equation in self._expression:
+            print(equation)
+
+
+
 
 
 if __name__ == '__main__':
     # python src/PDEs.py
-    from src.form import w, u, wXu, du, dsu, dsP, du_dt
+    from src.form import w, u, wXu, du, dsu, dsP, du_dt, f
     from src.form import list_forms
 
-    # wXu.print_representations()
-
     exp = [
-        'du_dt + wXu + dsP = 0',
+        'du_dt + wXu - dsP = f',
         'w = dsu',
         'du = 0'
     ]
 
+    # du_dt.print_representations()
+
     pde = PartialDifferentialEquations(exp, globals())
 
     # list_forms(globals())
+
+    # pde.print_equations()
