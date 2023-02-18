@@ -11,6 +11,14 @@ if './' not in sys.path:
 
 from src.tools.frozen import Frozen
 from src.form import Form
+import matplotlib.pyplot as plt
+import matplotlib
+plt.rcParams.update({
+    "text.usetex": True,
+    "font.family": "DejaVu Sans",
+    "text.latex.preamble": r"\usepackage{amsmath}"
+})
+matplotlib.use('TkAgg')
 
 
 class PartialDifferentialEquations(Frozen):
@@ -49,24 +57,83 @@ class PartialDifferentialEquations(Frozen):
 
     def _parse_expression(self, expression, interpreter):
         """Keep upgrading this method to let it understand more equations."""
-        Left = list()
-        Right = list()
-        for equation in expression:
+        term_dict = dict()
+        sign_dict = dict()
+        form_dict = dict()
+        for i, equation in enumerate(expression):
+
             equation = equation.replace(' ', '')  # remove all spaces
-            left, right = equation.split('=')  # we already checked there is only one '=' in it
+            equation = equation.replace('-', '+-')  # let all terms be connected by +
 
+            term_dict[i] = ([], [])  # for left terms and right terms of ith equation
+            sign_dict[i] = ([], [])  # for left terms and right terms of ith equation
+            form_dict[i] = ([], [])  # for left terms and right terms of ith equation
 
-        self._expression = expression
-        self._symbolic_representation = None  # TODO: to be continued.
+            for j, lor in enumerate(equation.split('=')):
+                local_terms = lor.split('+')
+                for loc_term in local_terms:
+                    if loc_term == '' or loc_term == '-':  # found empty terms, just ignore.
+                        pass
+                    else:
+                        if loc_term == '0':
+                            term_dict[i][j].append('0')
+                            sign_dict[i][j].append('+')
+                            form_dict[i][j].append(None)
+                        elif loc_term[0] == '-':
+                            assert loc_term[1:] in interpreter, f"found term {loc_term[1:]} not interpreted."
+                            term_dict[i][j].append(loc_term[1:])
+                            sign_dict[i][j].append('-')
+                            form_dict[i][j].append(interpreter[loc_term[1:]])
+                        else:
+                            assert loc_term in interpreter, f"found term {loc_term} not interpreted"
+                            term_dict[i][j].append(loc_term)
+                            sign_dict[i][j].append('+')
+                            form_dict[i][j].append(interpreter[loc_term])
 
+        self._term_dict = term_dict
+        self._sign_dict = sign_dict
+        self._form_dict = form_dict
 
-    def print_equations(self):
+        # TODO: below, we need to check the consistence of equations, for example, if we have k-form + l-form (k!=l).
+
+    def print_representations(self):
         """"""
-        for equation in self._expression:
-            print(equation)
+        cell_text = ['', '']
+        for i in self._term_dict:
+            left_terms, right_terms = self._term_dict[i]
+            for j, term in enumerate(left_terms):
+                sign = self._sign_dict[i][0][j]
+                form = self._form_dict[i][0][j]
+                if j == 0:
+                    if sign == '+':
+                        cell_text[0] += term
+                    elif sign == '-':
+                        cell_text[0] += '-' + term
+                    else:
+                        raise Exception()
+                else:
+                    cell_text[0] += ' ' + sign + ' ' + term
 
+            cell_text[0] += ' = '
 
+            for j, term in enumerate(right_terms):
+                sign = self._sign_dict[i][0][j]
+                form = self._form_dict[i][0][j]
+                if j == 0:
+                    if sign == '+':
+                        cell_text[0] += term
+                    elif sign == '-':
+                        cell_text[0] += '-' + term
+                    else:
+                        raise Exception()
+                else:
+                    cell_text[0] += ' ' + sign + ' ' + term
 
+            cell_text[0] += '\n'
+
+        cell_text[0] = cell_text[0][:-1]   # remove the last '\n'
+
+        print(cell_text[0])
 
 
 if __name__ == '__main__':
@@ -75,7 +142,7 @@ if __name__ == '__main__':
     from src.form import list_forms
 
     exp = [
-        'du_dt + wXu - dsP = f',
+        '-du_dt + wXu - dsP = f',
         'w = dsu',
         'du = 0'
     ]
@@ -86,4 +153,4 @@ if __name__ == '__main__':
 
     # list_forms(globals())
 
-    # pde.print_equations()
+    pde.print_representations()
