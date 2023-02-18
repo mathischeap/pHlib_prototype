@@ -94,46 +94,64 @@ class PartialDifferentialEquations(Frozen):
         self._sign_dict = sign_dict
         self._form_dict = form_dict
 
+        self._expression = expression
+        self._interpreter = interpreter
+
         # TODO: below, we need to check the consistence of equations, for example, if we have k-form + l-form (k!=l).
 
     def print_representations(self):
         """"""
-        cell_text = ['', '']
+        indicator = ''
+        symbolic = ''
         for i in self._term_dict:
-            left_terms, right_terms = self._term_dict[i]
-            for j, term in enumerate(left_terms):
-                sign = self._sign_dict[i][0][j]
-                form = self._form_dict[i][0][j]
-                if j == 0:
-                    if sign == '+':
-                        cell_text[0] += term
-                    elif sign == '-':
-                        cell_text[0] += '-' + term
+            for t, terms in enumerate(self._term_dict[i]):
+                for j, term in enumerate(terms):
+                    term = r'\texttt{' + term + '}'
+                    sign = self._sign_dict[i][t][j]
+                    form = self._form_dict[i][t][j]
+                    if form is None:
+                        form_symbolic_representation = '0'
                     else:
-                        raise Exception()
-                else:
-                    cell_text[0] += ' ' + sign + ' ' + term
+                        form_symbolic_representation = form._symbolic_representation
 
-            cell_text[0] += ' = '
-
-            for j, term in enumerate(right_terms):
-                sign = self._sign_dict[i][0][j]
-                form = self._form_dict[i][0][j]
-                if j == 0:
-                    if sign == '+':
-                        cell_text[0] += term
-                    elif sign == '-':
-                        cell_text[0] += '-' + term
+                    if j == 0:
+                        if sign == '+':
+                            indicator += term
+                            symbolic += form_symbolic_representation
+                        elif sign == '-':
+                            indicator += '$-$' + term
+                            symbolic += '-' + form_symbolic_representation
+                        else:
+                            raise Exception()
                     else:
-                        raise Exception()
-                else:
-                    cell_text[0] += ' ' + sign + ' ' + term
+                        indicator += ' $' + sign + '$ ' + term
+                        symbolic += ' ' + sign + ' ' + form_symbolic_representation
 
-            cell_text[0] += '\n'
+                if t == 0:
+                    indicator += ' $=$ '
+                    symbolic += ' = '
 
-        cell_text[0] = cell_text[0][:-1]   # remove the last '\n'
+            indicator += '\n'
+            symbolic += '\n'
 
-        print(cell_text[0])
+        indicator = indicator[:-1]   # remove the last '\n'
+        symbolic = symbolic[:-1]   # remove the last '\n'
+        symbolic = symbolic.replace('\n', r' \\ ')
+        symbolic = r"$\left\lbrace\begin{aligned}" + symbolic + r"\end{aligned}\right.$"
+        symbolic = symbolic.replace('=', r'&=')
+
+        length = max([len(i) for i in indicator.split('\n')]) / 10
+        height = 2 * len(self._form_dict) * 0.75
+        fig, ax = plt.subplots(figsize=(length, height))
+        fig.patch.set_visible(False)
+        ax.axis('off')
+        table = ax.table(cellText=[[indicator, ], [symbolic, ]],
+                         rowLabels=['expression', 'symbolic'], rowColours='gc',
+                         colLoc='left', loc='center', cellLoc='left')
+        table.scale(1, 8)
+        table.set_fontsize(20)
+        fig.tight_layout()
+        plt.show()
 
 
 if __name__ == '__main__':
@@ -142,15 +160,17 @@ if __name__ == '__main__':
     from src.form import list_forms
 
     exp = [
-        '-du_dt + wXu - dsP = f',
+        'du_dt + wXu - dsP = f',
         'w = dsu',
         'du = 0'
     ]
 
-    # du_dt.print_representations()
+    # f.print_representations()
 
     pde = PartialDifferentialEquations(exp, globals())
 
-    # list_forms(globals())
+    # print(111)
+
+    list_forms(globals())
 
     pde.print_representations()
