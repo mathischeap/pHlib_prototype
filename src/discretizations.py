@@ -2,25 +2,23 @@
 """
 @author: Yi Zhang
 @contact: zhangyi_aero@hotmail.com
-@time: 2/18/2023 10:18 PM
+@time: 2/19/2023 10:56 AM
 """
 import sys
 
 if './' not in sys.path:
     sys.path.append('./')
-from tools.frozen import Frozen
+from src.tools.frozen import Frozen
 
 
-class WeakFormulation(Frozen):
+class ClassName(Frozen):
     """"""
 
-    def __init__(self, term_dict, sign_dict):
+    def __init__(self, ):
         """"""
-        self._term_dict = term_dict
-        self._sign_dict = sign_dict
         self._freeze()
 
 
 if __name__ == '__main__':
-    # python src/weak_formulation.py
+    # python src/discretizations.py
     pass

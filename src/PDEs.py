@@ -28,6 +28,7 @@ class PartialDifferentialEquations(Frozen):
         expression = self._check_expression(expression)
         interpreter = self._filter_interpreter(interpreter)
         self._parse_expression(expression, interpreter)
+        self._variables = None
         self._freeze()
 
     def _check_expression(self, expression):
@@ -148,15 +149,42 @@ class PartialDifferentialEquations(Frozen):
         table = ax.table(cellText=[[indicator, ], [symbolic, ]],
                          rowLabels=['expression', 'symbolic'], rowColours='gc',
                          colLoc='left', loc='center', cellLoc='left')
-        table.scale(1, 8)
+        table.scale(1, 2.5*len(self._form_dict))
         table.set_fontsize(20)
         fig.tight_layout()
         plt.show()
 
+    def __len__(self):
+        """How many equations we have?"""
+        return len(self._form_dict)
+
+    @property
+    def variables(self):
+        """"""
+        return self._variables
+
+    @variables.setter
+    def variables(self, unknowns):
+        """"""
+        if self._variables is not None: f"variables exists; not allowed to change them."
+
+        if len(self) == 1 and not isinstance(unknowns, (list, tuple)):
+            unknowns = [unknowns, ]
+        assert isinstance(unknowns, (list, tuple)), \
+            f"please put variables in a list or tuple if there are more than 1 equation."
+        assert len(unknowns) == len(self), \
+            f"I have {len(self)} equations but receive {len(unknowns)} variables."
+
+        for i, unknown in enumerate(unknowns):
+            assert unknown.__class__ is Form and unknown.is_root(), \
+                f"{i}th variable is not a root form."
+
+        self._variables = unknowns
+
 
 if __name__ == '__main__':
     # python src/PDEs.py
-    from src.form import w, u, wXu, du, dsu, dsP, du_dt, f
+    from src.form import w, u, wXu, du, dsu, dsP, du_dt, f, P
     from src.form import list_forms
 
     exp = [
@@ -171,6 +199,9 @@ if __name__ == '__main__':
 
     # print(111)
 
-    list_forms(globals())
+    # list_forms(globals())
 
-    pde.print_representations()
+    # pde.print_representations()
+
+    pde.variables = [u, w, P]
+
