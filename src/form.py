@@ -140,8 +140,6 @@ class Cochain(Frozen):
     def global_(self, global_cochain):
         """"""
 
-
-
 w = Form(None, r'\omega^1', r"\textsf{vorticity1}", True)
 u = Form(None, r'u^2', r"\textsf{velocity2}", True)
 f = Form(None, r'f^2', r"\textsf{body-force2}", True)

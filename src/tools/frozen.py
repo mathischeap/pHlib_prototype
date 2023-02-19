@@ -5,14 +5,6 @@ created at: 2/16/2023 12:16 PM
 """
 
 from abc import ABC
-import matplotlib.pyplot as plt
-import matplotlib
-plt.rcParams.update({
-    "text.usetex": True,
-    "font.family": "DejaVu Sans",
-    "text.latex.preamble": r"\usepackage{amsmath}"
-})
-matplotlib.use('TkAgg')
 
 
 class FrozenError(Exception):
@@ -49,9 +41,3 @@ class Frozen(ABC):
         except AttributeError:
             object.__setattr__(self, '___IS_FROZEN___', False)
             return self.___IS_FROZEN___
-
-
-if __name__ == '__main__':
-    from doctest import testmod
-
-    testmod()

@@ -201,7 +201,7 @@ if __name__ == '__main__':
 
     # list_forms(globals())
 
-    # pde.print_representations()
+    pde.print_representations()
 
     pde.variables = [u, w, P]
 

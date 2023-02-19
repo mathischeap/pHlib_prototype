@@ -4,28 +4,19 @@
 @contact: zhangyi_aero@hotmail.com
 @time: 11/26/2022 2:56 PM
 """
-import sys
-
-if './' not in sys.path:
-    sys.path.append('./')
 
 from src.tools.frozen import Frozen
 from src.config import _global_variables
 
 
-class SpaceBase(Frozen):
+class Mesh(Frozen):
     """"""
 
-    def __init__(self, mesh):
+    def __init__(self, domain):
         """"""
-        self._mesh = mesh
-
-    @property
-    def mesh(self):
-        """"""
-        return self._mesh
+        self._domain = domain
+        self._freeze()
 
     @property
     def n(self):
-        """"""
         return _global_variables['space_dim']
