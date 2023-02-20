@@ -184,33 +184,65 @@ class PartialDifferentialEquations(Frozen):
 
 if __name__ == '__main__':
     # python src/PDEs.py
-    from src.form import w, u, wXu, du, dsu, dsP, du_dt, f, P
-    from src.form import list_forms
+    import __init__ as ph
 
-    exp = [
-        'du_dt + wXu - dsP = f',
-        'w = dsu',
-        'du = 0'
-    ]
+    mesh = ph.mesh.static(None)
 
-    # f.print_representations()
+    ph.space.set_mesh(mesh)
+    O0 = ph.space.add('Omega', k=0, N=3)
+    O1 = ph.space.add('Omega', k=1, N=3)
+    O2 = ph.space.add('Omega', k=2, N=3)
+    O3 = ph.space.add('Omega', k=3, N=3)
 
-    interpreter = {
-        'du_dt' : du_dt,
-        'wXu' : wXu,
-        'dsP' : dsP,
-        'f' : f,
-        'w' : w,
-        'dsu' : dsu,
-        'du' : du,
-    }
+    w = O1.make_form(r'\omega^1', "vorticity1")
+    u = O2.make_form(r'u^2', r"velocity2")
+    f = O2.make_form(r'f^2', r"body-force")
+    P = O3.make_form(r'P^3', r"total-pressure3")
 
-    pde = PartialDifferentialEquations(exp, interpreter)
+    wXu = ph.wedge(w, ph.Hodge(u))
 
-    # print(111)
+    wXu.print_representations()
 
-    list_forms(interpreter)
+    # f = Form(None, r'f^2', r"\textsf{body-force2}", True)
+    # P = Form(None, r'P^3', r"\textsf{total-pressure3}", True)
+    # wXu = Form(None, r'\omega^1\wedge\star u^2',
+    #            r'\textsf{vorticity1} \emph{cross-product} (\emph{Hodge} \textsf{velocity2})', False)
+    # du_dt = Form(None, r'\dfrac{\partial u^2}{\partial t}', r'\emph{time-derivative-of} \textsf{velocity2}', False)
+    # dsP = Form(None, r'\mathrm{d}^\ast P^3', r"\emph{codifferential-of} \textsf{total-pressure3}", False)
+    # dsu = Form(None, r'\mathrm{d}^{\ast}u^2', r"\emph{codifferential-of} \textsf{velocity2}", False)
+    # du = Form(None, r'\mathrm{d}u^2', r"\emph{exterior-derivative-of} \textsf{velocity2}", False)
 
-    pde.print_representations()
 
-    pde.variables = [u, w, P]
+    # print(ph.config.get_space_dim())
+    #
+    # from src.form import w, u, wXu, du, dsu, dsP, du_dt, f, P
+    # from src.form import list_forms
+    #
+    # exp = [
+    #     'du_dt + wXu - dsP = f',
+    #     'w = dsu',
+    #     'du = 0'
+    # ]
+    #
+    # # f.print_representations()
+    #
+    # interpreter = {
+    #     'du_dt' : du_dt,
+    #     'wXu' : wXu,
+    #     'dsP' : dsP,
+    #     'f' : f,
+    #     'w' : w,
+    #     'dsu' : dsu,
+    #     'du' : du,
+    # }
+    #
+    # pde = PartialDifferentialEquations(exp, interpreter)
+    #
+    # # print(111)
+    #
+    ph.list_forms(globals())
+    # ph.space.list_()
+    #
+    # pde.print_representations()
+    #
+    # pde.variables = [u, w, P]

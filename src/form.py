@@ -30,7 +30,6 @@ def list_forms(variable_range=None):
         col_name_0 = 'variable name'
 
     cell_text = list()
-    lengths = list()
     for form_id in _global_forms:
         form = _global_forms[form_id]
 
@@ -50,26 +49,24 @@ def list_forms(variable_range=None):
                 var_name = ','.join(var_name)
 
         cell_text.append([r'\texttt{' + str(var_name)  + '}',
-                          str(form.space),
+                          rf"${form.space._symbolic_representation}$",
                           f"${form._symbolic_representation}$",
                           form._linguistic_representation,
                           form.is_root()])
-        lengths.append(len(form._symbolic_representation)/10 + len(form._linguistic_representation)/5)
 
-    if len(lengths) == 0:
+    if len(cell_text) == 0:
         return
     else:
         pass
 
-    fig, ax = plt.subplots(figsize=(max(lengths), len(cell_text) * 1.2))
+    fig, ax = plt.subplots(figsize=(14, 2 + len(cell_text) * 1.2))
     fig.patch.set_visible(False)
     ax.axis('off')
     table = ax.table(cellText=cell_text, loc='center',
                      colLabels=[col_name_0, 'space', 'symbolic', 'linguistic', 'is_root()'],
-                     colLoc='left', colColours='rgbcy',
+                     colLoc='left', colColours='rgmcy',
                      cellLoc='left', colWidths=[0.15,0.125, 0.125, 0.375, 0.075])
-    table.scale(1, 5)
-    table.set_fontsize(20)
+    table.scale(1, 4)
     fig.tight_layout()
     plt.show()
 
@@ -92,7 +89,7 @@ class Form(Frozen):
         plt.figure(figsize=(2 + len(self._symbolic_representation)/4, 4))
         plt.axis([0, 1, 0, 5])
         plt.text(0, 4.5, f'form id: {my_id}', ha='left', va='center', size=15)
-        plt.text(0, 3.5, f'space: {self.space._symbolic_representation}', ha='left', va='center', size=15)
+        plt.text(0, 3.5, f'spaces: ${self.space._symbolic_representation}$', ha='left', va='center', size=15)
         plt.text(0, 2.5, 'symbolic : ' + f"${self._symbolic_representation}$", ha='left', va='center', size=15)
         plt.text(0, 1.5, 'linguistic : ' + self._linguistic_representation, ha='left', va='center', size=15)
         plt.text(0, 0.5, f'is_root: {self.is_root()}' , ha='left', va='center', size=15)
@@ -142,22 +139,77 @@ class Cochain(Frozen):
         """"""
 
 
-w = Form(None, r'\omega^1', r"\textsf{vorticity1}", True)
-u = Form(None, r'u^2', r"\textsf{velocity2}", True)
-f = Form(None, r'f^2', r"\textsf{body-force2}", True)
-P = Form(None, r'P^3', r"\textsf{total-pressure3}", True)
-wXu = Form(None, r'\omega^1\wedge\star u^2',
-           r'\textsf{vorticity1} \emph{cross-product} (\emph{Hodge} \textsf{velocity2})', False)
-du_dt = Form(None, r'\dfrac{\partial u^2}{\partial t}', r'\emph{time-derivative-of} \textsf{velocity2}', False)
-dsP = Form(None, r'\mathrm{d}^\ast P^3', r"\emph{codifferential-of} \textsf{total-pressure3}", False)
-dsu = Form(None, r'\mathrm{d}^{\ast}u^2', r"\emph{codifferential-of} \textsf{velocity2}", False)
-du = Form(None, r'\mathrm{d}u^2', r"\emph{exterior-derivative-of} \textsf{velocity2}", False)
+
+from src.spaces.operators import wedge as space_wedge
+from src.spaces.operators import Hodge as space_Hodge
+
+def wedge(f1, f2):
+    """"""
+    s1 = f1.space
+    s2 = f2.space
+
+    wedge_space = space_wedge(s1, s2)   # if this is not possible, return NotImplementedError
+
+    lr_term1 = f1._linguistic_representation
+    lr_term2 = f2._linguistic_representation
+    lr_operator = r"\emph{ wedge }"
+
+
+    sr_term1 = f1._symbolic_representation
+    sr_term2 = f2._symbolic_representation
+    sr_operator = r'\wedge '
+
+    if f1.is_root():
+        pass
+    else:
+        lr_term1 = '[' + lr_term1 + ']'
+        sr_term1 = r'\left(' + sr_term1 + r'\right)'
+    if f2.is_root():
+        pass
+    else:
+        lr_term2 = '[' + lr_term2 + ']'
+        sr_term2 = r'\left(' + sr_term2 + r'\right)'
+    linguistic_representation = lr_term1 + lr_operator + lr_term2
+    symbolic_representation = sr_term1 + sr_operator + sr_term2
+
+    f = Form(
+        wedge_space,               # space
+        symbolic_representation,   # symbolic representation
+        linguistic_representation,
+        False,
+    )
+
+    # TODO: deal with the cochain of the new form
+
+    return f
+
+
+def Hodge(f):
+    """Metric Hodge of a form."""
+    Hs = space_Hodge(f.space)
+
+    lr = f._linguistic_representation
+    sr = f._symbolic_representation
+
+    if f.is_root():
+        lr = r"\emph{Hodge of }" + lr
+        sr = r"\star " + sr
+    else:
+        lr = r"\emph{Hodge of }[" + lr + ']'
+        sr = r"\star \left(" + sr + r"\right)"
+
+    f = Form(
+        Hs,               # space
+        sr,   # symbolic representation
+        lr,
+        False,
+    )
+
+    # TODO: deal with the cochain of the new form
+
+    return f
 
 
 if __name__ == '__main__':
     # python src/form.py
-    wXu.print_representations()
-    du_dt.print_representations()
-    dsP.print_representations()
-    dsu.print_representations()
-    du.print_representations()
+    import __init__ as ph

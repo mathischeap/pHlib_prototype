@@ -11,7 +11,18 @@ import sys
 if absolute_path not in sys.path:
     sys.path.append(absolute_path)
 
+__version__ = '0.0.0'
+
+about = ''
+
 import src.config as config
 
-def space():
-    """"""
+import src.mesh as mesh
+
+import src.spaces.main as space
+
+from src.form import list_forms
+
+from src.operators import *
+
+

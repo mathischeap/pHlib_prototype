@@ -5,7 +5,7 @@
 @time: 11/26/2022 2:56 PM
 """
 
-from src.space.base import SpaceBase
+from src.spaces.base import SpaceBase
 from src.config import get_space_dim
 
 
@@ -13,11 +13,15 @@ class ScalarValuedFormSpace(SpaceBase):
     """
     Parameters
     ----------
-    mesh
+    mesh :
     k :
-        k-form space
+        k-form spaces
     N :
-        The degree of the fintie element space.
+        The degree of the fintie element spaces.
+
+    Examples
+    --------
+
     """
 
     def __init__(self, mesh, k, N):
@@ -27,7 +31,7 @@ class ScalarValuedFormSpace(SpaceBase):
         self._k = k
         assert isinstance(N, int) and N >= 1, f"N wrong"
         self._N = N
-        self._symbolic_representation = rf"$\Omega^{self.k}({self.N})$"
+        self._symbolic_representation = rf"\Omega^{self.k}({mesh._symbolic_representation};{self.N})"
         self._freeze()
 
     @property
@@ -38,3 +42,7 @@ class ScalarValuedFormSpace(SpaceBase):
     @property
     def N(self):
         return self._N
+
+    def __repr__(self):
+        """By construction, it will be unique."""
+        return 'Space:' + rf"\Omega^{self.k}({self.mesh.__repr__()};{self.N})"

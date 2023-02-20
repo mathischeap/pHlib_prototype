@@ -30,7 +30,15 @@ class SpaceBase(Frozen):
         """"""
         return get_space_dim()
 
-    def generate_instance(self, symbolic_representation, linguistic_representation):
+    def make_form(self, symbolic_representation, linguistic_representation):
         """"""
         linguistic_representation = r'\textsf{' + linguistic_representation + r'}'
         return Form(self, symbolic_representation, linguistic_representation, True)
+
+    def __repr__(self):
+        """"""
+        raise NotImplementedError()
+
+    def __eq__(self, other):
+        """"""
+        return self.__repr__() == other.__repr__()
