@@ -27,6 +27,7 @@ class ScalarValuedFormSpace(SpaceBase):
         self._k = k
         assert isinstance(N, int) and N >= 1, f"N wrong"
         self._N = N
+        self._symbolic_representation = rf"$\Omega^{self.k}({self.N})$"
         self._freeze()
 
     @property
@@ -37,6 +38,3 @@ class ScalarValuedFormSpace(SpaceBase):
     @property
     def N(self):
         return self._N
-
-    def __repr__(self):
-        return rf"$\Omega^{self.k}({self.N})$"

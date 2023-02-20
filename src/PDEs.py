@@ -195,11 +195,21 @@ if __name__ == '__main__':
 
     # f.print_representations()
 
-    pde = PartialDifferentialEquations(exp, globals())
+    interpreter = {
+        'du_dt' : du_dt,
+        'wXu' : wXu,
+        'dsP' : dsP,
+        'f' : f,
+        'w' : w,
+        'dsu' : dsu,
+        'du' : du,
+    }
+
+    pde = PartialDifferentialEquations(exp, interpreter)
 
     # print(111)
 
-    # list_forms(globals())
+    list_forms(interpreter)
 
     pde.print_representations()
 

@@ -92,7 +92,7 @@ class Form(Frozen):
         plt.figure(figsize=(2 + len(self._symbolic_representation)/4, 4))
         plt.axis([0, 1, 0, 5])
         plt.text(0, 4.5, f'form id: {my_id}', ha='left', va='center', size=15)
-        plt.text(0, 3.5, f'space: {self.space}', ha='left', va='center', size=15)
+        plt.text(0, 3.5, f'space: {self.space._symbolic_representation}', ha='left', va='center', size=15)
         plt.text(0, 2.5, 'symbolic : ' + f"${self._symbolic_representation}$", ha='left', va='center', size=15)
         plt.text(0, 1.5, 'linguistic : ' + self._linguistic_representation, ha='left', va='center', size=15)
         plt.text(0, 0.5, f'is_root: {self.is_root()}' , ha='left', va='center', size=15)

@@ -10,7 +10,7 @@ if './' not in sys.path:
     sys.path.append('./')
 
 from src.tools.frozen import Frozen
-from src.config import _global_variables
+from src.config import get_space_dim
 from src.form import Form
 
 _global_spaces = dict()
@@ -31,7 +31,7 @@ class SpaceBase(Frozen):
     @property
     def n(self):
         """"""
-        return _global_variables['space_dim']
+        return get_space_dim()
 
     def generate_instance(self, symbolic_representation, linguistic_representation):
         """"""

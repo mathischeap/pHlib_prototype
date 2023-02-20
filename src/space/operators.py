@@ -42,6 +42,6 @@ if __name__ == '__main__':
     # P = H3.generate_instance('P^3', "total-pressure3")
 
 
-    wXu = wedge(H1, H2)
+    wXu = wedge(H1, H2).generate_instance('\omega^1', "vorticity1")
 
-    print(wXu)
+    wXu.print_representations()
