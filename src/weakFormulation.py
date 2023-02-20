@@ -14,13 +14,6 @@ from tools.frozen import Frozen
 class WeakFormulation(Frozen):
     """"""
 
-    def __init__(self, term_dict, sign_dict):
+    def __init__(self):
         """"""
-        self._term_dict = term_dict
-        self._sign_dict = sign_dict
         self._freeze()
-
-
-if __name__ == '__main__':
-    # python src/weak_formulation.py
-    pass

@@ -16,7 +16,7 @@ import matplotlib
 plt.rcParams.update({
     "text.usetex": True,
     "font.family": "DejaVu Sans",
-    "text.latex.preamble": r"\usepackage{amsmath}"
+    "text.latex.preamble": r"\usepackage{amsmath}",
 })
 matplotlib.use('TkAgg')
 
@@ -204,4 +204,3 @@ if __name__ == '__main__':
     pde.print_representations()
 
     pde.variables = [u, w, P]
-

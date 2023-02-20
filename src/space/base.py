@@ -11,7 +11,9 @@ if './' not in sys.path:
 
 from src.tools.frozen import Frozen
 from src.config import _global_variables
+from src.form import Form
 
+_global_spaces = dict()
 
 class SpaceBase(Frozen):
     """"""
@@ -19,6 +21,7 @@ class SpaceBase(Frozen):
     def __init__(self, mesh):
         """"""
         self._mesh = mesh
+        _global_spaces[id(self)] = self
 
     @property
     def mesh(self):
@@ -29,3 +32,8 @@ class SpaceBase(Frozen):
     def n(self):
         """"""
         return _global_variables['space_dim']
+
+    def generate_instance(self, symbolic_representation, linguistic_representation):
+        """"""
+        linguistic_representation = r'\textsf{' + linguistic_representation + r'}'
+        return Form(self, symbolic_representation, linguistic_representation, True)

@@ -117,6 +117,7 @@ class Cochain(Frozen):
 
     def __init__(self, form):
         """"""
+        self._form = form
         self._local = None  # element-wise cochain; 2d data.
         self._global = None  # The cochain as a 1d vector. So ith entry refer to the value of #i dof.
         self._freeze()
@@ -140,11 +141,13 @@ class Cochain(Frozen):
     def global_(self, global_cochain):
         """"""
 
+
 w = Form(None, r'\omega^1', r"\textsf{vorticity1}", True)
 u = Form(None, r'u^2', r"\textsf{velocity2}", True)
 f = Form(None, r'f^2', r"\textsf{body-force2}", True)
 P = Form(None, r'P^3', r"\textsf{total-pressure3}", True)
-wXu = Form(None, r'\omega^1\wedge\star u^2', r'\textsf{vorticity1} \emph{cross-product} (\emph{Hodge} \textsf{velocity2})', False)
+wXu = Form(None, r'\omega^1\wedge\star u^2',
+           r'\textsf{vorticity1} \emph{cross-product} (\emph{Hodge} \textsf{velocity2})', False)
 du_dt = Form(None, r'\dfrac{\partial u^2}{\partial t}', r'\emph{time-derivative-of} \textsf{velocity2}', False)
 dsP = Form(None, r'\mathrm{d}^\ast P^3', r"\emph{codifferential-of} \textsf{total-pressure3}", False)
 dsu = Form(None, r'\mathrm{d}^{\ast}u^2', r"\emph{codifferential-of} \textsf{velocity2}", False)
@@ -153,9 +156,8 @@ du = Form(None, r'\mathrm{d}u^2', r"\emph{exterior-derivative-of} \textsf{veloci
 
 if __name__ == '__main__':
     # python src/form.py
-    pass
-    # wXu.print_representations()
-    # du_dt.print_representations()
-    # dsP.print_representations()
-    # dsu.print_representations()
-    # du.print_representations()
+    wXu.print_representations()
+    du_dt.print_representations()
+    dsP.print_representations()
+    dsu.print_representations()
+    du.print_representations()

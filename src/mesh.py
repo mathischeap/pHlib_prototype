@@ -19,4 +19,12 @@ class Mesh(Frozen):
 
     @property
     def n(self):
+        """"""
         return _global_variables['space_dim']
+
+    def __eq__(self, other):
+        """"""
+        if other is self:
+            return True
+        else:
+            return False
