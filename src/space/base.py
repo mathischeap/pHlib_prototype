@@ -4,16 +4,13 @@
 @contact: zhangyi_aero@hotmail.com
 @time: 11/26/2022 2:56 PM
 """
-import sys
-
-if './' not in sys.path:
-    sys.path.append('./')
 
 from src.tools.frozen import Frozen
 from src.config import get_space_dim
 from src.form import Form
 
 _global_spaces = dict()
+
 
 class SpaceBase(Frozen):
     """"""
