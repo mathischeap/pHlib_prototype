@@ -84,4 +84,3 @@ if __name__ == '__main__':
     du2 = dH2.make_form(r'\mathrm{d}u^2', "d-velocity")
     #
     du2.print_representations()
-

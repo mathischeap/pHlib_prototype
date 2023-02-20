@@ -24,5 +24,3 @@ import src.spaces.main as space
 from src.form import list_forms
 
 from src.operators import *
-
-

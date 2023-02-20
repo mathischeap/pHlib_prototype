@@ -139,9 +139,11 @@ class Cochain(Frozen):
         """"""
 
 
-
 from src.spaces.operators import wedge as space_wedge
 from src.spaces.operators import Hodge as space_Hodge
+from src.spaces.operators import d as space_d
+from src.spaces.operators import codifferential as space_codifferential
+
 
 def wedge(f1, f2):
     """"""
@@ -200,6 +202,58 @@ def Hodge(f):
 
     f = Form(
         Hs,               # space
+        sr,   # symbolic representation
+        lr,
+        False,
+    )
+
+    # TODO: deal with the cochain of the new form
+
+    return f
+
+
+def d(f):
+    """Metric Hodge of a form."""
+    ds = space_d(f.space)
+
+    lr = f._linguistic_representation
+    sr = f._symbolic_representation
+
+    if f.is_root():
+        lr = r"\emph{exterior derivative of }" + lr
+        sr = r"\mathrm{d}" + sr
+    else:
+        lr = r"\emph{exterior derivative of }[" + lr + ']'
+        sr = r"\mathrm{d}\left(" + sr + r"\right)"
+
+    f = Form(
+        ds,               # space
+        sr,   # symbolic representation
+        lr,
+        False,
+    )
+
+    # TODO: deal with the cochain of the new form
+
+    return f
+
+
+def codifferential(f):
+    """Metric Hodge of a form."""
+    ds = space_codifferential(f.space)
+
+    lr = f._linguistic_representation
+    sr = f._symbolic_representation
+
+    if f.is_root():
+        lr = r"\emph{codifferential of }" + lr
+        sr = r"\mathrm{d}^\ast " + sr
+    else:
+        lr = r"\emph{codifferential of }[" + lr + ']'
+        sr = r"\mathrm{d}^\ast\left(" + sr + r"\right)"
+
+    f = Form(
+        ds,               # space
         sr,   # symbolic representation
         lr,
         False,

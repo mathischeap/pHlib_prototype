@@ -201,17 +201,9 @@ if __name__ == '__main__':
 
     wXu = ph.wedge(w, ph.Hodge(u))
 
-    wXu.print_representations()
-
-    # f = Form(None, r'f^2', r"\textsf{body-force2}", True)
-    # P = Form(None, r'P^3', r"\textsf{total-pressure3}", True)
-    # wXu = Form(None, r'\omega^1\wedge\star u^2',
-    #            r'\textsf{vorticity1} \emph{cross-product} (\emph{Hodge} \textsf{velocity2})', False)
-    # du_dt = Form(None, r'\dfrac{\partial u^2}{\partial t}', r'\emph{time-derivative-of} \textsf{velocity2}', False)
-    # dsP = Form(None, r'\mathrm{d}^\ast P^3', r"\emph{codifferential-of} \textsf{total-pressure3}", False)
-    # dsu = Form(None, r'\mathrm{d}^{\ast}u^2', r"\emph{codifferential-of} \textsf{velocity2}", False)
-    # du = Form(None, r'\mathrm{d}u^2', r"\emph{exterior-derivative-of} \textsf{velocity2}", False)
-
+    dsP = ph.codifferential(P)
+    dsu = ph.codifferential(u)
+    du = ph.d(u)
 
     # print(ph.config.get_space_dim())
     #
