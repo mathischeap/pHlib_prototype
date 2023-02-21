@@ -37,7 +37,7 @@ _implemented_spaces = {
     'Omega': (ScalarValuedFormSpace, 'scalar valued k-form space', ['k', 'N']),
 }
 
-def list_():
+def _list_spaces():
     """"""
     print('{:>15} | {}'.format('abbreviation', 'description'))
     for abbr in _implemented_spaces:

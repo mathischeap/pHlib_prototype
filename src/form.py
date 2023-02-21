@@ -59,14 +59,14 @@ def list_forms(variable_range=None):
     else:
         pass
 
-    fig, ax = plt.subplots(figsize=(14, 2 + len(cell_text) * 1.2))
+    fig, ax = plt.subplots(figsize=(12, (1 + len(cell_text))*0.75))
     fig.patch.set_visible(False)
     ax.axis('off')
     table = ax.table(cellText=cell_text, loc='center',
                      colLabels=[col_name_0, 'space', 'symbolic', 'linguistic', 'is_root()'],
                      colLoc='left', colColours='rgmcy',
                      cellLoc='left', colWidths=[0.15,0.125, 0.125, 0.375, 0.075])
-    table.scale(1, 4)
+    table.scale(1, 3)
     fig.tight_layout()
     plt.show()
 
@@ -74,11 +74,28 @@ def list_forms(variable_range=None):
 class Form(Frozen):
     """"""
 
-    def __init__(self, space, symbolic_representation, linguistic_representation, is_root):
+    def __init__(
+            self, space,
+            symbolic_representation, linguistic_representation,
+            is_root,
+            elementary_forms=None,
+    ):
         self._space = space
         self._symbolic_representation = symbolic_representation
         self._linguistic_representation = linguistic_representation
         self._is_root = is_root
+        if is_root is True:
+            assert elementary_forms is None, f"pls do not provide elementary forms for a root form."
+            elementary_forms = [self, ]
+        else:
+            assert elementary_forms is not None, f"must provide elementary forms for a non-root form."
+            if elementary_forms .__class__.__name__ == 'Form':
+                elementary_forms = [elementary_forms, ]
+            else:
+                assert isinstance(elementary_forms, (list, tuple, set)) and \
+                       all([f.__class__.__name__ == 'Form' for f in elementary_forms]), \
+                    f'pls set only forms and put them in a list or tuple or set.'
+        self._elementary_forms = set(elementary_forms)
         self._cochain = Cochain(self)  # initialize an empty cochain for this form.
         _global_forms[id(self)] = self
         self._freeze()
@@ -174,11 +191,15 @@ def wedge(f1, f2):
     linguistic_representation = lr_term1 + lr_operator + lr_term2
     symbolic_representation = sr_term1 + sr_operator + sr_term2
 
+    elementary_forms = set()
+    elementary_forms.update(f1._elementary_forms)
+    elementary_forms.update(f2._elementary_forms)
     f = Form(
         wedge_space,               # space
         symbolic_representation,   # symbolic representation
         linguistic_representation,
         False,
+        elementary_forms=elementary_forms,
     )
 
     # TODO: deal with the cochain of the new form
@@ -205,6 +226,7 @@ def Hodge(f):
         sr,   # symbolic representation
         lr,
         False,
+        elementary_forms=f._elementary_forms,
     )
 
     # TODO: deal with the cochain of the new form
@@ -231,6 +253,7 @@ def d(f):
         sr,   # symbolic representation
         lr,
         False,
+        elementary_forms=f._elementary_forms,
     )
 
     # TODO: deal with the cochain of the new form
@@ -257,11 +280,40 @@ def codifferential(f):
         sr,   # symbolic representation
         lr,
         False,
+        elementary_forms=f._elementary_forms,
     )
 
     # TODO: deal with the cochain of the new form
 
     return f
+
+
+def time_derivative(f):
+    """"""
+    if f.__class__.__name__ != 'Form':
+        raise NotImplementedError()
+    else:
+        pass
+
+    lr = f._linguistic_representation
+    sr = f._symbolic_representation
+
+    if f.is_root():
+        lr = r"\emph{time derivative of }" + lr
+        sr = r"\partial_t " + sr
+    else:
+        lr = r"\emph{time derivative of }[" + lr + ']'
+        sr = r"\partial_t\left(" + sr + r"\right)"
+
+    tdf = Form(
+        f.space,
+        sr,
+        lr,
+        False,
+        elementary_forms=f._elementary_forms,
+    )
+
+    return tdf
 
 
 if __name__ == '__main__':

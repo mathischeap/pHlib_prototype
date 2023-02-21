@@ -21,6 +21,11 @@ plt.rcParams.update({
 matplotlib.use('TkAgg')
 
 
+def pde(*args, **kwargs):
+    """"""
+    return PartialDifferentialEquations(*args, **kwargs)
+
+
 class PartialDifferentialEquations(Frozen):
     """"""
 
@@ -28,7 +33,7 @@ class PartialDifferentialEquations(Frozen):
         expression = self._check_expression(expression)
         interpreter = self._filter_interpreter(interpreter)
         self._parse_expression(expression, interpreter)
-        self._variables = None
+        self._unknowns = None
         self._freeze()
 
     def _check_expression(self, expression):
@@ -98,6 +103,16 @@ class PartialDifferentialEquations(Frozen):
         self._expression = expression
         self._interpreter = interpreter
 
+        elementary_forms = list()
+        for i in self._form_dict:
+            for terms in self._form_dict[i]:
+                for term in terms:
+                    if term is not None:
+                        elementary_forms.extend(term._elementary_forms)
+                    else:
+                        pass
+        self._elementary_forms = set(elementary_forms)
+
         # TODO: below, we need to check the consistence of equations, for example, if we have k-form + l-form (k!=l).
 
     def print_representations(self):
@@ -141,15 +156,32 @@ class PartialDifferentialEquations(Frozen):
         symbolic = r"$\left\lbrace\begin{aligned}" + symbolic + r"\end{aligned}\right.$"
         symbolic = symbolic.replace('=', r'&=')
 
+        if self._unknowns is None:
+            ef_text = list()
+            for ef in self._elementary_forms:
+                ef_text.append(ef._symbolic_representation)
+            ef_text = r'$' + r', '.join(ef_text) + r'$'
+        else:
+            ef_text_unknowns = list()
+            ef_text_others = list()
+            for ef in self._elementary_forms:
+                if ef in self._unknowns:
+                    ef_text_unknowns.append(ef._symbolic_representation)
+                else:
+                    ef_text_others.append(ef._symbolic_representation)
+            ef_text_unknowns = r'unknowns: $' + r', '.join(ef_text_unknowns) + r'$'
+            ef_text_others =   r'others: $' + r', '.join(ef_text_others) + r'$'
+            ef_text = ef_text_unknowns + '\n' + ef_text_others
+
         length = max([len(i) for i in indicator.split('\n')]) / 10
         height = 2 * len(self._form_dict) * 0.75
         fig, ax = plt.subplots(figsize=(length, height))
         fig.patch.set_visible(False)
         ax.axis('off')
-        table = ax.table(cellText=[[indicator, ], [symbolic, ]],
-                         rowLabels=['expression', 'symbolic'], rowColours='gc',
+        table = ax.table(cellText=[[indicator, ], [symbolic, ], [ef_text, ]],
+                         rowLabels=['expression', 'symbolic', 'elementary forms'], rowColours='gcy',
                          colLoc='left', loc='center', cellLoc='left')
-        table.scale(1, 2.5*len(self._form_dict))
+        table.scale(1, 2*len(self._form_dict))
         table.set_fontsize(20)
         fig.tight_layout()
         plt.show()
@@ -159,27 +191,31 @@ class PartialDifferentialEquations(Frozen):
         return len(self._form_dict)
 
     @property
-    def variables(self):
+    def unknowns(self):
         """"""
-        return self._variables
+        return self._unknowns
 
-    @variables.setter
-    def variables(self, unknowns):
+    @unknowns.setter
+    def unknowns(self, unknowns):
         """"""
-        if self._variables is not None: f"variables exists; not allowed to change them."
+        if self._unknowns is not None: f"unknowns exists; not allowed to change them."
 
         if len(self) == 1 and not isinstance(unknowns, (list, tuple)):
             unknowns = [unknowns, ]
         assert isinstance(unknowns, (list, tuple)), \
-            f"please put variables in a list or tuple if there are more than 1 equation."
+            f"please put unknowns in a list or tuple if there are more than 1 equation."
         assert len(unknowns) == len(self), \
-            f"I have {len(self)} equations but receive {len(unknowns)} variables."
+            f"I have {len(self)} equations but receive {len(unknowns)} unknowns."
 
         for i, unknown in enumerate(unknowns):
             assert unknown.__class__ is Form and unknown.is_root(), \
                 f"{i}th variable is not a root form."
+            assert unknown in self._elementary_forms, f"{i}th variable is not an elementary form."
 
-        self._variables = unknowns
+        self._unknowns = unknowns
+
+    def test_with(self, test_spaces):
+        """return a weak formulation."""
 
 
 if __name__ == '__main__':
@@ -189,10 +225,12 @@ if __name__ == '__main__':
     mesh = ph.mesh.static(None)
 
     ph.space.set_mesh(mesh)
-    O0 = ph.space.add('Omega', k=0, N=3)
-    O1 = ph.space.add('Omega', k=1, N=3)
-    O2 = ph.space.add('Omega', k=2, N=3)
-    O3 = ph.space.add('Omega', k=3, N=3)
+    # ph.list_spaces()
+
+    O0 = ph.space.add('Omega', 0, N=3)
+    O1 = ph.space.add('Omega', 1, N=3)
+    O2 = ph.space.add('Omega', 2, N=3)
+    O3 = ph.space.add('Omega', 3, N=3)
 
     w = O1.make_form(r'\omega^1', "vorticity1")
     u = O2.make_form(r'u^2', r"velocity2")
@@ -205,19 +243,16 @@ if __name__ == '__main__':
     dsu = ph.codifferential(u)
     du = ph.d(u)
 
-    # print(ph.config.get_space_dim())
-    #
-    # from src.form import w, u, wXu, du, dsu, dsP, du_dt, f, P
-    # from src.form import list_forms
-    #
-    # exp = [
-    #     'du_dt + wXu - dsP = f',
-    #     'w = dsu',
-    #     'du = 0'
-    # ]
-    #
-    # # f.print_representations()
-    #
+    du_dt = ph.time_derivative(u)
+
+    # ph.list_forms(globals())
+
+    exp = [
+        'du_dt + wXu - dsP = f',
+        'w = dsu',
+        'du = 0'
+    ]
+
     # interpreter = {
     #     'du_dt' : du_dt,
     #     'wXu' : wXu,
@@ -227,14 +262,8 @@ if __name__ == '__main__':
     #     'dsu' : dsu,
     #     'du' : du,
     # }
-    #
-    # pde = PartialDifferentialEquations(exp, interpreter)
-    #
-    # # print(111)
-    #
-    ph.list_forms(globals())
-    # ph.space.list_()
-    #
-    # pde.print_representations()
-    #
-    # pde.variables = [u, w, P]
+
+    pde = ph.pde(exp, globals())
+
+    pde.unknowns = [u, w, P]
+    pde.print_representations()

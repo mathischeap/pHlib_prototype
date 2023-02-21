@@ -15,12 +15,18 @@ __version__ = '0.0.0'
 
 about = ''
 
+from src.form import list_forms
+from src.spaces.main import _list_spaces as list_spaces
+
 import src.config as config
+
 
 import src.mesh as mesh
 
 import src.spaces.main as space
 
-from src.form import list_forms
 
 from src.operators import *
+
+
+from src.PDEs import pde

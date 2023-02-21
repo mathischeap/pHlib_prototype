@@ -17,3 +17,9 @@ class WeakFormulation(Frozen):
     def __init__(self):
         """"""
         self._freeze()
+
+
+if __name__ == '__main__':
+    # python src/weakFormulation.py
+    import __init__ as ph
+
