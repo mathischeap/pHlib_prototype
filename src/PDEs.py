@@ -19,7 +19,7 @@ plt.rcParams.update({
     "text.latex.preamble": r"\usepackage{amsmath}",
 })
 matplotlib.use('TkAgg')
-
+from src.weakFormulation import RawWeakFormulation
 
 def pde(*args, **kwargs):
     """"""
@@ -104,16 +104,26 @@ class PartialDifferentialEquations(Frozen):
         self._interpreter = interpreter
 
         elementary_forms = list()
+        mesh = None
         for i in self._form_dict:
             for terms in self._form_dict[i]:
                 for term in terms:
                     if term is not None:
                         elementary_forms.extend(term._elementary_forms)
+                        if mesh is None:
+                            mesh = term.mesh
+                        else:
+                            assert mesh == term.mesh, f"mesh dis-match."
                     else:
                         pass
         self._elementary_forms = set(elementary_forms)
+        self._mesh = mesh
 
         # TODO: below, we need to check the consistence of equations, for example, if we have k-form + l-form (k!=l).
+
+    @property
+    def mesh(self):
+        return self._mesh
 
     def print_representations(self):
         """"""
@@ -216,11 +226,13 @@ class PartialDifferentialEquations(Frozen):
 
     def test_with(self, test_spaces):
         """return a weak formulation."""
+        return RawWeakFormulation(self, test_spaces)
 
 
 if __name__ == '__main__':
     # python src/PDEs.py
     import __init__ as ph
+    # import phlib as ph
 
     mesh = ph.mesh.static(None)
 
@@ -266,4 +278,10 @@ if __name__ == '__main__':
     pde = ph.pde(exp, globals())
 
     pde.unknowns = [u, w, P]
-    pde.print_representations()
+    # pde.print_representations()
+
+    rwf = pde.test_with([u, w, P])
+
+    # ph.list_forms()
+
+    rwf.print_representations()

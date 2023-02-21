@@ -16,6 +16,8 @@ from src.spaces.operators import codifferential as space_codifferential
 from src.form import codifferential as form_codifferential
 from src.form import time_derivative as form_td
 
+from src.form import inner
+
 
 def wedge(obj1, obj2):
     """"""

@@ -122,6 +122,10 @@ class Form(Frozen):
         """"""
         return self._space
 
+    @property
+    def mesh(self):
+        return self.space.mesh
+
     def __repr__(self):
         return super().__repr__()   # TODO: to be customized.
 
@@ -171,7 +175,7 @@ def wedge(f1, f2):
 
     lr_term1 = f1._linguistic_representation
     lr_term2 = f2._linguistic_representation
-    lr_operator = r"\emph{ wedge }"
+    lr_operator = r" \emph{wedge} "
 
 
     sr_term1 = f1._symbolic_representation
@@ -215,10 +219,10 @@ def Hodge(f):
     sr = f._symbolic_representation
 
     if f.is_root():
-        lr = r"\emph{Hodge of }" + lr
+        lr = r"\emph{Hodge of} " + lr
         sr = r"\star " + sr
     else:
-        lr = r"\emph{Hodge of }[" + lr + ']'
+        lr = r"\emph{Hodge of} [" + lr + ']'
         sr = r"\star \left(" + sr + r"\right)"
 
     f = Form(
@@ -242,10 +246,10 @@ def d(f):
     sr = f._symbolic_representation
 
     if f.is_root():
-        lr = r"\emph{exterior derivative of }" + lr
+        lr = r"\emph{exterior derivative of} " + lr
         sr = r"\mathrm{d}" + sr
     else:
-        lr = r"\emph{exterior derivative of }[" + lr + ']'
+        lr = r"\emph{exterior derivative of} [" + lr + ']'
         sr = r"\mathrm{d}\left(" + sr + r"\right)"
 
     f = Form(
@@ -269,10 +273,10 @@ def codifferential(f):
     sr = f._symbolic_representation
 
     if f.is_root():
-        lr = r"\emph{codifferential of }" + lr
+        lr = r"\emph{codifferential of} " + lr
         sr = r"\mathrm{d}^\ast " + sr
     else:
-        lr = r"\emph{codifferential of }[" + lr + ']'
+        lr = r"\emph{codifferential of} [" + lr + ']'
         sr = r"\mathrm{d}^\ast\left(" + sr + r"\right)"
 
     f = Form(
@@ -299,10 +303,10 @@ def time_derivative(f):
     sr = f._symbolic_representation
 
     if f.is_root():
-        lr = r"\emph{time derivative of }" + lr
+        lr = r"\emph{time derivative of} " + lr
         sr = r"\partial_t " + sr
     else:
-        lr = r"\emph{time derivative of }[" + lr + ']'
+        lr = r"\emph{time derivative of} [" + lr + ']'
         sr = r"\partial_t\left(" + sr + r"\right)"
 
     tdf = Form(
@@ -313,7 +317,62 @@ def time_derivative(f):
         elementary_forms=f._elementary_forms,
     )
 
+    # TODO: deal with the cochain of the new form
+
     return tdf
+
+
+def inner(f1, f2, method='L2'):
+    """"""
+
+    if f1.__class__.__name__ != 'Form' or f2.__class__.__name__ != 'Form':
+        raise NotImplementedError()
+    else:
+        pass
+
+    s1 = f1.space
+    s2 = f2.space
+
+    if s1._quasi_equal(s2):
+        pass
+    else:
+        raise Exception(f'cannot do inner product between {s1} and {s2}.')
+
+    return _L2InnerProductTerm(f1, f2)
+
+
+class _L2InnerProductTerm(Frozen):
+    """"""
+    def __init__(self, f1, f2):
+        """"""
+        assert f1.space._quasi_equal(f2.space), f"spaces dis-match."
+        self._f1 = f1
+        self._f2 = f2
+
+        sr1 = f1._symbolic_representation
+        sr2 = f2._symbolic_representation
+
+        lr1 = f1._linguistic_representation
+        lr2 = f2._linguistic_representation
+
+        if f1.is_root():
+            pass
+        else:
+            lr1 = rf'[{lr1}]'
+        if f2.is_root():
+            pass
+        else:
+            lr2 = rf'[{lr2}]'
+
+        self._symbolic_representation = rf'\left({sr1}, {sr2}\right)_' + r"{L^2}"
+        self._linguistic_representation = r"\emph{L2 inner product between} " + lr1 + r' \emph{and} ' + lr2
+
+        self._freeze()
+
+
+
+
+
 
 
 if __name__ == '__main__':

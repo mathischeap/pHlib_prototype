@@ -42,3 +42,12 @@ class SpaceBase(Frozen):
     def __eq__(self, other):
         """"""
         return self.__repr__() == other.__repr__()
+
+    def _quasi_equal(self, other):
+        """equal but basis function degrees can be different."""
+        raise NotImplementedError()
+
+    @property
+    def _is_space(self):
+        """A private tag."""
+        return True

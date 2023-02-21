@@ -46,3 +46,13 @@ class ScalarValuedFormSpace(SpaceBase):
     def __repr__(self):
         """By construction, it will be unique."""
         return 'Space:' + rf"\Omega^{self.k}({self.mesh.__repr__()};{self.N})"
+
+    def _quasi_equal(self, other):
+        """"""
+        if other is self:
+            return True
+        else:
+            if other.__class__.__name__ != 'ScalarValuedFormSpace':
+                return False
+            else:
+                return other.mesh == self.mesh and other.k == self.k

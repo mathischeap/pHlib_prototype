@@ -26,7 +26,7 @@ import src.mesh as mesh
 import src.spaces.main as space
 
 
-from src.operators import *
+from src.operators import inner, wedge, Hodge, d, codifferential, time_derivative
 
 
 from src.PDEs import pde
