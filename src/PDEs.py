@@ -119,7 +119,8 @@ class PartialDifferentialEquations(Frozen):
         self._elementary_forms = set(elementary_forms)
         self._mesh = mesh
 
-        # TODO: below, we need to check the consistence of equations, for example, if we have k-form + l-form (k!=l).
+        # TODO: below, we need to check the consistence of equations, for example, orientations or,
+        #  whether we have k-form + l-form (k!=l).
 
     @property
     def mesh(self):
