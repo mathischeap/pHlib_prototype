@@ -47,7 +47,6 @@ class SpaceBase(Frozen):
         """equal but basis function degrees can be different."""
         raise NotImplementedError()
 
-    @property
     def _is_space(self):
         """A private tag."""
         return True

@@ -251,6 +251,8 @@ if __name__ == '__main__':
     f = O2.make_form(r'f^2', r"body-force")
     P = O3.make_form(r'P^3', r"total-pressure3")
 
+    # ph.list_forms(globals())
+    #
     wXu = ph.wedge(w, ph.Hodge(u))
 
     dsP = ph.codifferential(P)
@@ -258,32 +260,36 @@ if __name__ == '__main__':
     du = ph.d(u)
 
     du_dt = ph.time_derivative(u)
-
+    #
     # ph.list_forms(globals())
-
+    # du_dt.print_representations()
+    #
     exp = [
         'du_dt + wXu - dsP = f',
         'w = dsu',
         'du = 0'
     ]
-
-    # interpreter = {
-    #     'du_dt' : du_dt,
-    #     'wXu' : wXu,
-    #     'dsP' : dsP,
-    #     'f' : f,
-    #     'w' : w,
-    #     'dsu' : dsu,
-    #     'du' : du,
-    # }
-
-    pde = ph.pde(exp, globals())
-
+    # #
+    interpreter = {
+        'du_dt' : du_dt,
+        'wXu' : wXu,
+        'dsP' : dsP,
+        'f' : f,
+        'w' : w,
+        'dsu' : dsu,
+        'du' : du,
+    }
+    # #
+    # print(globals())
+    pde = ph.pde(exp, interpreter)
+    # #
     pde.unknowns = [u, w, P]
     # pde.print_representations()
+    #
+    rwf = pde.test_with([O2, O1, O3])
+    # #
+    # # # ph.list_forms()
+    # #
+    # rwf.print_representations()
 
-    rwf = pde.test_with([u, w, P])
-
-    # ph.list_forms()
-
-    rwf.print_representations()
+    print(rwf._term_dict)
