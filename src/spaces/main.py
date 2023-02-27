@@ -19,14 +19,14 @@ def set_mesh(mesh):
     """"""
     assert mesh.__class__.__name__ in ('StaticMesh', 'AdaptiveMesh', 'MovingMesh'), \
         f"I need a Mesh instance."
-    repr = mesh.__repr__()
-    if repr in _mesh_set:
+    rp = mesh.__repr__()
+    if rp in _mesh_set:
         pass
     else:
-        _mesh_set[repr] = mesh
-        _space_set[repr] = dict()
+        _mesh_set[rp] = mesh
+        _space_set[rp] = dict()
 
-    _config['current_mesh'] = repr
+    _config['current_mesh'] = rp
 
 
 from src.spaces.scalarValuedFormSpace import ScalarValuedFormSpace
@@ -75,7 +75,7 @@ def add(abbrs, *args, **kwargs):
         current_spaces = _space_set[mesh_repr]
 
         space = space_class(mesh, *args, **kwargs)
-        srp = space.__repr__ ()
+        srp = space.__repr__()
 
         if srp in current_spaces:
             pass
@@ -95,7 +95,7 @@ if __name__ == '__main__':
     import __init__ as ph
 
     # print(_space_set)
-    mesh = ph.mesh.static(None)
-    ph.space.set_mesh(mesh)
+    msh = ph.mesh.static(None)
+    ph.space.set_mesh(msh)
     #
     O2 = ph.space.add('Omega', k=2, N=3)

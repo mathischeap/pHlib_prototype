@@ -32,8 +32,6 @@ class ScalarValuedFormSpace(SpaceBase):
         assert isinstance(N, int) and N >= 1, f"N wrong"
         self._N = N
         self._symbolic_representation = rf"\Omega^{self.k}({mesh._symbolic_representation};{self.N})"
-
-
         self._freeze()
 
     @property

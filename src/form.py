@@ -48,7 +48,7 @@ def list_forms(variable_range=None):
             else:
                 var_name = ','.join(var_name)
 
-        cell_text.append([r'\texttt{' + str(var_name)  + '}',
+        cell_text.append([r'\texttt{' + str(var_name) + '}',
                           rf"${form.space._symbolic_representation}$",
                           f"${form._symbolic_representation}$",
                           form._linguistic_representation,
@@ -59,14 +59,15 @@ def list_forms(variable_range=None):
     else:
         pass
 
-    fig, ax = plt.subplots(figsize=(12, (1 + len(cell_text))*0.75))
+    fig, ax = plt.subplots(figsize=(16, (1 + len(cell_text))))
     fig.patch.set_visible(False)
     ax.axis('off')
     table = ax.table(cellText=cell_text, loc='center',
                      colLabels=[col_name_0, 'space', 'symbolic', 'linguistic', 'is_root()'],
                      colLoc='left', colColours='rgmcy',
-                     cellLoc='left', colWidths=[0.15,0.125, 0.125, 0.375, 0.075])
-    table.scale(1, 3)
+                     cellLoc='left', colWidths=[0.15, 0.125, 0.125, 0.375, 0.075])
+    table.scale(1, 8)
+    table.set_fontsize(50)
     fig.tight_layout()
     plt.show()
 
@@ -93,7 +94,7 @@ class Form(Frozen):
                 elementary_forms = [elementary_forms, ]
             else:
                 assert isinstance(elementary_forms, (list, tuple, set)) and \
-                       all([f.__class__.__name__ == 'Form' for f in elementary_forms]), \
+                    all([f.__class__.__name__ == 'Form' for f in elementary_forms]), \
                     f'pls set only forms and put them in a list or tuple or set.'
         self._elementary_forms = set(elementary_forms)
         self._cochain = Cochain(self)  # initialize an empty cochain for this form.
@@ -124,10 +125,14 @@ class Form(Frozen):
 
     @property
     def mesh(self):
+        """"""
         return self.space.mesh
 
     def __repr__(self):
         return super().__repr__()   # TODO: to be customized.
+
+    def wedge(self, other):
+        return wedge(self, other)
 
 
 class Cochain(Frozen):

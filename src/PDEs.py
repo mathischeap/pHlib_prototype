@@ -253,7 +253,7 @@ if __name__ == '__main__':
 
     # ph.list_forms(globals())
     #
-    wXu = ph.wedge(w, ph.Hodge(u))
+    wXu = w.wedge(ph.Hodge(u))
 
     dsP = ph.codifferential(P)
     dsu = ph.codifferential(u)
@@ -261,7 +261,7 @@ if __name__ == '__main__':
 
     du_dt = ph.time_derivative(u)
     #
-    # ph.list_forms(globals())
+    ph.list_forms(globals())
     # du_dt.print_representations()
     #
     exp = [
@@ -291,5 +291,3 @@ if __name__ == '__main__':
     # # # ph.list_forms()
     # #
     # rwf.print_representations()
-
-    print(rwf._term_dict)

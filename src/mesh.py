@@ -74,7 +74,6 @@ class StaticMesh(Frozen):   #
         return 'StaticMesh:' + self._symbolic_representation # this will be unique.
 
 
-
 class AdaptiveMesh(StaticMesh):
     """"""
 
