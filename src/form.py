@@ -338,13 +338,18 @@ def inner(f1, f2, method='L2'):
     else:
         raise Exception(f'cannot do inner product between {s1} and {s2}.')
 
-    return _L2InnerProductTerm(f1, f2)
+    if method == 'L2':
+        return _L2InnerProductTerm(f1, f2)
+    else:
+        raise NotImplementedError()
 
 
 class _L2InnerProductTerm(Frozen):
     """"""
+
     def __init__(self, f1, f2):
         """"""
+
         assert f1.space._quasi_equal(f2.space), f"spaces dis-match."
         self._f1 = f1
         self._f2 = f2
@@ -359,6 +364,7 @@ class _L2InnerProductTerm(Frozen):
             pass
         else:
             lr1 = rf'[{lr1}]'
+
         if f2.is_root():
             pass
         else:
@@ -368,11 +374,6 @@ class _L2InnerProductTerm(Frozen):
         self._linguistic_representation = r"\emph{L2 inner product between} " + lr1 + r' \emph{and} ' + lr2
 
         self._freeze()
-
-
-
-
-
 
 
 if __name__ == '__main__':

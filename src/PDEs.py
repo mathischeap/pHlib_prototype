@@ -21,6 +21,7 @@ plt.rcParams.update({
 matplotlib.use('TkAgg')
 from src.weakFormulation import RawWeakFormulation
 
+
 def pde(*args, **kwargs):
     """"""
     return PartialDifferentialEquations(*args, **kwargs)
