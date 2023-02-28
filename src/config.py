@@ -7,15 +7,15 @@
 """
 
 _global_variables = {
-    'space_dim': 3,
+    'embedding_space_dim': 3,
 }
 
 
-def set_space_dim(ndim):
+def set_embedding_space_dim(ndim):
     """"""
-    _global_variables['space_dim'] = ndim
+    _global_variables['embedding_space_dim'] = ndim
 
 
-def get_space_dim():
+def get_embedding_space_dim():
     """"""
-    return _global_variables['space_dim']
+    return _global_variables['embedding_space_dim']

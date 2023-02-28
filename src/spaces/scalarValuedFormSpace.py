@@ -6,7 +6,7 @@
 """
 
 from src.spaces.base import SpaceBase
-from src.config import get_space_dim
+from src.config import get_embedding_space_dim
 
 
 class ScalarValuedFormSpace(SpaceBase):
@@ -27,7 +27,7 @@ class ScalarValuedFormSpace(SpaceBase):
     def __init__(self, mesh, k, N):
         """"""
         super().__init__(mesh)
-        assert isinstance(k, int) and 0 <= k <= get_space_dim(), f" k wrong"
+        assert isinstance(k, int) and 0 <= k <= get_embedding_space_dim(), f" k wrong"
         self._k = k
         assert isinstance(N, int) and N >= 1, f"N wrong"
         self._N = N

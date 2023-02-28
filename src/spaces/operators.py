@@ -10,7 +10,7 @@ if './' not in sys.path:
     sys.path.append('./')
 
 
-from src.config import get_space_dim
+from src.config import get_embedding_space_dim
 from src.spaces.main import add, set_mesh
 
 
@@ -23,7 +23,7 @@ def wedge(s1, s2):
         k = s1.k
         l = s2.k
 
-        assert k + l <= get_space_dim()
+        assert k + l <= get_embedding_space_dim()
 
         set_mesh(s1.mesh)   # let the `space.mesh` become the current mesh.
         return add('Omega', k+l, s1.N + s2.N)
@@ -35,7 +35,7 @@ def wedge(s1, s2):
 def Hodge(s):
     """A not well-defined one"""
     if s.__class__.__name__ == 'ScalarValuedFormSpace':
-        n = get_space_dim()
+        n = get_embedding_space_dim()
         set_mesh(s.mesh)   # let the `space.mesh` become the current mesh.
         return add('Omega', n-s.k, s.N)
     else:
@@ -45,7 +45,7 @@ def Hodge(s):
 def d(space):
     """the range of exterior derivative operator on `space`."""
     if space.__class__.__name__ == 'ScalarValuedFormSpace':
-        assert space.k < get_space_dim(), f'd of top-form is 0.'
+        assert space.k < get_embedding_space_dim(), f'd of top-form is 0.'
         set_mesh(space.mesh)   # let the `space.mesh` become the current mesh.
         return add('Omega', space.k+1, space.N)
     else:

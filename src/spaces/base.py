@@ -6,7 +6,7 @@
 """
 
 from src.tools.frozen import Frozen
-from src.config import get_space_dim
+from src.config import get_embedding_space_dim
 from src.form import Form
 
 _global_spaces = dict()
@@ -28,7 +28,7 @@ class SpaceBase(Frozen):
     @property
     def n(self):
         """"""
-        return get_space_dim()
+        return get_embedding_space_dim()
 
     def make_form(self, symbolic_representation, linguistic_representation):
         """"""

@@ -261,7 +261,7 @@ if __name__ == '__main__':
 
     du_dt = ph.time_derivative(u)
     #
-    ph.list_forms(globals())
+    # ph.list_forms(globals())
     # du_dt.print_representations()
     #
     exp = [
@@ -290,4 +290,4 @@ if __name__ == '__main__':
     # #
     # # # ph.list_forms()
     # #
-    # rwf.print_representations()
+    rwf.print_representations()

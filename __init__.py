@@ -13,23 +13,30 @@ if absolute_path not in sys.path:
 
 __version__ = '0.0.0'
 
-about = ''
-
-from src.form import list_forms
-from src.spaces.main import _list_spaces as list_spaces
+__all__ = [
+    'config',
+    'list_forms', 'list_spaces',
+    'mesh',
+    'space',
+    'inner', 'wedge', 'Hodge',
+    'd', 'exterior_derivative',
+    'codifferential',
+    'time_derivative',
+    'pde',
+]
 
 import src.config as config
 
+from src.form import list_forms
+from src.spaces.main import _list_spaces as list_spaces
 
 import src.mesh as mesh
 
 import src.spaces.main as space
 
-
 from src.operators import inner, wedge, Hodge
 from src.operators import d, exterior_derivative
 from src.operators import codifferential
 from src.operators import time_derivative
-
 
 from src.PDEs import pde
