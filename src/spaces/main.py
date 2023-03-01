@@ -70,9 +70,6 @@ def _new(*args, **kwargs):
     return spaces
 
 
-from src.mesh import _global_mesh_variables, _global_meshes
-
-
 def new(abbrs, *args, **kwargs):
     """generate a space (named `abbr`) with args `kwargs` use current mesh.
 
@@ -86,11 +83,7 @@ def new(abbrs, *args, **kwargs):
 
     """
     if _config['current_mesh'] == '':
-        last_mesh_sr = _global_mesh_variables['last_mesh']
-        if last_mesh_sr == '':
-            raise Exception(f"There is no mesh existing, pls make a mesh firstly.")
-        else:
-            set_mesh(_global_meshes[last_mesh_sr])
+        raise Exception(f"pls set a mesh firstly by using `space.set_mesh`.")
     else:
         pass
 

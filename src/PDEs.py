@@ -242,10 +242,7 @@ if __name__ == '__main__':
     ph.config.set_embedding_space_dim(3)
     manifold = ph.manifold(3)
     mesh = ph.mesh(manifold)
-
-    # ph.space.set_mesh(mesh)
-    # ph.list_meshes()
-
+    ph.space.set_mesh(mesh)
     O0 = ph.space.new('Omega', 0, p=3)
     O1 = ph.space.new('Omega', 1, p=3)
     O2 = ph.space.new('Omega', 2, p=3)
@@ -276,22 +273,19 @@ if __name__ == '__main__':
         'du = 0'
     ]
     #
-    interpreter = {
-        'du_dt': du_dt,
-        'wXu': wXu,
-        'dsP': dsP,
-        'f': f,
-        'w': w,
-        'dsu': dsu,
-        'du': du,
-    }
-    # #
-    # print(globals())
-    pde = ph.pde(exp, interpreter)
-    # #
+    # interpreter = {
+    #     'du_dt': du_dt,
+    #     'wXu': wXu,
+    #     'dsP': dsP,
+    #     'f': f,
+    #     'w': w,
+    #     'dsu': dsu,
+    #     'du': du,
+    # }
+
+    pde = ph.pde(exp, globals())
     pde.unknowns = [u, w, P]
     # pde.print_representations()
-    #
     rwf = pde.test_with([O2, O1, O3])
     rwf.print_representations()
-    # print(mesh)
+    print(rwf.mesh)

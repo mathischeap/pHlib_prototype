@@ -10,12 +10,9 @@ if './' not in sys.path:
     sys.path.append('./')
 
 from src.tools.frozen import Frozen
-from src.config import get_embedding_space_dim
 
 _global_meshes = dict()  # we monitor all meshes to avoid that we use the same representation for different meshes.
-_global_mesh_variables =  {
-    'last_mesh': '',
-}
+
 
 def mesh(*args, **kwargs):
     return Mesh(*args, **kwargs)
@@ -60,14 +57,8 @@ class Mesh(Frozen):   #
             f"Manifold symbolic representation is illegal, pls specify a symbolic representation other than " \
             f"{set(_global_meshes.keys())}"
         _global_meshes[symbolic_representation] = self
-        _global_mesh_variables['last_mesh'] = symbolic_representation
         self._symbolic_representation = symbolic_representation
         self._freeze()
-
-    @property
-    def n(self):
-        """"""
-        return get_embedding_space_dim()
 
     @property
     def ndim(self):

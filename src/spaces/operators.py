@@ -59,27 +59,3 @@ def codifferential(space):
         return _new('Omega', space.k - 1, space.p)
     else:
         raise NotImplementedError()
-
-
-if __name__ == '__main__':
-    # python src/spaces/operators.py
-
-    import __init__ as hp
-
-    mesh = hp.mesh.static(None)
-    hp.space.set_mesh(mesh)
-
-    H1 = hp.space.new('Omega', k=1, N=1)
-    H2 = hp.space.new('Omega', k=2, N=1)
-    H3 = hp.space.new('Omega', k=3, N=1)
-
-    # w = H1.generate_instance('\omega^1', "vorticity1")
-    # u = H2.generate_instance('u^2', "velocity2")
-    # f = H2.generate_instance('f^2', "body-force2")
-    # P = H3.generate_instance('P^3', "total-pressure3")
-
-    wXu = wedge(H1, H2).make_form('\omega^1', "vorticity1")
-    dH2 = d(H2)
-    du2 = dH2.make_form(r'\mathrm{d}u^2', "d-velocity")
-    #
-    du2.print_representations()
