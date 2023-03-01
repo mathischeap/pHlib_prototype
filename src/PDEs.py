@@ -125,6 +125,7 @@ class PartialDifferentialEquations(Frozen):
 
     @property
     def mesh(self):
+        """"""
         return self._mesh
 
     def print_representations(self):
@@ -176,13 +177,15 @@ class PartialDifferentialEquations(Frozen):
         else:
             ef_text_unknowns = list()
             ef_text_others = list()
+            for ef in self._unknowns:
+                ef_text_unknowns.append(ef._symbolic_representation)
             for ef in self._elementary_forms:
                 if ef in self._unknowns:
-                    ef_text_unknowns.append(ef._symbolic_representation)
+                    pass
                 else:
                     ef_text_others.append(ef._symbolic_representation)
             ef_text_unknowns = r'unknowns: $' + r', '.join(ef_text_unknowns) + r'$'
-            ef_text_others =   r'others: $' + r', '.join(ef_text_others) + r'$'
+            ef_text_others = r'others: $' + r', '.join(ef_text_others) + r'$'
             ef_text = ef_text_unknowns + '\n' + ef_text_others
 
         length = max([len(i) for i in indicator.split('\n')]) / 10
@@ -210,7 +213,8 @@ class PartialDifferentialEquations(Frozen):
     @unknowns.setter
     def unknowns(self, unknowns):
         """"""
-        if self._unknowns is not None: f"unknowns exists; not allowed to change them."
+        if self._unknowns is not None:
+            f"unknowns exists; not allowed to change them."
 
         if len(self) == 1 and not isinstance(unknowns, (list, tuple)):
             unknowns = [unknowns, ]
@@ -235,24 +239,26 @@ if __name__ == '__main__':
     # python src/PDEs.py
     import __init__ as ph
     # import phlib as ph
+    ph.config.set_embedding_space_dim(3)
+    manifold = ph.manifold(3)
+    mesh = ph.mesh(manifold)
 
-    mesh = ph.mesh.static(None)
+    # ph.space.set_mesh(mesh)
+    # ph.list_meshes()
 
-    ph.space.set_mesh(mesh)
-    # ph.list_spaces()
-
-    O0 = ph.space.add('Omega', 0, N=3)
-    O1 = ph.space.add('Omega', 1, N=3)
-    O2 = ph.space.add('Omega', 2, N=3)
-    O3 = ph.space.add('Omega', 3, N=3)
+    O0 = ph.space.new('Omega', 0, p=3)
+    O1 = ph.space.new('Omega', 1, p=3)
+    O2 = ph.space.new('Omega', 2, p=3)
+    O3 = ph.space.new('Omega', 3, p=3)
 
     w = O1.make_form(r'\omega^1', "vorticity1")
     u = O2.make_form(r'u^2', r"velocity2")
     f = O2.make_form(r'f^2', r"body-force")
     P = O3.make_form(r'P^3', r"total-pressure3")
 
+    # ph.list_spaces()
     # ph.list_forms(globals())
-    #
+
     wXu = w.wedge(ph.Hodge(u))
 
     dsP = ph.codifferential(P)
@@ -260,24 +266,24 @@ if __name__ == '__main__':
     du = ph.d(u)
 
     du_dt = ph.time_derivative(u)
-    #
+
     # ph.list_forms(globals())
     # du_dt.print_representations()
-    #
+
     exp = [
         'du_dt + wXu - dsP = f',
         'w = dsu',
         'du = 0'
     ]
-    # #
+    #
     interpreter = {
-        'du_dt' : du_dt,
-        'wXu' : wXu,
-        'dsP' : dsP,
-        'f' : f,
-        'w' : w,
-        'dsu' : dsu,
-        'du' : du,
+        'du_dt': du_dt,
+        'wXu': wXu,
+        'dsP': dsP,
+        'f': f,
+        'w': w,
+        'dsu': dsu,
+        'du': du,
     }
     # #
     # print(globals())
@@ -287,7 +293,5 @@ if __name__ == '__main__':
     # pde.print_representations()
     #
     rwf = pde.test_with([O2, O1, O3])
-    # #
-    # # # ph.list_forms()
-    # #
     rwf.print_representations()
+    # print(mesh)

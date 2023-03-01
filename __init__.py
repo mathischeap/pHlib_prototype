@@ -15,7 +15,8 @@ __version__ = '0.0.0'
 
 __all__ = [
     'config',
-    'list_forms', 'list_spaces',
+    'list_forms', 'list_spaces', 'list_meshes',
+    'manifold',
     'mesh',
     'space',
     'inner', 'wedge', 'Hodge',
@@ -27,10 +28,15 @@ __all__ = [
 
 import src.config as config
 
-from src.form import list_forms
+from src.form import _list_forms as list_forms
+
 from src.spaces.main import _list_spaces as list_spaces
 
-import src.mesh as mesh
+from src.mesh import _list_meshes as list_meshes
+
+from src.manifold import manifold
+
+from src.mesh import mesh
 
 import src.spaces.main as space
 

@@ -30,14 +30,15 @@ class SpaceBase(Frozen):
         """"""
         return get_embedding_space_dim()
 
-    def make_form(self, symbolic_representation, linguistic_representation):
+    def make_form(self, symbolic_representation, linguistic_representation, orientation='outer'):
         """"""
         linguistic_representation = r'\textsf{' + linguistic_representation + r'}'
-        return Form(self, symbolic_representation, linguistic_representation, True)
-
-    def __repr__(self):
-        """"""
-        raise NotImplementedError()
+        return Form(
+            self, symbolic_representation, linguistic_representation,
+            True,  # is_root
+            None,  # elementary_forms
+            orientation
+        )
 
     def __eq__(self, other):
         """"""
@@ -47,6 +48,7 @@ class SpaceBase(Frozen):
         """equal but basis function degrees can be different."""
         raise NotImplementedError()
 
-    def _is_space(self):
+    @staticmethod
+    def _is_space():
         """A private tag."""
         return True

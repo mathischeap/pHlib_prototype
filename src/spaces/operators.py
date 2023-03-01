@@ -9,9 +9,8 @@ import sys
 if './' not in sys.path:
     sys.path.append('./')
 
-
 from src.config import get_embedding_space_dim
-from src.spaces.main import add, set_mesh
+from src.spaces.main import _new, set_mesh
 
 
 def wedge(s1, s2):
@@ -26,7 +25,7 @@ def wedge(s1, s2):
         assert k + l <= get_embedding_space_dim()
 
         set_mesh(s1.mesh)   # let the `space.mesh` become the current mesh.
-        return add('Omega', k+l, s1.N + s2.N)
+        return _new('Omega', k + l, s1.p + s2.p)
 
     else:
         raise NotImplementedError()
@@ -37,7 +36,7 @@ def Hodge(s):
     if s.__class__.__name__ == 'ScalarValuedFormSpace':
         n = get_embedding_space_dim()
         set_mesh(s.mesh)   # let the `space.mesh` become the current mesh.
-        return add('Omega', n-s.k, s.N)
+        return _new('Omega', n - s.k, s.p)
     else:
         raise NotImplementedError()
 
@@ -47,7 +46,7 @@ def d(space):
     if space.__class__.__name__ == 'ScalarValuedFormSpace':
         assert space.k < get_embedding_space_dim(), f'd of top-form is 0.'
         set_mesh(space.mesh)   # let the `space.mesh` become the current mesh.
-        return add('Omega', space.k+1, space.N)
+        return _new('Omega', space.k + 1, space.p)
     else:
         raise NotImplementedError()
 
@@ -57,7 +56,7 @@ def codifferential(space):
     if space.__class__.__name__ == 'ScalarValuedFormSpace':
         assert space.k > 0, f'd of 0-form is 0.'
         set_mesh(space.mesh)   # let the `space.mesh` become the current mesh.
-        return add('Omega', space.k-1, space.N)
+        return _new('Omega', space.k - 1, space.p)
     else:
         raise NotImplementedError()
 
@@ -70,9 +69,9 @@ if __name__ == '__main__':
     mesh = hp.mesh.static(None)
     hp.space.set_mesh(mesh)
 
-    H1 = hp.space.add('Omega', k=1, N=1)
-    H2 = hp.space.add('Omega', k=2, N=1)
-    H3 = hp.space.add('Omega', k=3, N=1)
+    H1 = hp.space.new('Omega', k=1, N=1)
+    H2 = hp.space.new('Omega', k=2, N=1)
+    H3 = hp.space.new('Omega', k=3, N=1)
 
     # w = H1.generate_instance('\omega^1', "vorticity1")
     # u = H2.generate_instance('u^2', "velocity2")

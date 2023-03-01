@@ -22,7 +22,7 @@ matplotlib.use('TkAgg')
 _global_forms = dict()
 
 
-def list_forms(variable_range=None):
+def _list_forms(variable_range=None):
     """"""
     if variable_range is None:
         col_name_0 = 'form id'
@@ -79,7 +79,8 @@ class Form(Frozen):
             self, space,
             symbolic_representation, linguistic_representation,
             is_root,
-            elementary_forms=None,
+            elementary_forms,
+            orientation,
     ):
         self._space = space
         self._symbolic_representation = symbolic_representation
@@ -97,7 +98,17 @@ class Form(Frozen):
                     all([f.__class__.__name__ == 'Form' for f in elementary_forms]), \
                     f'pls set only forms and put them in a list or tuple or set.'
         self._elementary_forms = set(elementary_forms)
-        self._cochain = Cochain(self)  # initialize an empty cochain for this form.
+        assert orientation in ('inner', 'outer', 'i', 'o', None, 'None'), \
+            f"orientation={orientation} is wrong, must be one of ('inner', 'outer', 'i', 'o', None)."
+        if orientation == 'i':
+            orientation = 'inner'
+        elif orientation == 'o':
+            orientation = 'outer'
+        elif orientation is None:
+            orientation = 'None'
+        else:
+            pass
+        self._orientation = orientation
         _global_forms[id(self)] = self
         self._freeze()
 
@@ -113,6 +124,11 @@ class Form(Frozen):
         plt.text(0, 0.5, f'is_root: {self.is_root()}' , ha='left', va='center', size=15)
         plt.axis('off')
         plt.show()
+
+    @property
+    def orientation(self):
+        """"""
+        return self._orientation
 
     def is_root(self):
         """"""
@@ -134,35 +150,6 @@ class Form(Frozen):
     def wedge(self, other):
         return wedge(self, other)
 
-
-class Cochain(Frozen):
-    """"""
-
-    def __init__(self, form):
-        """"""
-        self._form = form
-        self._local = None  # element-wise cochain; 2d data.
-        self._global = None  # The cochain as a 1d vector. So ith entry refer to the value of #i dof.
-        self._freeze()
-
-    @property
-    def local(self):
-        """element-wise cochain; 2d data; 1-axis refers to number of mesh elements; 2-axis refers to local numbering of
-        dofs."""
-        return self._local
-
-    @local.setter
-    def local(self, local_cochain):
-        """"""
-
-    @property
-    def global_(self):
-        """The cochain as a 1d vector. The ith entry refers to the value of #i dof."""
-        return self._global
-
-    @global_.setter
-    def global_(self, global_cochain):
-        """"""
 
 
 from src.spaces.operators import wedge as space_wedge
@@ -203,12 +190,19 @@ def wedge(f1, f2):
     elementary_forms = set()
     elementary_forms.update(f1._elementary_forms)
     elementary_forms.update(f2._elementary_forms)
+
+    if f1.orientation == f2.orientation:
+        orientation = f1.orientation
+    else:
+        orientation = 'None'
+
     f = Form(
         wedge_space,               # space
         symbolic_representation,   # symbolic representation
         linguistic_representation,
         False,
-        elementary_forms=elementary_forms,
+        elementary_forms,
+        orientation,
     )
 
     # TODO: deal with the cochain of the new form
@@ -230,12 +224,19 @@ def Hodge(f):
         lr = r"\emph{Hodge of} [" + lr + ']'
         sr = r"\star \left(" + sr + r"\right)"
 
+    if f.orientation == 'inner':
+        orientation = 'outer'
+    elif f.orientation == 'outer':
+        orientation = 'inner'
+    else:
+        orientation = 'None'
     f = Form(
         Hs,               # space
         sr,   # symbolic representation
         lr,
         False,
-        elementary_forms=f._elementary_forms,
+        f._elementary_forms,
+        orientation,
     )
 
     # TODO: deal with the cochain of the new form
@@ -262,7 +263,8 @@ def d(f):
         sr,   # symbolic representation
         lr,
         False,
-        elementary_forms=f._elementary_forms,
+        f._elementary_forms,
+        f.orientation,
     )
 
     # TODO: deal with the cochain of the new form
@@ -289,7 +291,8 @@ def codifferential(f):
         sr,   # symbolic representation
         lr,
         False,
-        elementary_forms=f._elementary_forms,
+        f._elementary_forms,
+        f.orientation,
     )
 
     # TODO: deal with the cochain of the new form
@@ -319,7 +322,8 @@ def time_derivative(f):
         sr,
         lr,
         False,
-        elementary_forms=f._elementary_forms,
+        f._elementary_forms,
+        f.orientation,
     )
 
     # TODO: deal with the cochain of the new form
@@ -383,4 +387,4 @@ class _L2InnerProductTerm(Frozen):
 
 if __name__ == '__main__':
     # python src/form.py
-    import __init__ as ph
+    pass

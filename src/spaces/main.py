@@ -10,6 +10,7 @@ if './' not in sys.path:
 
 _config = {
     'current_mesh': '',
+    'suppress_existing_space_warning': False,
 }
 _mesh_set = dict()
 _space_set = dict()
@@ -17,16 +18,16 @@ _space_set = dict()
 
 def set_mesh(mesh):
     """"""
-    assert mesh.__class__.__name__ in ('StaticMesh', 'AdaptiveMesh', 'MovingMesh'), \
+    assert mesh.__class__.__name__  == 'Mesh', \
         f"I need a Mesh instance."
-    rp = mesh.__repr__()
-    if rp in _mesh_set:
+    sr = mesh._symbolic_representation
+    if sr in _mesh_set:
         pass
     else:
-        _mesh_set[rp] = mesh
-        _space_set[rp] = dict()
+        _mesh_set[sr] = mesh
+        _space_set[sr] = dict()
 
-    _config['current_mesh'] = rp
+    _config['current_mesh'] = sr
 
 
 from src.spaces.scalarValuedFormSpace import ScalarValuedFormSpace
@@ -34,18 +35,45 @@ from src.spaces.scalarValuedFormSpace import ScalarValuedFormSpace
 # whenever new space is implemented, add it below.
 _implemented_spaces = {
     # abbr : (class                , description                 , parameters),
-    'Omega': (ScalarValuedFormSpace, 'scalar valued k-form space', ['k', 'N']),
+    'Omega': (ScalarValuedFormSpace, 'scalar valued k-form space', ['k', 'p']),
 }
+
 
 def _list_spaces():
     """"""
-    print('{:>15} | {}'.format('abbreviation', 'description'))
+    print('\n Implemented spaces:')
+    print('{:>15} - {}'.format('abbreviation', 'description'))
     for abbr in _implemented_spaces:
         description = _implemented_spaces[abbr][1]
         print('{:>15} | {}'.format(abbr, description))
 
+    print('\n Existing spaces:')
+    for mesh in _space_set:
+        spaces = _space_set[mesh]
+        print('{:>15} {}'.format('On mesh', mesh))
+        for i, sr in enumerate(spaces):
+            space = spaces[sr]
+            print('{:>15}: {}'.format(i, space._symbolic_representation))
 
-def add(abbrs, *args, **kwargs):
+
+class SpaceExistingWarning(UserWarning, ValueError):
+    pass
+
+import warnings
+
+
+def _new(*args, **kwargs):
+    """A private `new` function to suppress the warning."""
+    _config['suppress_existing_space_warning'] = True
+    spaces = new(*args, **kwargs)
+    _config['suppress_existing_space_warning'] = False
+    return spaces
+
+
+from src.mesh import _global_mesh_variables, _global_meshes
+
+
+def new(abbrs, *args, **kwargs):
     """generate a space (named `abbr`) with args `kwargs` use current mesh.
 
     Parameters
@@ -57,12 +85,19 @@ def add(abbrs, *args, **kwargs):
     -------
 
     """
+    if _config['current_mesh'] == '':
+        last_mesh_sr = _global_mesh_variables['last_mesh']
+        if last_mesh_sr == '':
+            raise Exception(f"There is no mesh existing, pls make a mesh firstly.")
+        else:
+            set_mesh(_global_meshes[last_mesh_sr])
+    else:
+        pass
+
     if isinstance(abbrs, str):  # make only 1 space
         abbrs = [abbrs, ]
     else:
         isinstance(abbrs, (list, tuple)), f"pls put space abbreviations into a list or tuple."
-
-    assert _config['current_mesh'] != '', f"pls set mesh firstly."
 
     spaces = tuple()
     for abbr in abbrs:
@@ -70,15 +105,19 @@ def add(abbrs, *args, **kwargs):
             f"space abbr.={abbr} not implemented. do `ph.space.list_()` to see all implemented spaces."
         space_class = _implemented_spaces[abbr][0]
 
-        mesh_repr = _config['current_mesh']
-        mesh = _mesh_set[mesh_repr]
-        current_spaces = _space_set[mesh_repr]
+        mesh_sr = _config['current_mesh']
+        mesh = _mesh_set[mesh_sr]
+        current_spaces = _space_set[mesh_sr]
 
         space = space_class(mesh, *args, **kwargs)
-        srp = space.__repr__()
+        srp = space._symbolic_representation  # do not use __repr__()
 
         if srp in current_spaces:
-            pass
+            if _config['suppress_existing_space_warning']:
+                pass
+            else:
+                warnings.warn(f"{srp} already exists, will return the exist one instead of making a new one.",
+                              SpaceExistingWarning)
         else:
             current_spaces[srp] = space
 
@@ -92,10 +131,4 @@ def add(abbrs, *args, **kwargs):
 
 if __name__ == '__main__':
     # python src/spaces/main.py
-    import __init__ as ph
-
-    # print(_space_set)
-    msh = ph.mesh.static(None)
-    ph.space.set_mesh(msh)
-    #
-    O2 = ph.space.add('Omega', k=2, N=3)
+    pass

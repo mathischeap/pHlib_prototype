@@ -16,7 +16,7 @@ class ScalarValuedFormSpace(SpaceBase):
     mesh :
     k :
         k-form spaces
-    N :
+    p :
         The degree of the fintie element spaces.
 
     Examples
@@ -24,14 +24,15 @@ class ScalarValuedFormSpace(SpaceBase):
 
     """
 
-    def __init__(self, mesh, k, N):
+    def __init__(self, mesh, k, p):
         """"""
         super().__init__(mesh)
         assert isinstance(k, int) and 0 <= k <= get_embedding_space_dim(), f" k wrong"
         self._k = k
-        assert isinstance(N, int) and N >= 1, f"N wrong"
-        self._N = N
-        self._symbolic_representation = rf"\Omega^{self.k}({mesh._symbolic_representation};{self.N})"
+        assert isinstance(p, int) and p >= 1, f"basis function degree p ={p} is wrong."
+        self._p = p
+        self._symbolic_representation = r"\Omega^{(" + str(self.k) + r')}' + \
+                                        rf"_{self.p}({mesh._symbolic_representation})"
         self._freeze()
 
     @property
@@ -40,12 +41,14 @@ class ScalarValuedFormSpace(SpaceBase):
         return self._k
 
     @property
-    def N(self):
-        return self._N
+    def p(self):
+        """Basis function degree."""
+        return self._p
 
     def __repr__(self):
         """By construction, it will be unique."""
-        return 'Space:' + rf"\Omega^{self.k}({self.mesh.__repr__()};{self.N})"
+        super_repr = super().__repr__().split('object')[-1]
+        return f'<Space {self._symbolic_representation}' + super_repr
 
     def _quasi_equal(self, other):
         """"""
