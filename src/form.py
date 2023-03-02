@@ -125,8 +125,6 @@ class Form(Frozen):
             pass
         self._orientation = orientation
         _global_forms[id(self)] = self
-        if is_root:
-            self._pattern = 'A'
         self._freeze()
 
     def print_representations(self):

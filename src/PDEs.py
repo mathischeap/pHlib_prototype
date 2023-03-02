@@ -344,5 +344,8 @@ if __name__ == '__main__':
     # rwf.print_representations(indexing=True)
     # # ph.list_forms(globals())
     # # print(mesh.boundary().boundary())
-    # for i in rwf:
-    #     print(rwf[i])
+    for i in rwf:
+        if rwf[i][1] == 0:
+            pass
+        else:
+            print(rwf[i][1]._simple_patterns)
