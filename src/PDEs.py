@@ -19,7 +19,7 @@ plt.rcParams.update({
     "text.latex.preamble": r"\usepackage{amsmath}",
 })
 matplotlib.use('TkAgg')
-from src.weakFormulation import RawWeakFormulation
+from src.wf.raw import RawWeakFormulation
 
 
 def pde(*args, **kwargs):
@@ -37,7 +37,8 @@ class PartialDifferentialEquations(Frozen):
         self._unknowns = None
         self._freeze()
 
-    def _check_expression(self, expression):
+    @staticmethod
+    def _check_expression(expression):
         """"""
         if isinstance(expression, str):
             assert len(expression) > 0, "cannot be empty expression."
@@ -52,7 +53,8 @@ class PartialDifferentialEquations(Frozen):
 
         return expression
 
-    def _filter_interpreter(self, interpreter):
+    @staticmethod
+    def _filter_interpreter(interpreter):
         """"""
         new_interpreter = dict()
         for var_name in interpreter:
@@ -64,42 +66,62 @@ class PartialDifferentialEquations(Frozen):
 
     def _parse_expression(self, expression, interpreter):
         """Keep upgrading this method to let it understand more equations."""
-        term_dict = dict()
+        indi_dict = dict()
         sign_dict = dict()
         form_dict = dict()
+        ind_dict = dict()
+        indexing = dict()
         for i, equation in enumerate(expression):
 
             equation = equation.replace(' ', '')  # remove all spaces
             equation = equation.replace('-', '+-')  # let all terms be connected by +
 
-            term_dict[i] = ([], [])  # for left terms and right terms of ith equation
+            indi_dict[i] = ([], [])  # for left terms and right terms of ith equation
             sign_dict[i] = ([], [])  # for left terms and right terms of ith equation
             form_dict[i] = ([], [])  # for left terms and right terms of ith equation
+            ind_dict[i] = ([], [])  # for left terms and right terms of ith equation
+
 
             for j, lor in enumerate(equation.split('=')):
                 local_terms = lor.split('+')
+                k = 0
                 for loc_term in local_terms:
                     if loc_term == '' or loc_term == '-':  # found empty terms, just ignore.
                         pass
                     else:
                         if loc_term == '0':
-                            term_dict[i][j].append('0')
-                            sign_dict[i][j].append('+')
-                            form_dict[i][j].append(None)
+                            indi = '0'
+                            sign = '+'
+                            form = 0
                         elif loc_term[0] == '-':
                             assert loc_term[1:] in interpreter, f"found term {loc_term[1:]} not interpreted."
-                            term_dict[i][j].append(loc_term[1:])
-                            sign_dict[i][j].append('-')
-                            form_dict[i][j].append(interpreter[loc_term[1:]])
+                            indi = loc_term[1:]
+                            sign = '-'
+                            form = interpreter[loc_term[1:]]
                         else:
                             assert loc_term in interpreter, f"found term {loc_term} not interpreted"
-                            term_dict[i][j].append(loc_term)
-                            sign_dict[i][j].append('+')
-                            form_dict[i][j].append(interpreter[loc_term])
+                            indi = loc_term
+                            sign = '+'
+                            form = interpreter[loc_term]
 
-        self._term_dict = term_dict
+                        indi_dict[i][j].append(indi)
+                        sign_dict[i][j].append(sign)
+                        form_dict[i][j].append(form)
+                        if j == 0:
+                            index = str(i) + '|' + str(k) + '='
+                        elif j == 1:
+                            index = str(i) + '|=' + str(k)
+                        else:
+                            raise Exception()
+                        k += 1
+                        indexing[index] = (indi, sign, form)
+                        ind_dict[i][j].append(index)
+
+        self._indi_dict = indi_dict
         self._sign_dict = sign_dict
         self._form_dict = form_dict
+        self._ind_dict = ind_dict
+        self._indexing = indexing
 
         self._expression = expression
         self._interpreter = interpreter
@@ -109,94 +131,110 @@ class PartialDifferentialEquations(Frozen):
         for i in self._form_dict:
             for terms in self._form_dict[i]:
                 for term in terms:
-                    if term is not None:
+                    if term == 0:
+                        pass
+                    else:
                         elementary_forms.extend(term._elementary_forms)
                         if mesh is None:
                             mesh = term.mesh
                         else:
                             assert mesh == term.mesh, f"mesh dis-match."
-                    else:
-                        pass
+
         self._elementary_forms = set(elementary_forms)
         self._mesh = mesh
-
-        # TODO: below, we need to check the consistence of equations, for example, orientations or,
-        #  whether we have k-form + l-form (k!=l).
 
     @property
     def mesh(self):
         """"""
         return self._mesh
 
-    def print_representations(self):
+    def print_representations(self, indexing=False):
         """"""
         indicator = ''
         symbolic = ''
-        for i in self._term_dict:
-            for t, terms in enumerate(self._term_dict[i]):
+        number_equations = len(self._indi_dict)
+        for i in self._indi_dict:
+            for t, terms in enumerate(self._indi_dict[i]):
                 for j, term in enumerate(terms):
-                    term = r'\texttt{' + term + '}'
+                    term = r'\text{\texttt{' + term + '}}'
+                    if indexing:
+                        index = self._ind_dict[i][t][j]
+                        term = r'\underbrace{'+ term + r'}_{' + \
+                               rf"{index}" + '}'
+                    else:
+                        pass
                     sign = self._sign_dict[i][t][j]
                     form = self._form_dict[i][t][j]
-                    if form is None:
-                        form_symbolic_representation = '0'
+                    if form == 0:
+                        form_sym_repr = '0'
                     else:
-                        form_symbolic_representation = form._symbolic_representation
+                        form_sym_repr = form._sym_repr
+                    if indexing:
+                        index = self._ind_dict[i][t][j]
+                        form_sym_repr = r'\underbrace{'+ form_sym_repr + r'}_{' + \
+                               rf"{index}" + '}'
+                    else:
+                        pass
 
                     if j == 0:
                         if sign == '+':
                             indicator += term
-                            symbolic += form_symbolic_representation
+                            symbolic += form_sym_repr
                         elif sign == '-':
-                            indicator += '$-$' + term
-                            symbolic += '-' + form_symbolic_representation
+                            indicator += '-' + term
+                            symbolic += '-' + form_sym_repr
                         else:
                             raise Exception()
                     else:
-                        indicator += ' $' + sign + '$ ' + term
-                        symbolic += ' ' + sign + ' ' + form_symbolic_representation
+                        indicator += ' ' + sign + ' ' + term
+                        symbolic += ' ' + sign + ' ' + form_sym_repr
 
                 if t == 0:
-                    indicator += ' $=$ '
-                    symbolic += ' = '
-
-            indicator += '\n'
-            symbolic += '\n'
-
-        indicator = indicator[:-1]   # remove the last '\n'
-        symbolic = symbolic[:-1]   # remove the last '\n'
-        symbolic = symbolic.replace('\n', r' \\ ')
+                    indicator += ' &= '
+                    symbolic += ' &= '
+            if i < number_equations - 1:
+                indicator += r' \\ '
+                symbolic += r' \\ '
+            else:
+                pass
+        indicator = r"$\left\lbrace\begin{aligned}" + indicator + r"\end{aligned}\right.$"
         symbolic = r"$\left\lbrace\begin{aligned}" + symbolic + r"\end{aligned}\right.$"
-        symbolic = symbolic.replace('=', r'&=')
 
         if self._unknowns is None:
             ef_text = list()
             for ef in self._elementary_forms:
-                ef_text.append(ef._symbolic_representation)
+                ef_text.append(ef._sym_repr)
             ef_text = r'$' + r', '.join(ef_text) + r'$'
         else:
             ef_text_unknowns = list()
             ef_text_others = list()
             for ef in self._unknowns:
-                ef_text_unknowns.append(ef._symbolic_representation)
+                ef_text_unknowns.append(ef._sym_repr)
             for ef in self._elementary_forms:
                 if ef in self._unknowns:
                     pass
                 else:
-                    ef_text_others.append(ef._symbolic_representation)
+                    ef_text_others.append(ef._sym_repr)
             ef_text_unknowns = r'unknowns: $' + r', '.join(ef_text_unknowns) + r'$'
             ef_text_others = r'others: $' + r', '.join(ef_text_others) + r'$'
             ef_text = ef_text_unknowns + '\n' + ef_text_others
 
-        length = max([len(i) for i in indicator.split('\n')]) / 10
-        height = 2 * len(self._form_dict) * 0.75
+        if indexing:
+            length = max([len(i) for i in indicator.split(r'\\')]) / 20
+            height = 2 * len(self._form_dict) * 1.5
+        else:
+            length = max([len(i) for i in indicator.split(r'\\')]) / 15
+            height = 2 * len(self._form_dict) * 0.75
         fig, ax = plt.subplots(figsize=(length, height))
         fig.patch.set_visible(False)
         ax.axis('off')
         table = ax.table(cellText=[[indicator, ], [symbolic, ], [ef_text, ]],
                          rowLabels=['expression', 'symbolic', 'elementary forms'], rowColours='gcy',
                          colLoc='left', loc='center', cellLoc='left')
-        table.scale(1, 2*len(self._form_dict))
+        if indexing:
+            table.scale(1, 5*len(self._form_dict))
+        else:
+            table.scale(1, 2.25*len(self._form_dict))
         table.set_fontsize(20)
         fig.tight_layout()
         plt.show()
@@ -204,6 +242,21 @@ class PartialDifferentialEquations(Frozen):
     def __len__(self):
         """How many equations we have?"""
         return len(self._form_dict)
+
+    def __getitem__(self, item):
+        return self._indexing[item]
+
+    def __iter__(self):
+        """"""
+        for i in self._ind_dict:
+            for lri in self._ind_dict[i]:
+                for index in lri:
+                    yield index
+
+    @property
+    def elementary_forms(self):
+        """Return a set of root forms that this equation involves."""
+        return self._elementary_forms
 
     @property
     def unknowns(self):
@@ -242,6 +295,7 @@ if __name__ == '__main__':
     ph.config.set_embedding_space_dim(3)
     manifold = ph.manifold(3)
     mesh = ph.mesh(manifold)
+
     ph.space.set_mesh(mesh)
     O0 = ph.space.new('Omega', 0, p=3)
     O1 = ph.space.new('Omega', 1, p=3)
@@ -270,7 +324,7 @@ if __name__ == '__main__':
     exp = [
         'du_dt + wXu - dsP = f',
         'w = dsu',
-        'du = 0'
+        'du = 0',
     ]
     #
     # interpreter = {
@@ -285,7 +339,10 @@ if __name__ == '__main__':
 
     pde = ph.pde(exp, globals())
     pde.unknowns = [u, w, P]
-    # pde.print_representations()
+    # pde.print_representations(indexing=True)
     rwf = pde.test_with([O2, O1, O3])
-    rwf.print_representations()
-    print(rwf.mesh)
+    rwf.print_representations(indexing=True)
+    # # ph.list_forms(globals())
+    # # print(mesh.boundary().boundary())
+    for i in rwf:
+        print(rwf[i])

@@ -15,6 +15,7 @@ _global_meshes = dict()  # we monitor all meshes to avoid that we use the same r
 
 
 def mesh(*args, **kwargs):
+    """A wrapper of the Mesh class"""
     return Mesh(*args, **kwargs)
 
 
@@ -27,37 +28,49 @@ def _list_meshes():
         print('{:>15} | {}'.format(rp, abstract))
 
 
-class Mesh(Frozen):   #
+class Mesh(Frozen):   # Mesh -
     """"""
 
-    def __init__(self, manifold, symbolic_representation=None):
+    def __init__(self, manifold, sym_repr=None):
         """
 
         Parameters
         ----------
         manifold
-        symbolic_representation :
-            We can customize the symbolic_representation of the mesh.
+        sym_repr :
+            We can customize the sym_repr of the mesh.
         """
         assert manifold.__class__.__name__ == 'Manifold', f"I need a manifold."
         self._manifold = manifold
 
-        if symbolic_representation is None:
+        if sym_repr is None:
             number_existing_meshes = len(_global_meshes)
             while 1:
-                symbolic_representation = r'\mathcal{T}_{' + str(number_existing_meshes) + '}'
-                if symbolic_representation in _global_meshes:
-                    number_existing_meshes += 1
-                else:
+                if number_existing_meshes == 0:
+                    sym_repr = r'\mathcal{T}'
                     break
+                else:
+                    sym_repr = r'\mathcal{T}_{' + str(number_existing_meshes) + '}'
+                    if sym_repr in _global_meshes:
+                        number_existing_meshes += 1
+                    else:
+                        break
         else:
-            assert isinstance(symbolic_representation, str) and len(symbolic_representation)>0, \
-                f"symbolic_representation must be a str of length > 0."
-        assert symbolic_representation not in _global_meshes, \
+            assert isinstance(sym_repr, str), \
+                f"sym_repr must be a str of length > 0."
+            sym_repr = sym_repr.replace(' ', '')
+            assert len(sym_repr) > 0, \
+                f"sym_repr must be a str of length > 0."
+
+        assert sym_repr not in _global_meshes, \
             f"Manifold symbolic representation is illegal, pls specify a symbolic representation other than " \
             f"{set(_global_meshes.keys())}"
-        _global_meshes[symbolic_representation] = self
-        self._symbolic_representation = symbolic_representation
+
+        _global_meshes[sym_repr] = self
+        self._sym_repr = sym_repr
+        self._boundary = None
+        self._interface = None
+        self._inclusion = None
         self._freeze()
 
     @property
@@ -65,20 +78,48 @@ class Mesh(Frozen):   #
         """"""
         return self._manifold.ndim
 
-    def __hash__(self):
-        """This has to be updated later on. Same hash means the meshes are exactly the same. Cannot use
-        symbolic_representation for the hash as two differently named meshes can be equal to each other.
-        """
-        raise NotImplementedError()
-
-    def __eq__(self, other):
-        """"""
-        if self is other:
-            return True
-        else:
-            return hash(self) == hash(other)
-
     def __repr__(self):
         """"""
         super_repr = super().__repr__().split('object')[-1]
-        return '<Mesh ' + self._symbolic_representation + super_repr  # this will be unique.
+        return '<Mesh ' + self._sym_repr + super_repr  # this will be unique.
+
+    @property
+    def manifold(self):
+        """The manifold this mesh is based on."""
+        return self._manifold
+
+    def boundary(self, sym_repr=None):
+        """Give a mesh of dimensions (n-1) on the boundary manifold."""
+        if self._boundary is None:
+            manifold_boundary = self.manifold.boundary()
+            if manifold_boundary.__class__.__name__ == 'Manifold':
+                if sym_repr is None:
+                    sym_repr = r'\partial' + self._sym_repr
+                else:
+                    pass
+                self._boundary = Mesh(
+                    manifold_boundary,
+                    sym_repr
+                )
+                self._boundary._inclusion = self
+            elif manifold_boundary.__class__.__name__ == 'NullManifold':
+                self._boundary = NullMesh(manifold_boundary)
+            else:
+                raise NotImplementedError()
+        return self._boundary
+
+    def inclusion(self):
+        """Give the mesh of dimensions (n+1) on the inclusion manifold."""
+        return self._inclusion
+
+
+class NullMesh(Frozen):
+    """A mesh that is constructed upon a null manifold."""
+
+    def __init__(self, null_manifold):
+        self._null_manifold = null_manifold
+        self._freeze()
+
+    @property
+    def ndim(self):
+        return self._null_manifold.ndim

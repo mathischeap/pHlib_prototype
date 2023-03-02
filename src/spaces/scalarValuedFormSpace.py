@@ -31,8 +31,7 @@ class ScalarValuedFormSpace(SpaceBase):
         self._k = k
         assert isinstance(p, int) and p >= 1, f"basis function degree p ={p} is wrong."
         self._p = p
-        self._symbolic_representation = r"\Omega^{(" + str(self.k) + r')}' + \
-                                        rf"_{self.p}({mesh._symbolic_representation})"
+        self._sym_repr = r"\Omega^{(" + str(self.k) + r')}' + rf"_{self.p}({mesh._sym_repr})"
         self._freeze()
 
     @property
@@ -48,7 +47,7 @@ class ScalarValuedFormSpace(SpaceBase):
     def __repr__(self):
         """By construction, it will be unique."""
         super_repr = super().__repr__().split('object')[-1]
-        return f'<Space {self._symbolic_representation}' + super_repr
+        return f'<Space {self._sym_repr}' + super_repr
 
     def _quasi_equal(self, other):
         """"""

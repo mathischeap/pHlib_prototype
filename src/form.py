@@ -49,9 +49,9 @@ def _list_forms(variable_range=None):
                 var_name = ','.join(var_name)
 
         cell_text.append([r'\texttt{' + str(var_name) + '}',
-                          rf"${form.space._symbolic_representation}$",
-                          f"${form._symbolic_representation}$",
-                          form._linguistic_representation,
+                          rf"${form.space._sym_repr}$",
+                          f"${form._sym_repr}$",
+                          form._lin_repr,
                           form.is_root()])
 
     if len(cell_text) == 0:
@@ -77,14 +77,29 @@ class Form(Frozen):
 
     def __init__(
             self, space,
-            symbolic_representation, linguistic_representation,
+            sym_repr, lin_repr,
             is_root,
             elementary_forms,
             orientation,
     ):
+        assert isinstance(is_root, bool), f"is_root must be bool."
         self._space = space
-        self._symbolic_representation = symbolic_representation
-        self._linguistic_representation = linguistic_representation
+
+        if is_root:  # we check the `sym_repr` only for root forms.
+            assert isinstance(sym_repr, str), \
+                f"sym_repr must be a str of length > 0."
+            sym_repr = sym_repr.replace(' ', '')
+            assert len(sym_repr) > 0, \
+                f"sym_repr must be a str of length > 0."
+            for form_id in _global_forms:
+                form = _global_forms[form_id]
+                assert sym_repr != form._sym_repr, \
+                    f"form symbolic representation={sym_repr} is taken. Pls use another one."
+        else:
+            pass
+
+        self._sym_repr = sym_repr
+        self._lin_repr = lin_repr
         self._is_root = is_root
         if is_root is True:
             assert elementary_forms is None, f"pls do not provide elementary forms for a root form."
@@ -110,20 +125,27 @@ class Form(Frozen):
             pass
         self._orientation = orientation
         _global_forms[id(self)] = self
+        if is_root:
+            self._pattern = 'A'
         self._freeze()
 
     def print_representations(self):
         """"""
         my_id = r'\texttt{' + str(id(self)) + '}'
-        plt.figure(figsize=(2 + len(self._symbolic_representation)/4, 4))
+        plt.figure(figsize=(2 + len(self._sym_repr)/4, 4))
         plt.axis([0, 1, 0, 5])
         plt.text(0, 4.5, f'form id: {my_id}', ha='left', va='center', size=15)
-        plt.text(0, 3.5, f'spaces: ${self.space._symbolic_representation}$', ha='left', va='center', size=15)
-        plt.text(0, 2.5, 'symbolic : ' + f"${self._symbolic_representation}$", ha='left', va='center', size=15)
-        plt.text(0, 1.5, 'linguistic : ' + self._linguistic_representation, ha='left', va='center', size=15)
+        plt.text(0, 3.5, f'spaces: ${self.space._sym_repr}$', ha='left', va='center', size=15)
+        plt.text(0, 2.5, 'symbolic : ' + f"${self._sym_repr}$", ha='left', va='center', size=15)
+        plt.text(0, 1.5, 'linguistic : ' + self._lin_repr, ha='left', va='center', size=15)
         plt.text(0, 0.5, f'is_root: {self.is_root()}' , ha='left', va='center', size=15)
         plt.axis('off')
         plt.show()
+
+    def __repr__(self):
+        """"""
+        super_repr = super().__repr__().split('object')[-1]
+        return '<Form ' + self._sym_repr + super_repr  # this will be unique.
 
     @property
     def orientation(self):
@@ -144,12 +166,9 @@ class Form(Frozen):
         """"""
         return self.space.mesh
 
-    def __repr__(self):
-        return super().__repr__()   # TODO: to be customized.
 
     def wedge(self, other):
         return wedge(self, other)
-
 
 
 from src.spaces.operators import wedge as space_wedge
@@ -165,13 +184,13 @@ def wedge(f1, f2):
 
     wedge_space = space_wedge(s1, s2)   # if this is not possible, return NotImplementedError
 
-    lr_term1 = f1._linguistic_representation
-    lr_term2 = f2._linguistic_representation
+    lr_term1 = f1._lin_repr
+    lr_term2 = f2._lin_repr
     lr_operator = r" \emph{wedge} "
 
 
-    sr_term1 = f1._symbolic_representation
-    sr_term2 = f2._symbolic_representation
+    sr_term1 = f1._sym_repr
+    sr_term2 = f2._sym_repr
     sr_operator = r'\wedge '
 
     if f1.is_root():
@@ -184,8 +203,8 @@ def wedge(f1, f2):
     else:
         lr_term2 = '[' + lr_term2 + ']'
         sr_term2 = r'\left(' + sr_term2 + r'\right)'
-    linguistic_representation = lr_term1 + lr_operator + lr_term2
-    symbolic_representation = sr_term1 + sr_operator + sr_term2
+    lin_repr = lr_term1 + lr_operator + lr_term2
+    sym_repr = sr_term1 + sr_operator + sr_term2
 
     elementary_forms = set()
     elementary_forms.update(f1._elementary_forms)
@@ -198,14 +217,12 @@ def wedge(f1, f2):
 
     f = Form(
         wedge_space,               # space
-        symbolic_representation,   # symbolic representation
-        linguistic_representation,
+        sym_repr,   # symbolic representation
+        lin_repr,
         False,
         elementary_forms,
         orientation,
     )
-
-    # TODO: deal with the cochain of the new form
 
     return f
 
@@ -214,8 +231,8 @@ def Hodge(f):
     """Metric Hodge of a form."""
     Hs = space_Hodge(f.space)
 
-    lr = f._linguistic_representation
-    sr = f._symbolic_representation
+    lr = f._lin_repr
+    sr = f._sym_repr
 
     if f.is_root():
         lr = r"\emph{Hodge of} " + lr
@@ -239,8 +256,6 @@ def Hodge(f):
         orientation,
     )
 
-    # TODO: deal with the cochain of the new form
-
     return f
 
 
@@ -248,8 +263,8 @@ def d(f):
     """Metric Hodge of a form."""
     ds = space_d(f.space)
 
-    lr = f._linguistic_representation
-    sr = f._symbolic_representation
+    lr = f._lin_repr
+    sr = f._sym_repr
 
     if f.is_root():
         lr = r"\emph{exterior derivative of} " + lr
@@ -267,8 +282,6 @@ def d(f):
         f.orientation,
     )
 
-    # TODO: deal with the cochain of the new form
-
     return f
 
 
@@ -276,8 +289,8 @@ def codifferential(f):
     """Metric Hodge of a form."""
     ds = space_codifferential(f.space)
 
-    lr = f._linguistic_representation
-    sr = f._symbolic_representation
+    lr = f._lin_repr
+    sr = f._sym_repr
 
     if f.is_root():
         lr = r"\emph{codifferential of} " + lr
@@ -295,8 +308,6 @@ def codifferential(f):
         f.orientation,
     )
 
-    # TODO: deal with the cochain of the new form
-
     return f
 
 
@@ -307,8 +318,8 @@ def time_derivative(f):
     else:
         pass
 
-    lr = f._linguistic_representation
-    sr = f._symbolic_representation
+    lr = f._lin_repr
+    sr = f._sym_repr
 
     if f.is_root():
         lr = r"\emph{time derivative of} " + lr
@@ -326,65 +337,4 @@ def time_derivative(f):
         f.orientation,
     )
 
-    # TODO: deal with the cochain of the new form
-
     return tdf
-
-
-def inner(f1, f2, method='L2'):
-    """"""
-
-    if f1.__class__.__name__ != 'Form' or f2.__class__.__name__ != 'Form':
-        raise NotImplementedError()
-    else:
-        pass
-
-    s1 = f1.space
-    s2 = f2.space
-
-    if s1._quasi_equal(s2):
-        pass
-    else:
-        raise Exception(f'cannot do inner product between {s1} and {s2}.')
-
-    if method == 'L2':
-        return _L2InnerProductTerm(f1, f2)
-    else:
-        raise NotImplementedError()
-
-
-class _L2InnerProductTerm(Frozen):
-    """"""
-
-    def __init__(self, f1, f2):
-        """"""
-
-        assert f1.space._quasi_equal(f2.space), f"spaces dis-match."
-        self._f1 = f1
-        self._f2 = f2
-
-        sr1 = f1._symbolic_representation
-        sr2 = f2._symbolic_representation
-
-        lr1 = f1._linguistic_representation
-        lr2 = f2._linguistic_representation
-
-        if f1.is_root():
-            pass
-        else:
-            lr1 = rf'[{lr1}]'
-
-        if f2.is_root():
-            pass
-        else:
-            lr2 = rf'[{lr2}]'
-
-        self._symbolic_representation = rf'\left({sr1}, {sr2}\right)_' + r"{L^2}"
-        self._linguistic_representation = r"\emph{L2 inner product between} " + lr1 + r' \emph{and} ' + lr2
-
-        self._freeze()
-
-
-if __name__ == '__main__':
-    # python src/form.py
-    pass

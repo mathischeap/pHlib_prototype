@@ -8,7 +8,7 @@ import sys
 
 if './' not in sys.path:
     sys.path.append('./')
-from tools.frozen import Frozen
+from src.tools.frozen import Frozen
 import matplotlib.pyplot as plt
 import matplotlib
 plt.rcParams.update({
@@ -17,7 +17,7 @@ plt.rcParams.update({
     "text.latex.preamble": r"\usepackage{amsmath}",
 })
 matplotlib.use('TkAgg')
-from src.form import inner
+from src.wf.term import inner
 
 
 class RawWeakFormulation(Frozen):
@@ -53,6 +53,17 @@ class RawWeakFormulation(Frozen):
     def pde(self):
         return self._pde
 
+    def __getitem__(self, item):
+        """"""
+        return self._indexing[item]
+
+    def __iter__(self):
+        """"""
+        for i in self._ind_dict:
+            for lri in self._ind_dict[i]:
+                for index in lri:
+                    yield index
+
     @property
     def unknowns(self):
         return self._pde.unknowns
@@ -62,7 +73,7 @@ class RawWeakFormulation(Frozen):
         pde_unknowns = self.pde.unknowns
         tfs = list()
         for i, ts in enumerate(self._test_spaces):
-            unknown = None  # in case not found a unknown, will raise Error.
+            unknown = None  # in case not found an unknown, will raise Error.
             for unknown in pde_unknowns:
                 unknown_space = unknown.space
                 if ts == unknown_space:
@@ -74,7 +85,7 @@ class RawWeakFormulation(Frozen):
                 sr = r"\underline{\tau}_" + str(i)
             else:
                 assert unknown.is_root(), f"a trivial check."
-                sr = unknown._symbolic_representation
+                sr = unknown._sym_repr
                 _base = sr.split('^')[0].split('_')[0]
                 sr = sr.replace(_base, r'\underline{' + _base + '}')
 
@@ -86,35 +97,45 @@ class RawWeakFormulation(Frozen):
     def _parse_weak_terms(self):
         """"""
         term_dict = dict()
+        ind_dict = dict()
+        indexing = dict()
 
         form_dict = self.pde._form_dict
 
         for i in form_dict:   # ith equation
             term_dict[i] = ([], [])
+            ind_dict[i] = ([], [])
             for j, terms in enumerate(form_dict[i]):
-                for term in terms:
-                    if term is None:
+                for k, term in enumerate(terms):
+                    if term == 0:
                         raw_weak_term = 0
                     else:
                         raw_weak_term = inner(term, self._test_forms[i], method=self._test_method)
                     term_dict[i][j].append(raw_weak_term)
+                    index = self.pde._ind_dict[i][j][k]
+                    ind_dict[i][j].append(index)
+                    indexing[index] = (self.pde._sign_dict[i][j][k], raw_weak_term)
 
         self._term_dict = term_dict
         self._sign_dict = self.pde._sign_dict
+        self._ind_dict = ind_dict
+        self._indexing = indexing
 
-    def print_representations(self):
+
+    def print_representations(self, indexing=True):
         """"""
-        seek_text = 'Seek $\left('
+        seek_text = r'Seek $\left('
         form_sr_list = list()
         space_sr_list = list()
         for un in self.unknowns:
-            form_sr_list.append(rf' {un._symbolic_representation}')
-            space_sr_list.append(rf"{un.space._symbolic_representation}")
+            form_sr_list.append(rf' {un._sym_repr}')
+            space_sr_list.append(rf"{un.space._sym_repr}")
         seek_text += ','.join(form_sr_list)
         seek_text += r'\right) \in '
         seek_text += r'\times '.join(space_sr_list)
         seek_text += r'$, such that\\'
         symbolic = ''
+        number_equations = len(self._term_dict)
         for i in self._term_dict:
             for t, terms in enumerate(self._term_dict[i]):
                 for j, term in enumerate(terms):
@@ -122,53 +143,55 @@ class RawWeakFormulation(Frozen):
                     term = self._term_dict[i][t][j]
 
                     if term == 0:
-                        term_symbolic_representation = '0'
+                        term_sym_repr = '0'
                     else:
-                        term_symbolic_representation = term._symbolic_representation
+                        term_sym_repr = term._sym_repr
+
+                    if indexing:
+                        index = self._ind_dict[i][t][j]
+                        term_sym_repr = r'\underbrace{'+ term_sym_repr + r'}_{' + \
+                               rf"{index}" + '}'
+                    else:
+                        pass
 
                     if j == 0:
                         if sign == '+':
-                            symbolic += term_symbolic_representation
+                            symbolic += term_sym_repr
                         elif sign == '-':
-                            symbolic += '-' + term_symbolic_representation
+                            symbolic += '-' + term_sym_repr
                         else:
                             raise Exception()
                     else:
-                        symbolic += ' ' + sign + ' ' + term_symbolic_representation
+                        symbolic += ' ' + sign + ' ' + term_sym_repr
 
                 if t == 0:
-                    symbolic += ' = '
-            symbolic += r'\quad &&\forall' + self._test_forms[i]._symbolic_representation + r'\in ' + \
-                        self._test_spaces[i]._symbolic_representation
-            symbolic += ',\n'
+                    symbolic += ' &= '
 
-        symbolic = symbolic[:-2]   # remove the last '\n'
-        symbolic += '.'
-        symbolic = symbolic.replace('\n', r' \\ ')
+            symbolic += r'\quad &&\forall' + self._test_forms[i]._sym_repr + r'\in ' + \
+                        self._test_spaces[i]._sym_repr
+
+            if i < number_equations - 1:
+                symbolic += r',\\'
+            else:
+                symbolic += '.'
+
         symbolic = r"$\left\lbrace\begin{aligned}" + symbolic + r"\end{aligned}\right.$"
-        symbolic = symbolic.replace('=', r'&=')
 
-        fig, ax = plt.subplots(figsize=(14, len(self._term_dict)))
+
+        if indexing:
+            figsize = (14, 2 * len(self._term_dict))
+        else:
+            figsize = (14, len(self._term_dict))
+        fig, ax = plt.subplots(figsize=figsize)
         fig.patch.set_visible(False)
         ax.axis('off')
         table = ax.table(cellText=[[seek_text + symbolic, ], ],
                          rowLabels=['symbolic', ], rowColours='gcy',
                          colLoc='left', loc='center', cellLoc='left')
-        table.scale(1, 3 * len(self._term_dict))
+        if indexing:
+            table.scale(1, 5 * len(self._term_dict))
+        else:
+            table.scale(1, 3 * len(self._term_dict))
         table.set_fontsize(20)
         fig.tight_layout()
         plt.show()
-
-
-
-
-
-
-class WeakFormulation(Frozen):
-    """"""
-
-
-
-if __name__ == '__main__':
-    # python src/weakFormulation.py
-    import __init__ as ph

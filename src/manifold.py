@@ -24,8 +24,8 @@ class Manifold(Frozen):
 
     def __init__(
             self, ndim,
+            sym_repr=None,
             is_periodic=False,
-            symbolic_representation=None,
             undirected_graph=None,   # the undirected graph representation of this manifold
             # add other representations here.
     ):
@@ -35,25 +35,35 @@ class Manifold(Frozen):
             f"manifold ndim={ndim} is wrong. Is should be an integer and be in range [0, {embedding_space_ndim}]. " \
             f"You change change the dimensions of the embedding space using function `config.set_embedding_space_dim`."
         self._ndim = ndim
-        assert isinstance(is_periodic, bool), f"is_periodic={is_periodic} wrong, must be bool."
-        self._is_periodic = is_periodic
-        if symbolic_representation is None:
+        if sym_repr is None:
             number_existing_manifolds = len(_global_manifolds)
             while 1:
-                symbolic_representation = r'\mathcal{M}_{' + str(number_existing_manifolds) + '}'
-                if symbolic_representation in _global_manifolds:
-                    number_existing_manifolds += 1
-                else:
+                if number_existing_manifolds == 0:
+                    sym_repr = r'\mathcal{M}'
                     break
+                else:
+                    sym_repr = r'\mathcal{M}_{' + str(number_existing_manifolds) + '}'
+                    if sym_repr in _global_manifolds:
+                        number_existing_manifolds += 1
+                    else:
+                        break
         else:
-            assert isinstance(symbolic_representation, str) and len(symbolic_representation)>0, \
-                f"symbolic_representation must be str of length > 0."
+            assert isinstance(sym_repr, str), \
+                f"sym_repr must be a str of length > 0."
+            sym_repr = sym_repr.replace(' ', '')
+            assert len(sym_repr) > 0, \
+                f"sym_repr must be a str of length > 0."
 
-        assert symbolic_representation not in _global_manifolds, \
+        assert sym_repr not in _global_manifolds, \
             f"Manifold symbolic representation is illegal, pls specify a symbolic representation other than " \
             f"{set(_global_manifolds.keys())}"
-        _global_manifolds[symbolic_representation] = self
-        self._symbolic_representation = symbolic_representation
+
+        _global_manifolds[sym_repr] = self
+        self._sym_repr = sym_repr
+
+        assert isinstance(is_periodic, bool), f"is_periodic must be bool type."
+        self._is_periodic = is_periodic
+
         self._undirected_graph = undirected_graph  # if it has an undirected_graph representation.
         self._boundary = None
         self._inclusion = None  # not None for boundary manifold. Will be set when initialize a boundary manifold.
@@ -64,32 +74,36 @@ class Manifold(Frozen):
         """The dimensions of this manifold."""
         return self._ndim
 
-    def is_periodic(self):
-        """"""
-        return self._is_periodic
-
     @property
     def undirected_graph(self):
         """the undirected graph representation of this manifold."""
         return self._undirected_graph
 
+    def is_periodic(self):
+        """"""
+        return self._is_periodic
+
     def __repr__(self):
         """"""
         super_repr = super().__repr__().split('object')[-1]
-        return f'<Manifold {self._symbolic_representation}' + super_repr  # this must be unique.
+        return f'<Manifold {self._sym_repr}' + super_repr  # this must be unique.
 
-    def boundary(self):
+    def boundary(self, sym_repr=None):
         """Give a manifold of dimensions (n-1)"""
         if self._boundary is None:
-            if self.is_periodic() or self.ndim == 0:
-                return None
+            if self.ndim == 0:
+                return NullManifold('Null')
+            elif self.is_periodic():
+                return NullManifold(self.ndim-1)
             else:
-                sr = self._symbolic_representation
-                boundary_sr = r'\partial' + sr
+                if sym_repr is None:
+                    sym_repr = r'\partial' + self._sym_repr
+                else:
+                    pass
                 self._boundary = Manifold(
                     self.ndim-1,
-                    is_periodic=True,    # a boundary of a manifold must be a periodic manifold.
-                    symbolic_representation=boundary_sr
+                    sym_repr=sym_repr,
+                    is_periodic=True,
                 )
                 self._boundary._inclusion = self
         return self._boundary
@@ -97,6 +111,26 @@ class Manifold(Frozen):
     def inclusion(self):
         """"""
         return self._inclusion
+
+    def cap(self, other, sym_repr=None):
+        """return the intersection of two manifolds, i.e., return manifold := self cap other."""
+
+    def interface(self, other, sym_repr=None):
+        """return the cap of boundaries of two manifolds."""
+
+
+class NullManifold(Frozen):
+    """"""
+
+    def __init__(self, ndim):
+        """"""
+        self._ndim = ndim
+        self._freeze()
+
+    @property
+    def ndim(self):
+        """"""
+        return self._ndim
 
 
 if __name__ == '__main__':

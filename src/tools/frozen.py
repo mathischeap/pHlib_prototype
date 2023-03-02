@@ -16,28 +16,27 @@ class Frozen(ABC):
 
     def __setattr__(self, key, value):
         """"""
-        if self.___is_frozen___ and key not in dir(self):
+        if self.___frozen___ and key not in dir(self):
             raise FrozenError(f" <Frozen> : {self} is frozen. CANNOT define new attributes.")
         object.__setattr__(self, key, value)
 
     def _freeze(self):
         """Freeze self, can define no more new attributes. """
-        self.___IS_FROZEN___ = True
+        self.___FROZEN___ = True
 
     def _melt(self):
         """Melt self, so  we can define new attributes."""
-        self.___IS_FROZEN___ = False
+        self.___FROZEN___ = False
 
-    @property
     def _is_frozen(self):
         """Return the status of the form, frozen (True) or melt (False)?"""
-        return self.___is_frozen___
+        return self.___frozen___
 
     @property
-    def ___is_frozen___(self):
+    def ___frozen___(self):
         """"""
         try:
-            return self.___IS_FROZEN___
+            return self.___FROZEN___
         except AttributeError:
-            object.__setattr__(self, '___IS_FROZEN___', False)
-            return self.___IS_FROZEN___
+            object.__setattr__(self, '___FROZEN___', False)
+            return self.___FROZEN___

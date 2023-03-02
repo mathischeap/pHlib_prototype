@@ -20,7 +20,7 @@ def set_mesh(mesh):
     """"""
     assert mesh.__class__.__name__  == 'Mesh', \
         f"I need a Mesh instance."
-    sr = mesh._symbolic_representation
+    sr = mesh._sym_repr
     if sr in _mesh_set:
         pass
     else:
@@ -53,10 +53,11 @@ def _list_spaces():
         print('{:>15} {}'.format('On mesh', mesh))
         for i, sr in enumerate(spaces):
             space = spaces[sr]
-            print('{:>15}: {}'.format(i, space._symbolic_representation))
+            print('{:>15}: {}'.format(i, space._sym_repr))
 
 
 class SpaceExistingWarning(UserWarning, ValueError):
+    """Raise this error when trying to generate a space which is already existing."""
     pass
 
 import warnings
@@ -103,7 +104,7 @@ def new(abbrs, *args, **kwargs):
         current_spaces = _space_set[mesh_sr]
 
         space = space_class(mesh, *args, **kwargs)
-        srp = space._symbolic_representation  # do not use __repr__()
+        srp = space._sym_repr  # do not use __repr__()
 
         if srp in current_spaces:
             if _config['suppress_existing_space_warning']:

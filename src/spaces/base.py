@@ -30,11 +30,11 @@ class SpaceBase(Frozen):
         """"""
         return get_embedding_space_dim()
 
-    def make_form(self, symbolic_representation, linguistic_representation, orientation='outer'):
+    def make_form(self, sym_repr, lin_repr, orientation='outer'):
         """"""
-        linguistic_representation = r'\textsf{' + linguistic_representation + r'}'
+        lin_repr = r'\textsf{' + lin_repr + r'}'
         return Form(
-            self, symbolic_representation, linguistic_representation,
+            self, sym_repr, lin_repr,
             True,  # is_root
             None,  # elementary_forms
             orientation
