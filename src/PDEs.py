@@ -341,8 +341,8 @@ if __name__ == '__main__':
     pde.unknowns = [u, w, P]
     # pde.print_representations(indexing=True)
     rwf = pde.test_with([O2, O1, O3])
-    rwf.print_representations(indexing=True)
+    # rwf.print_representations(indexing=True)
     # # ph.list_forms(globals())
     # # print(mesh.boundary().boundary())
-    for i in rwf:
-        print(rwf[i])
+    # for i in rwf:
+    #     print(rwf[i])

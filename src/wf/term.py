@@ -61,6 +61,9 @@ class L2InnerProductTerm(Frozen):
 
         self._sym_repr = rf'\left({sr1},{sr2}\right)_' + r"{L^2}"
         self._lin_repr = r"\emph{L2 inner product between} " + lr1 + r' \emph{and} ' + lr2
+        self._simple_pattern = _simpler_pattern_examiner(f1, f2)
+
+        print(self._simple_pattern)
 
         self._freeze()
 
@@ -68,3 +71,11 @@ class L2InnerProductTerm(Frozen):
         """"""
         super_repr = super().__repr__().split('object')[1]
         return '<L2IP ' + self._sym_repr + f'{super_repr}'
+
+
+def _simpler_pattern_examiner(f1, f2):
+
+
+    return 'unknown'
+
+
