@@ -15,7 +15,7 @@ _global_manifolds = dict()
 
 
 def manifold(*args,  **kwargs):
-    """"""
+    """A function wrapper of the Manifold class."""
     return Manifold(*args,  **kwargs)
 
 
@@ -26,7 +26,7 @@ class Manifold(Frozen):
             self, ndim,
             sym_repr=None,
             is_periodic=False,
-            undirected_graph=None,   # the undirected graph representation of this manifold
+            udg_repr=None,   # the undirected graph representation of this manifold
             # add other representations here.
     ):
         """"""
@@ -64,7 +64,7 @@ class Manifold(Frozen):
         assert isinstance(is_periodic, bool), f"is_periodic must be bool type."
         self._is_periodic = is_periodic
 
-        self._undirected_graph = undirected_graph  # if it has an undirected_graph representation.
+        self._udg_repr = udg_repr  # if it has an udg_repr representation.
         self._boundary = None
         self._inclusion = None  # not None for boundary manifold. Will be set when initialize a boundary manifold.
         self._freeze()
@@ -75,9 +75,9 @@ class Manifold(Frozen):
         return self._ndim
 
     @property
-    def undirected_graph(self):
+    def udg_repr(self):
         """the undirected graph representation of this manifold."""
-        return self._undirected_graph
+        return self._udg_repr
 
     def is_periodic(self):
         """"""
@@ -114,9 +114,11 @@ class Manifold(Frozen):
 
     def cap(self, other, sym_repr=None):
         """return the intersection of two manifolds, i.e., return manifold := self cap other."""
+        raise NotImplementedError()
 
     def interface(self, other, sym_repr=None):
         """return the cap of boundaries of two manifolds."""
+        raise NotImplementedError()
 
 
 class NullManifold(Frozen):

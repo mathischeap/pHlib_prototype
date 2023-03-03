@@ -20,6 +20,9 @@ plt.rcParams.update({
 matplotlib.use('TkAgg')
 
 _global_forms = dict()
+_global_form_variables = {
+    'update_cache': True
+}
 
 
 def _list_forms(variable_range=None):
@@ -124,7 +127,10 @@ class Form(Frozen):
         else:
             pass
         self._orientation = orientation
-        _global_forms[id(self)] = self
+        if _global_form_variables['update_cache']:  # not saved globally
+            _global_forms[id(self)] = self
+        else:
+            pass
         self._freeze()
 
     def print_representations(self):
@@ -312,7 +318,7 @@ def codifferential(f):
 def time_derivative(f):
     """"""
     if f.__class__.__name__ != 'Form':
-        raise NotImplementedError()
+        raise NotImplementedError(f"time_derivative on {f} is not implemented or even not possible at all.")
     else:
         pass
 

@@ -12,7 +12,7 @@ class FrozenError(Exception):
 
 
 class Frozen(ABC):
-    """"""
+    """Enable a class to freeze self such that no more new attribute can be defined."""
 
     def __setattr__(self, key, value):
         """"""

@@ -15,7 +15,7 @@ _global_meshes = dict()  # we monitor all meshes to avoid that we use the same r
 
 
 def mesh(*args, **kwargs):
-    """A wrapper of the Mesh class"""
+    """A wrapper of the Mesh class."""
     return Mesh(*args, **kwargs)
 
 

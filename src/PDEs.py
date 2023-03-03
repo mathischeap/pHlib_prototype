@@ -19,7 +19,8 @@ plt.rcParams.update({
     "text.latex.preamble": r"\usepackage{amsmath}",
 })
 matplotlib.use('TkAgg')
-from src.wf.raw import RawWeakFormulation
+from src.wf.term import inner
+from src.wf.main import WeakFormulation
 
 
 def pde(*args, **kwargs):
@@ -283,9 +284,64 @@ class PartialDifferentialEquations(Frozen):
 
         self._unknowns = unknowns
 
-    def test_with(self, test_spaces):
+    def test_with(self, test_spaces, test_method='L2', sym_repr=None):
         """return a weak formulation."""
-        return RawWeakFormulation(self, test_spaces)
+        if not isinstance(test_spaces, (list, tuple)):
+            test_spaces = [test_spaces, ]
+        else:
+            pass
+        _test_spaces = list()
+        for i, obj in enumerate(test_spaces):
+            if obj.__class__.__name__ == 'Form':
+                _test_spaces.append(obj.space)
+            else:
+                assert obj._is_space(), f"test_spaces[{i}] is not a space."
+                _test_spaces.append(obj)
+        assert len(_test_spaces) == len(self), \
+            f"pde has {len(self)} equations, so I need {len(self)} test spaces."
+
+        tfs = list()
+        for i, ts in enumerate(test_spaces):
+            unknown = None  # in case not found an unknown, will raise Error.
+            for unknown in self.unknowns:
+                unknown_space = unknown.space
+                if ts == unknown_space:
+                    break
+                else:
+                    unknown = None
+
+            if sym_repr is None:
+                if unknown is None:  # we do not find an unknown which is in the same space as the test form.
+                    sr = r"\underline{\tau}_" + str(i)
+                else:
+                    assert unknown.is_root(), f"a trivial check."
+                    sr = unknown._sym_repr
+                    _base = sr.split('^')[0].split('_')[0]
+                    sr = sr.replace(_base, r'\underline{' + _base + '}')
+            else:
+                assert len(sym_repr) == len(test_spaces), \
+                    f"We have {len(test_spaces)} test forms, so we need {len(test_spaces)} syb_repr. " \
+                    f"Now we receive {len(sym_repr)}."
+
+                sr = sym_repr[i]
+
+            tf = ts.make_form(sr, f'{i}th-test-form')
+            tfs.append(tf)
+
+        term_dict = dict()
+        for i in self._form_dict:   # ith equation
+            term_dict[i] = ([], [])
+            for j, terms in enumerate(self._form_dict[i]):
+                for k, term in enumerate(terms):
+                    if term == 0:
+                        raw_weak_term = 0
+                    else:
+                        raw_weak_term = inner(term, tfs[i], method=test_method)
+                    term_dict[i][j].append(raw_weak_term)
+
+        wf = WeakFormulation(term_sign_dict=(term_dict, self._sign_dict), test_forms=tfs)
+        wf.unknowns = self.unknowns
+        return wf
 
 
 if __name__ == '__main__':
@@ -344,8 +400,8 @@ if __name__ == '__main__':
     # rwf.print_representations(indexing=True)
     # # ph.list_forms(globals())
     # # print(mesh.boundary().boundary())
-    for i in rwf:
-        if rwf[i][1] == 0:
-            pass
-        else:
-            print(rwf[i][1]._simple_patterns)
+    # for i in rwf:
+    #     if rwf[i][1] == 0:
+    #         pass
+    #     else:
+    #         print(rwf[i][1]._simple_patterns)

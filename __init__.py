@@ -29,9 +29,7 @@ __all__ = [
 import src.config as config
 
 from src.form import _list_forms as list_forms
-
 from src.spaces.main import _list_spaces as list_spaces
-
 from src.mesh import _list_meshes as list_meshes
 
 from src.manifold import manifold
