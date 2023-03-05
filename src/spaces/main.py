@@ -112,8 +112,3 @@ def new(abbrs, *args, mesh=None, **kwargs):
         return spaces[0]
     else:
         return spaces
-
-
-if __name__ == '__main__':
-    # python src/spaces/main.py
-    pass

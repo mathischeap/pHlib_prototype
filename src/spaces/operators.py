@@ -9,7 +9,6 @@ import sys
 if './' not in sys.path:
     sys.path.append('./')
 
-from src.config import get_embedding_space_dim
 from src.spaces.main import new
 
 
@@ -22,7 +21,7 @@ def wedge(s1, s2):
         k = s1.k
         l = s2.k
 
-        assert k + l <= get_embedding_space_dim()
+        assert k + l <= s1.mesh.ndim
 
         return new('Omega', k + l, s1.p + s2.p, mesh=s1.mesh)
 
@@ -42,7 +41,7 @@ def Hodge(s):
 def d(space):
     """the range of exterior derivative operator on `space`."""
     if space.__class__.__name__ == 'ScalarValuedFormSpace':
-        assert space.k < get_embedding_space_dim(), f'd of top-form is 0.'
+        assert space.k < space.mesh.ndim, f'd of top-form-space: {space} is 0.'
         return new('Omega', space.k + 1, space.p, mesh=space.mesh)
     else:
         raise NotImplementedError()
@@ -55,3 +54,14 @@ def codifferential(space):
         return new('Omega', space.k - 1, space.p, mesh=space.mesh)
     else:
         raise NotImplementedError(f"codifferential of {space} is not implemented or not even possible.")
+
+
+def trace(space):
+    if space.__class__.__name__ == 'ScalarValuedFormSpace':
+        mesh = space.mesh
+        assert 0 <= space.k < mesh.ndim, f"Cannot do trace on {space}."
+        boundary_mesh = mesh.boundary()
+        return new('Omega', space.k, space.p, mesh = boundary_mesh)
+
+    else:
+        raise NotImplementedError(f"trace of {space} is not implemented or not even possible.")

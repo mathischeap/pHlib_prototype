@@ -47,10 +47,10 @@ class Mesh(Frozen):   # Mesh -
             number_existing_meshes = len(_global_meshes)
             while 1:
                 if number_existing_meshes == 0:
-                    sym_repr = r'\mathcal{T}'
+                    sym_repr = r'\mathfrak{M}'
                     break
                 else:
-                    sym_repr = r'\mathcal{T}_{' + str(number_existing_meshes) + '}'
+                    sym_repr = r'\mathfrak{M}_{' + str(number_existing_meshes) + '}'
                     if sym_repr in _global_meshes:
                         number_existing_meshes += 1
                     else:
@@ -94,7 +94,7 @@ class Mesh(Frozen):   # Mesh -
             manifold_boundary = self.manifold.boundary()
             if manifold_boundary.__class__.__name__ == 'Manifold':
                 if sym_repr is None:
-                    sym_repr = r'\partial' + self._sym_repr
+                    sym_repr = r'\eth' + self._sym_repr
                 else:
                     pass
                 self._boundary = Mesh(

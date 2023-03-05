@@ -16,7 +16,7 @@ import matplotlib
 plt.rcParams.update({
     "text.usetex": True,
     "font.family": "DejaVu Sans",
-    "text.latex.preamble": r"\usepackage{amsmath}",
+    "text.latex.preamble": r"\usepackage{amsmath, amssymb}",
 })
 matplotlib.use('TkAgg')
 from src.wf.term import inner
@@ -82,41 +82,40 @@ class PartialDifferentialEquations(Frozen):
             form_dict[i] = ([], [])  # for left terms and right terms of ith equation
             ind_dict[i] = ([], [])  # for left terms and right terms of ith equation
 
-
+            k = 0
             for j, lor in enumerate(equation.split('=')):
                 local_terms = lor.split('+')
-                k = 0
+
                 for loc_term in local_terms:
                     if loc_term == '' or loc_term == '-':  # found empty terms, just ignore.
                         pass
                     else:
                         if loc_term == '0':
-                            indi = '0'
-                            sign = '+'
-                            form = 0
-                        elif loc_term[0] == '-':
-                            assert loc_term[1:] in interpreter, f"found term {loc_term[1:]} not interpreted."
-                            indi = loc_term[1:]
-                            sign = '-'
-                            form = interpreter[loc_term[1:]]
+                            pass
                         else:
-                            assert loc_term in interpreter, f"found term {loc_term} not interpreted"
-                            indi = loc_term
-                            sign = '+'
-                            form = interpreter[loc_term]
+                            if loc_term[0] == '-':
+                                assert loc_term[1:] in interpreter, f"found term {loc_term[1:]} not interpreted."
+                                indi = loc_term[1:]
+                                sign = '-'
+                                form = interpreter[loc_term[1:]]
+                            else:
+                                assert loc_term in interpreter, f"found term {loc_term} not interpreted"
+                                indi = loc_term
+                                sign = '+'
+                                form = interpreter[loc_term]
 
-                        indi_dict[i][j].append(indi)
-                        sign_dict[i][j].append(sign)
-                        form_dict[i][j].append(form)
-                        if j == 0:
-                            index = str(i) + '|' + str(k) + '='
-                        elif j == 1:
-                            index = str(i) + '|=' + str(k)
-                        else:
-                            raise Exception()
-                        k += 1
-                        indexing[index] = (indi, sign, form)
-                        ind_dict[i][j].append(index)
+                            indi_dict[i][j].append(indi)
+                            sign_dict[i][j].append(sign)
+                            form_dict[i][j].append(form)
+                            if j == 0:
+                                index = str(i) + '-' + str(k)
+                            elif j == 1:
+                                index = str(i) + '-' + str(k)
+                            else:
+                                raise Exception()
+                            k += 1
+                            indexing[index] = (indi, sign, form)
+                            ind_dict[i][j].append(index)
 
         self._indi_dict = indi_dict
         self._sign_dict = sign_dict
@@ -156,39 +155,40 @@ class PartialDifferentialEquations(Frozen):
         number_equations = len(self._indi_dict)
         for i in self._indi_dict:
             for t, terms in enumerate(self._indi_dict[i]):
-                for j, term in enumerate(terms):
-                    term = r'\text{\texttt{' + term + '}}'
-                    if indexing:
-                        index = self._ind_dict[i][t][j]
-                        term = r'\underbrace{'+ term + r'}_{' + \
-                               rf"{index}" + '}'
-                    else:
-                        pass
-                    sign = self._sign_dict[i][t][j]
-                    form = self._form_dict[i][t][j]
-                    if form == 0:
-                        form_sym_repr = '0'
-                    else:
-                        form_sym_repr = form._sym_repr
-                    if indexing:
-                        index = self._ind_dict[i][t][j]
-                        form_sym_repr = r'\underbrace{'+ form_sym_repr + r'}_{' + \
-                               rf"{index}" + '}'
-                    else:
-                        pass
-
-                    if j == 0:
-                        if sign == '+':
-                            indicator += term
-                            symbolic += form_sym_repr
-                        elif sign == '-':
-                            indicator += '-' + term
-                            symbolic += '-' + form_sym_repr
+                if len(terms) == 0:
+                    indicator += '0'
+                    symbolic += '0'
+                else:
+                    for j, term in enumerate(terms):
+                        term = r'\text{\texttt{' + term + '}}'
+                        if indexing:
+                            index = self._ind_dict[i][t][j].replace('-', r'\text{-}')
+                            term = r'\underbrace{'+ term + r'}_{' + \
+                                   rf"{index}" + '}'
                         else:
-                            raise Exception()
-                    else:
-                        indicator += ' ' + sign + ' ' + term
-                        symbolic += ' ' + sign + ' ' + form_sym_repr
+                            pass
+                        sign = self._sign_dict[i][t][j]
+                        form = self._form_dict[i][t][j]
+                        form_sym_repr = form._sym_repr
+                        if indexing:
+                            index = self._ind_dict[i][t][j].replace('-', r'\text{-}')
+                            form_sym_repr = r'\underbrace{'+ form_sym_repr + r'}_{' + \
+                                   rf"{index}" + '}'
+                        else:
+                            pass
+
+                        if j == 0:
+                            if sign == '+':
+                                indicator += term
+                                symbolic += form_sym_repr
+                            elif sign == '-':
+                                indicator += '-' + term
+                                symbolic += '-' + form_sym_repr
+                            else:
+                                raise Exception()
+                        else:
+                            indicator += ' ' + sign + ' ' + term
+                            symbolic += ' ' + sign + ' ' + form_sym_repr
 
                 if t == 0:
                     indicator += ' &= '

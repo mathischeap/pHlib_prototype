@@ -25,6 +25,22 @@ _global_form_variables = {
 }
 
 
+def _find_form(repr):
+    """Find a form according to ..."""
+    the_one = None
+    for form_id in _global_forms:
+        form = _global_forms[form_id]
+        if form._sym_repr == repr or form._lin_repr == repr:
+            the_one = form
+            break
+        else:
+            pass
+
+    return the_one
+
+
+
+
 def _list_forms(variable_range=None):
     """"""
     if variable_range is None:
@@ -91,13 +107,23 @@ class Form(Frozen):
         if is_root:  # we check the `sym_repr` only for root forms.
             assert isinstance(sym_repr, str), \
                 f"sym_repr must be a str of length > 0."
-            sym_repr = sym_repr.replace(' ', '')
+            assert ' ' not in  sym_repr, f"root form symbolic represent cannot have space."  # this is important
+            assert 'textsf' not in sym_repr, f"A safety check, almost trivial."
+            # make sure it does not confuse form lin repr
+            assert 'emph' not in sym_repr, f"A safety check, almost trivial."
+            # make sure it does not confuse operator lin repr
             assert len(sym_repr) > 0, \
                 f"sym_repr must be a str of length > 0."
             for form_id in _global_forms:
                 form = _global_forms[form_id]
                 assert sym_repr != form._sym_repr, \
-                    f"form symbolic representation={sym_repr} is taken. Pls use another one."
+                    f"root form symbolic representation={sym_repr} is taken. Pls use another one."
+            assert lin_repr[:8] == r"\textsf{" and lin_repr[-1] == r'}', \
+                f"root form linguistic representation = {lin_repr} illegal, it be must be of form " + r"\textsf{...}."
+            _pure_lin_repr = lin_repr[8:-1].replace('-', '')
+            assert _pure_lin_repr.isalnum(), rf'lin_repr={lin_repr} illegal. ' + \
+                                             "In {}, it must only have letters, numbers and '-'."
+
         else:
             pass
 
@@ -169,7 +195,6 @@ class Form(Frozen):
     def mesh(self):
         """"""
         return self.space.mesh
-
 
     def wedge(self, other):
         return wedge(self, other)
@@ -342,3 +367,33 @@ def time_derivative(f):
     )
 
     return tdf
+
+from src.spaces.operators import trace as space_trace
+
+def trace(f):
+    """"""
+    trf_space = space_trace(f.space)
+
+    lr = f._lin_repr
+    sr = f._sym_repr
+
+    if f.is_root():
+        lr = r"\emph{trace of} " + lr
+        sr = r"\mathrm{tr}" + sr
+    else:
+        lr = r"\emph{trace of} [" + lr + ']'
+        sr = r"\mathrm{tr}\left(" + sr + r"\right)"
+
+    f = Form(
+        trf_space,               # space
+        sr,   # symbolic representation
+        lr,
+        False,
+        f._elementary_forms,
+        f.orientation,
+    )
+
+    return f
+
+
+

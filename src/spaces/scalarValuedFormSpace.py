@@ -6,7 +6,6 @@
 """
 
 from src.spaces.base import SpaceBase
-from src.config import get_embedding_space_dim
 
 
 class ScalarValuedFormSpace(SpaceBase):
@@ -27,9 +26,9 @@ class ScalarValuedFormSpace(SpaceBase):
     def __init__(self, mesh, k, p):
         """"""
         super().__init__(mesh)
-        assert isinstance(k, int) and 0 <= k <= get_embedding_space_dim(), f" k wrong"
+        assert isinstance(k, int) and 0 <= k <= mesh.ndim, f" k={k} illegal on {mesh}."
         self._k = k
-        assert isinstance(p, int) and p >= 1, f"basis function degree p ={p} is wrong."
+        assert isinstance(p, int) and p >= 1, f"basis function degree p = {p} is wrong."
         self._p = p
         self._sym_repr = r"\Omega^{(" + str(self.k) + r')}' + rf"_{self.p}({mesh._sym_repr})"
         self._freeze()
@@ -48,13 +47,3 @@ class ScalarValuedFormSpace(SpaceBase):
         """By construction, it will be unique."""
         super_repr = super().__repr__().split('object')[-1]
         return f'<Space {self._sym_repr}' + super_repr
-
-    def _quasi_equal(self, other):
-        """"""
-        if other is self:
-            return True
-        else:
-            if other.__class__.__name__ != 'ScalarValuedFormSpace':
-                return False
-            else:
-                return other.mesh == self.mesh and other.k == self.k
