@@ -294,12 +294,15 @@ if __name__ == '__main__':
     ode_i = ph.ode(terms_and_signs=[terms, signs])
     ode_i.constant_elementary_forms = wf.test_forms[0]
     # ode_i.print_representations()
+
+    term0 = ode_i['0'][1]
+    term0.print_representations()
     # print(ode_i)
     # # for i in ode_i:
     # #     print(ode_i[i])
 
-    uk = u._abstract_at_time('k')
-    uk.print_representations()
-    ph.list_forms(globals())
+    # uk = u._abstract_at_time('k')
+    # uk.print_representations()
+    # ph.list_forms(globals())
 
 

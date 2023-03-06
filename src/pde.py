@@ -24,12 +24,12 @@ from src.wf.main import WeakFormulation
 
 
 def pde(*args, **kwargs):
-    """"""
+    """A wrapper of the PDE class."""
     return PartialDifferentialEquations(*args, **kwargs)
 
 
 class PartialDifferentialEquations(Frozen):
-    """"""
+    """PDE"""
 
     def __init__(self, expression, interpreter):
         expression = self._check_expression(expression)
@@ -145,11 +145,11 @@ class PartialDifferentialEquations(Frozen):
 
     @property
     def mesh(self):
-        """"""
+        """The mesh"""
         return self._mesh
 
     def print_representations(self, indexing=False):
-        """"""
+        """Print representations"""
         indicator = ''
         symbolic = ''
         number_equations = len(self._indi_dict)
@@ -163,7 +163,7 @@ class PartialDifferentialEquations(Frozen):
                         term = r'\text{\texttt{' + term + '}}'
                         if indexing:
                             index = self._ind_dict[i][t][j].replace('-', r'\text{-}')
-                            term = r'\underbrace{'+ term + r'}_{' + \
+                            term = r'\underbrace{' + term + r'}_{' + \
                                    rf"{index}" + '}'
                         else:
                             pass
@@ -172,8 +172,8 @@ class PartialDifferentialEquations(Frozen):
                         form_sym_repr = form._sym_repr
                         if indexing:
                             index = self._ind_dict[i][t][j].replace('-', r'\text{-}')
-                            form_sym_repr = r'\underbrace{'+ form_sym_repr + r'}_{' + \
-                                   rf"{index}" + '}'
+                            form_sym_repr = r'\underbrace{' + form_sym_repr + r'}_{' + \
+                                rf"{index}" + '}'
                         else:
                             pass
 
@@ -261,7 +261,7 @@ class PartialDifferentialEquations(Frozen):
 
     @property
     def unknowns(self):
-        """"""
+        """Unknowns"""
         return self._unknowns
 
     @unknowns.setter

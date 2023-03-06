@@ -49,4 +49,3 @@ from src.operators import time_derivative
 
 from src.pde import pde
 from src.ode.main import ode
-

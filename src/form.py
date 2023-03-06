@@ -27,7 +27,7 @@ _global_form_variables = {
 
 def _find_form(repr, upon=None):
     """Find a form according to symbolic_representation or linguistic_representation."""
-    _global_form_variables['update_cache'] = False
+    _global_form_variables['update_cache'] = False  # during this process, we do not cache the intermediate forms.
     if upon is None:
         the_one = None
         for form_id in _global_forms:
@@ -55,7 +55,6 @@ def _find_form(repr, upon=None):
                         pass
         else:
             raise NotImplementedError()
-
     _global_form_variables['update_cache'] = True
     return the_one
 
@@ -234,7 +233,7 @@ class Form(Frozen):
 
     @property
     def mesh(self):
-        """The mesh this form is on"""
+        """The mesh this form is on."""
         return self.space.mesh
 
     def wedge(self, other):
@@ -243,7 +242,7 @@ class Form(Frozen):
 
     @property
     def _abstract_forms(self):
-        """All abstract forms of self in a dictionary"""
+        """All abstract forms of self in a dictionary."""
         return self._abf
 
     def _abstract_at_time(self, k):
@@ -464,7 +463,8 @@ def trace(f):
 
     return f
 
-_operators = (
+
+_operators = (  # coded operators
     Hodge,
     d,
     codifferential,

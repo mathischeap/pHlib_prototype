@@ -8,6 +8,15 @@ import sys
 if './' not in sys.path:
     sys.path.append('./')
 
+import matplotlib.pyplot as plt
+import matplotlib
+plt.rcParams.update({
+    "text.usetex": True,
+    "font.family": "DejaVu Sans",
+    "text.latex.preamble": r"\usepackage{amsmath}"
+})
+matplotlib.use('TkAgg')
+
 from src.tools.frozen import Frozen
 from src.form import _find_form
 from src.form import codifferential, d, trace, Hodge
@@ -16,9 +25,20 @@ from src.form import codifferential, d, trace, Hodge
 class _WeakFormulationTerm(Frozen):
     """"""
 
-    def __init__(self, mesh):
+    def __init__(self, mesh, f1, f2):
         """"""
         self._mesh = mesh
+        self._f1 = f1
+        self._f2 = f2
+        self._simple_patterns = _simpler_pattern_examiner(f1, f2)
+        for sp in self._simple_patterns:
+            assert sp in simple_patterns, f"found unknown simple pattern: {sp}."
+        self._elementary_forms = set()
+        self._elementary_forms.update(f1._elementary_forms)
+        self._elementary_forms.update(f2._elementary_forms)
+        self._sym_repr = None
+        self._lin_repr = None
+        self._freeze()
 
     @property
     def mesh(self):
@@ -33,8 +53,16 @@ class _WeakFormulationTerm(Frozen):
     def _is_real_number_valued():
         return True
 
-    def _replace(self, f, by):
-        """replace f by `by`"""
+    def print_representations(self):
+        """Print the representations of this term."""
+        plt.figure(figsize=(2 + len(self._sym_repr)/10, 2))
+        plt.axis([0, 1, 0, 1])
+        plt.text(0, 0.5, 'symbolic : ' + f"${self._sym_repr}$", ha='left', va='center', size=15)
+        plt.axis('off')
+        plt.show()
+
+    def _replace(self, f, by, which='all'):
+        """replace `f` by `by`, if there are more than one `f` found, apply the replacement to `which`."""
 
 
 
@@ -85,9 +113,7 @@ class DualityPairing(_WeakFormulationTerm):
         else:
             raise Exception(f'cannot do duality pairing between {f1} in {s1} and {f2} in {s2}.')
 
-        self._f1 = f1
-        self._f2 = f2
-        super().__init__(f1.mesh)
+        super().__init__(f1.mesh, f1, f2)
 
         sr1 = f1._sym_repr
         sr2 = f2._sym_repr
@@ -107,14 +133,6 @@ class DualityPairing(_WeakFormulationTerm):
 
         self._sym_repr = rf'\left<\left.{sr1}\right|{sr2}\right>_' + r"{" + self._mesh.manifold._sym_repr + "}"
         self._lin_repr = r"\emph{duality pairing between} " + lr1 + r' \emph{and} ' + lr2
-        self._simple_patterns = _simpler_pattern_examiner(f1, f2)
-
-        for sp in self._simple_patterns:
-            assert sp in simple_patterns, f"found unknown simple pattern: {sp}."
-        self._elementary_forms = set()
-        self._elementary_forms.update(f1._elementary_forms)
-        self._elementary_forms.update(f2._elementary_forms)
-        self._freeze()
 
     def __repr__(self):
         """"""
@@ -180,9 +198,7 @@ class L2InnerProductTerm(_WeakFormulationTerm):
         else:
             raise NotImplementedError()
 
-        self._f1 = f1
-        self._f2 = f2
-        super().__init__(f1.mesh)
+        super().__init__(f1.mesh, f1, f2)
 
         sr1 = f1._sym_repr
         sr2 = f2._sym_repr
@@ -202,14 +218,6 @@ class L2InnerProductTerm(_WeakFormulationTerm):
 
         self._sym_repr = rf'\left({sr1},{sr2}\right)_' + r"{" + self._mesh.manifold._sym_repr + "}"
         self._lin_repr = r"\emph{L2 inner product between} " + lr1 + r' \emph{and} ' + lr2
-        self._simple_patterns = _simpler_pattern_examiner(f1, f2)
-
-        for sp in self._simple_patterns:
-            assert sp in simple_patterns, f"found unknown simple pattern: {sp}."
-        self._elementary_forms = set()
-        self._elementary_forms.update(f1._elementary_forms)
-        self._elementary_forms.update(f2._elementary_forms)
-        self._freeze()
 
     def __repr__(self):
         """"""
@@ -261,7 +269,7 @@ def _simpler_pattern_examiner_scalar_valued_forms(f1, f2):
 
     if f1._sym_repr[:10] == r'\partial_t':
         bf1 = _find_form(f1._sym_repr[11:])  # use 11 as there is a space between `\partial_t` and root form sym_repr.
-        if bf1.is_root:
+        if bf1.is_root and r'\partial_t' not in f2._sym_repr:
             patterns.append('(partial_t root-sf, sf)')
 
     return tuple(patterns)

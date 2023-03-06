@@ -101,7 +101,7 @@ class ConstantTimeSequence(TimeSequence):
         self._melt()
         self._factor = factor  # in each step, we have factor - 1 intermediate time instances.
         self._dt = (t_max - t0) * factor / n
-        self._k_max = n / (factor)
+        self._k_max = n / factor
         self._n = n
         self._allowed_reminder = [round(1*i/factor, 8) for i in range(factor)]
         self._freeze()
@@ -199,7 +199,7 @@ class AbstractTimeInstant(Frozen):
             <TimeInstant t=4.0 at ...
 
         """
-        time_instance_str  = self._k
+        time_instance_str = self._k
         for key in kwargs:
             time_instance_str = time_instance_str.replace(key, str(kwargs[key]))
         time = eval(time_instance_str)
