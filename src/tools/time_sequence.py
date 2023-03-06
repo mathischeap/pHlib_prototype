@@ -22,9 +22,9 @@ class AbstractTimeSequence(Frozen):
         self._object = None
         self._freeze()
 
-    def set_object(self, obj):
-        """"""
-        assert obj._is_time_sequence(), f"I need a time sequence instance."
+    def specify(self, obj):
+        """specify to a particular time sequence."""
+        assert obj._is_specific_time_sequence(), f"I need a time sequence instance."
         self._object = obj
 
     def __getitem__(self, k):
@@ -34,7 +34,7 @@ class AbstractTimeSequence(Frozen):
                 f"Abstract time sequence needs a object before referring to a time instance. "
             return self._object[k]
         elif isinstance(k, str):   # abstract time instance
-            return AbstractTimeInstance(self, k)
+            return AbstractTimeInstant(self, k)
         else:
             raise Exception()
 
@@ -42,6 +42,11 @@ class AbstractTimeSequence(Frozen):
         """customized repr."""
         super_repr = super().__repr__().split('object')[1]
         return f"<AbstractTimeSequence" + super_repr
+
+    @staticmethod
+    def _is_abstract_time_sequence():
+        """A private tag."""
+        return True
 
 
 class TimeSequence(Frozen):
@@ -59,6 +64,11 @@ class TimeSequence(Frozen):
     @property
     def t_max(self):
         return self._t_max
+
+    @staticmethod
+    def _is_specific_time_sequence():
+        """A private tag."""
+        return True
 
     @staticmethod
     def _is_time_sequence():
@@ -112,18 +122,18 @@ class ConstantTimeSequence(TimeSequence):
             time = self.t_0 + k * self._dt
             remainder = round(k % 1, 8)
             if time < self.t_0:
-                raise TimeInstanceError(
+                raise TimeInstantError(
                     f"t[{k}] = {time} is lower than t0={self.t_0}.")
             elif time > self.t_max:
-                raise TimeInstanceError(
+                raise TimeInstantError(
                     f"t[{k}] = {time} is higher than t_max={self.t_max}.")
             elif remainder not in self._allowed_reminder:
-                raise TimeInstanceError(
+                raise TimeInstantError(
                     f"t[{k}] = {time} is not a valid time instance of the sequence.")
             else:
-                return TimeInstance(time)
+                return TimeInstant(time)
         elif isinstance(k, str):   # abstract time instance
-            return AbstractTimeInstance(self, k)
+            return AbstractTimeInstant(self, k)
         else:
             raise Exception()
 
@@ -134,11 +144,11 @@ class ConstantTimeSequence(TimeSequence):
             super_repr
 
 
-class TimeInstanceError(Exception):
+class TimeInstantError(Exception):
     """Raise when we try to define new attribute for a frozen object."""
 
 
-class TimeInstance(Frozen):
+class TimeInstant(Frozen):
     """This is a time instance regardless of the sequence."""
 
     def __init__(self, time):
@@ -155,13 +165,13 @@ class TimeInstance(Frozen):
     def __repr__(self):
         """"""
         super_repr = super().__repr__().split('object')[1]
-        return f'< TimeInstance t={self.time}' + super_repr
+        return f'<TimeInstant t={self.time}' + super_repr
 
     def __eq__(self, other):
-        return other.__class__.__name__ == 'TimeInstance' and other.time == self.time
+        return other.__class__.__name__ == 'TimeInstant' and other.time == self.time
 
 
-class AbstractTimeInstance(Frozen):
+class AbstractTimeInstant(Frozen):
     """"""
 
     def __init__(self, ts, k):
@@ -182,10 +192,11 @@ class AbstractTimeInstance(Frozen):
 
         examples
         --------
-        >>> t = ConstantTimeSequence([0, 5, 5], 3)
-        >>> t = t['k+1/3'](k=1)
-        >>> print(t)  # doctest: +ELLIPSIS
-        < TimeInstance t=4.0 at ...
+
+            >>> t = ConstantTimeSequence([0, 5, 5], 3)
+            >>> t = t['k+1/3'](k=1)
+            >>> print(t)  # doctest: +ELLIPSIS
+            <TimeInstant t=4.0 at ...
 
         """
         time_instance_str  = self._k
@@ -200,18 +211,17 @@ class AbstractTimeInstance(Frozen):
             pass
         try:
             ts = self.time_sequence[time]
-        except TimeInstanceError:
-            tb = traceback.format_exc().split('TimeInstanceError:')[1]
+        except TimeInstantError:
+            tb = traceback.format_exc().split('TimeInstantError:')[1]
             key_str = ["'" + str(key) + "'" + '=' + str(kwargs[key]) for key in kwargs]
             local_error_message = f"t['{self.k}'] for {''.join(key_str)} leads to"
-            raise TimeInstanceError(local_error_message + tb)
+            raise TimeInstantError(local_error_message + tb)
         return ts
 
     def __repr__(self):
         """"""
         super_repr = super().__repr__().split('object')[1]
-        return f"<AbstractTimeInstance t={self.k}" + super_repr[:-1] + f' of {self.time_sequence}>'
-
+        return f"<AbstractTimeInstant t={self.k}" + super_repr[:-1] + f' of {self.time_sequence}>'
 
 
 class TimeStep(Frozen):
@@ -258,10 +268,10 @@ if __name__ == '__main__':
     ct = ConstantTimeSequence([0, 100, 100], 2)
     t = ct['k+0.5']
     print(t)
-    print(t(k=5.1))
+    print(t(k=5.))
 
-    # at = AbstractTimeSequence()
-    # t = at['k+j']
-    # at.set_object(ct)
-    # print(t(k=1.1, j=0.9))
+    at = AbstractTimeSequence()
+    t = at['k+j']
+    at.specify(ct)
+    print(t(k=1.1, j=0.9))
     # print(ts[1+1/4])

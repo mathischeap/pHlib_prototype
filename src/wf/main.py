@@ -18,11 +18,10 @@ plt.rcParams.update({
 })
 matplotlib.use('TkAgg')
 from copy import deepcopy
-from src.ode.main import ode
 
 
 class WeakFormulation(Frozen):
-    """"""
+    """Weak Formulation."""
 
     def __init__(self, term_sign_dict=None, test_forms=None, expression=None):
         """
@@ -89,6 +88,15 @@ class WeakFormulation(Frozen):
 
         self._elementary_forms = elementary_forms
 
+    def __repr__(self):
+        """Customize the __repr__."""
+        super_repr = super().__repr__().split('object')[1]
+        if self.unknowns is None:
+            unknown_sym_repr = '[...]'
+        else:
+            unknown_sym_repr = [f._sym_repr for f in self.unknowns]
+        return f"<WeakFormulation of {unknown_sym_repr}" + super_repr
+
     def __getitem__(self, item):
         """"""
         assert item in self._indexing, \
@@ -132,12 +140,12 @@ class WeakFormulation(Frozen):
 
     @property
     def unknowns(self):
-        """"""
+        """The unknowns of this weak formulation"""
         return self._unknowns
 
     @unknowns.setter
     def unknowns(self, unknowns):
-        """"""
+        """The unknowns of this weak formulation"""
         if self._unknowns is not None:
             f"unknowns exists; not allowed to change them."
 
@@ -160,7 +168,7 @@ class WeakFormulation(Frozen):
         return self._test_forms
 
     def print_representations(self, indexing=True):
-        """"""
+        """Print the representations"""
         seek_text = r'Seek $\left('
         form_sr_list = list()
         space_sr_list = list()
@@ -318,7 +326,7 @@ class _Derive(Frozen):
         return term_dict, sign_dict
 
     def rearrange(self, rearrangement):
-        """"""
+        """rearrange the terms."""
         if isinstance(rearrangement, dict):
             pass
         elif isinstance(rearrangement, (list, tuple)):
@@ -348,6 +356,7 @@ class _Derive(Frozen):
 
             else:
                 assert isinstance(ri, str), "Use str to represent a rearrangement pls."
+
                 # noinspection PyUnresolvedReferences
                 left_terms, right_terms = ri.replace(' ', '').split('=')
                 _left_terms = left_terms.replace(',', '')
@@ -368,6 +377,7 @@ class _Derive(Frozen):
                 else:
                     right_terms = 0
                 _.sort()
+
                 number_terms = len(self._wf._term_dict[i][0]) + len(self._wf._term_dict[i][1])
                 assert _ == [str(j) for j in range(number_terms)], \
                     f'indices of rearrangement for {i}th equation: {ri} are wrong.'
@@ -434,7 +444,7 @@ class _Derive(Frozen):
             raise Exception()
 
     def integration_by_parts_wrt_codifferential(self, index):
-        """"""
+        """integration by parts."""
         sign, term = self._wf[index]
         assert term != 0, f"Cannot apply integration by parts to term '{index}': {term}"
         new_terms, new_signs = term._integration_by_parts()
@@ -464,7 +474,6 @@ if __name__ == '__main__':
     f = O2.make_form(r'f^2', "body-force")
     P = O3.make_form(r'P^3', "total-pressure3")
 
-
     wXu = w.wedge(ph.Hodge(u))
     dsP = ph.codifferential(P)
     dsu = ph.codifferential(u)
@@ -483,12 +492,13 @@ if __name__ == '__main__':
     # pde.print_representations(indexing=True)
 
     wf = pde.test_with([O2, O1, O3], sym_repr=[r'v^2', r'w^1', r'q^3'])
-    # wf.print_representations(indexing=True)
+    print(wf)
+    wf.print_representations(indexing=True)
 
     wf = wf.derive.integration_by_parts_wrt_codifferential('0-2')
     wf = wf.derive.integration_by_parts_wrt_codifferential('1-1')
     # wf.print_representations()
-    #
+
     # # wf = wf.derive.rearrange(
     # #     [
     # #         '0, 1, 2 = 4, 3',
@@ -504,11 +514,10 @@ if __name__ == '__main__':
             2: ' = 0',
         }
     )
-    #
+
     # for index in pde:
     #     term = pde[index][2]
     #     term.print_representations()
-
 
     wf.print_representations(indexing=True)
     # # print(wf.elementary_forms)
@@ -520,6 +529,6 @@ if __name__ == '__main__':
     terms = wf._term_dict[i]
     signs = wf._sign_dict[i]
 
-    ode_i = ode(terms_and_signs=[terms, signs])
+    ode_i = ph.ode(terms_and_signs=[terms, signs])
     ode_i.constant_elementary_forms = wf.test_forms[0]
     ode_i.print_representations()

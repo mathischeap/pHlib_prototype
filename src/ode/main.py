@@ -29,7 +29,6 @@ class OrdinaryDifferentialEquationError(Exception):
     """Raise when we try to define new attribute for a frozen object."""
 
 
-
 class OrdinaryDifferentialEquation(Frozen):
     """ODE about t only. Only deal with real number valued terms."""
 
@@ -148,7 +147,7 @@ class OrdinaryDifferentialEquation(Frozen):
                     term = self._other[i][j]
 
                 index = str(k)
-                indexing[index] = term
+                indexing[index] = (self._signs[i][j], term)
                 ind[i].append(index)
                 k += 1
 
@@ -159,7 +158,20 @@ class OrdinaryDifferentialEquation(Frozen):
         self._ind = ind
         self._indexing = indexing
 
+    def __repr__(self):
+        super_repr = super().__repr__().split('object')[1]
+        ele_form_repr = set([form._sym_repr for form in self._elementary_forms])
+        return f"<ODE of {self._about._sym_repr} for {ele_form_repr}" + super_repr
 
+    def __contains__(self, index):
+        return index in self._indexing
+
+    def __getitem__(self, index):
+        return self._indexing[index]
+
+    def __iter__(self):
+        for index in self._indexing:
+            yield index
 
     @property
     def elementary_forms(self):
@@ -184,9 +196,7 @@ class OrdinaryDifferentialEquation(Frozen):
 
     def print_representations(self, indexing=True):
         """"""
-        sym = ''
-
-        sym += 'elementary forms: '
+        sym = 'elementary forms: '
         for ef in self.elementary_forms:
             sym += rf'${ef._sym_repr}$, '
         if len(self.constant_elementary_forms) > 0:
@@ -196,6 +206,7 @@ class OrdinaryDifferentialEquation(Frozen):
             sym = sym[:-2] + '):'
         else:
             sym = sym[:-2] + ':'
+
         sym += r'\\\\$'
         for i, terms in enumerate(self._pterm):
             if len(terms) == 0:
@@ -223,9 +234,9 @@ class OrdinaryDifferentialEquation(Frozen):
 
             if i == 0:
                 sym += '='
+
         sym += '$'
         figsize = (14, 8)
-
         fig, ax = plt.subplots(figsize=figsize)
         fig.patch.set_visible(False)
         ax.axis('off')
@@ -234,14 +245,61 @@ class OrdinaryDifferentialEquation(Frozen):
                          colLoc='left', loc='center', cellLoc='left')
 
         table.scale(1, 8)
-
         table.set_fontsize(20)
         fig.tight_layout()
         plt.show()
 
 
-
-
 if __name__ == '__main__':
     # python src/ode/main.py
-    pass
+    import __init__ as ph
+    # import phlib as ph
+    # ph.config.set_embedding_space_dim(3)
+    manifold = ph.manifold(3)
+    mesh = ph.mesh(manifold)
+    ph.space.set_mesh(mesh)
+    O1 = ph.space.new('Omega', k=1, p=3)
+    O2 = ph.space.new('Omega', k=2, p=3)
+    O3 = ph.space.new('Omega', k=3, p=3)
+    # ph.list_meshes()
+    w = O1.make_form(r'\omega^1', "vorticity1")
+    u = O2.make_form(r'u^2', "velocity2")
+    f = O2.make_form(r'f^2', "body-force")
+    P = O3.make_form(r'P^3', "total-pressure3")
+    wXu = w.wedge(ph.Hodge(u))
+    dsP = ph.codifferential(P)
+    dsu = ph.codifferential(u)
+    du = ph.d(u)
+    du_dt = ph.time_derivative(u)
+    exp = [
+        'du_dt + wXu - dsP = f',
+        'w = dsu',
+        'du = 0',
+    ]
+    pde = ph.pde(exp, globals())
+    pde.unknowns = [u, w, P]
+    wf = pde.test_with([O2, O1, O3], sym_repr=[r'v^2', r'w^1', r'q^3'])
+    wf = wf.derive.integration_by_parts_wrt_codifferential('0-2')
+    wf = wf.derive.integration_by_parts_wrt_codifferential('1-1')
+    wf = wf.derive.rearrange(
+        {
+            0: '0, 1, 2 = 4, 3',
+            1: '1, 0 = 2',
+            2: ' = 0',
+        }
+    )
+    i = 0
+    terms = wf._term_dict[i]
+    signs = wf._sign_dict[i]
+    ode_i = ph.ode(terms_and_signs=[terms, signs])
+    ode_i.constant_elementary_forms = wf.test_forms[0]
+    # ode_i.print_representations()
+    # print(ode_i)
+    # # for i in ode_i:
+    # #     print(ode_i[i])
+
+    uk = u._abstract_at_time('k')
+    uk.print_representations()
+    ph.list_forms(globals())
+
+

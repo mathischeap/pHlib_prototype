@@ -9,7 +9,7 @@ if './' not in sys.path:
     sys.path.append('./')
 
 from src.tools.frozen import Frozen
-from src.form import _global_forms, _global_form_variables, _find_form
+from src.form import _find_form
 from src.form import codifferential, d, trace, Hodge
 
 
@@ -32,6 +32,10 @@ class _WeakFormulationTerm(Frozen):
     @staticmethod
     def _is_real_number_valued():
         return True
+
+    def _replace(self, f, by):
+        """replace f by `by`"""
+
 
 
 def duality_pairing(f1, f2):
@@ -215,25 +219,10 @@ class L2InnerProductTerm(_WeakFormulationTerm):
     def _integration_by_parts(self):
         """"""
         if '(codifferential sf, sf)' in self._simple_patterns:
-            _global_form_variables['update_cache'] = False
             # we try to find the sf by testing all existing forms, this is bad. Update this in the future.
-            bf = None
-            for form_id in _global_forms:
-                form = _global_forms[form_id]
-                try:
-                    ds_f = codifferential(form)
-                except:
-                    continue
-                else:
-                    if ds_f._sym_repr == self._f1._sym_repr:
-                        bf = form
-                        break
-                    else:
-                        pass
+            bf = _find_form(self._f1._sym_repr, upon=codifferential)
             assert bf is not None, f"something is wrong, we do not found the base form " \
                                    f"(codifferential of base form = f1)."
-            _global_form_variables['update_cache'] = True
-
             term_manifold = L2InnerProductTerm(bf, d(self._f2))
 
             trace_form_1 = trace(Hodge(bf))

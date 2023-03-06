@@ -300,6 +300,8 @@ class PartialDifferentialEquations(Frozen):
         assert len(_test_spaces) == len(self), \
             f"pde has {len(self)} equations, so I need {len(self)} test spaces."
 
+        assert self.unknowns is not None, f"Set unknowns before testing the pde."
+
         tfs = list()
         for i, ts in enumerate(test_spaces):
             unknown = None  # in case not found an unknown, will raise Error.
@@ -333,10 +335,7 @@ class PartialDifferentialEquations(Frozen):
             term_dict[i] = ([], [])
             for j, terms in enumerate(self._form_dict[i]):
                 for k, term in enumerate(terms):
-                    if term == 0:
-                        raw_weak_term = 0
-                    else:
-                        raw_weak_term = inner(term, tfs[i], method=test_method)
+                    raw_weak_term = inner(term, tfs[i], method=test_method)
                     term_dict[i][j].append(raw_weak_term)
 
         wf = WeakFormulation(term_sign_dict=(term_dict, self._sign_dict), test_forms=tfs)

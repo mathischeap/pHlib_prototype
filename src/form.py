@@ -8,7 +8,7 @@ import sys
 
 if './' not in sys.path:
     sys.path.append('./')
-
+from src.tools.time_sequence import AbstractTimeSequence
 from src.tools.frozen import Frozen
 import matplotlib.pyplot as plt
 import matplotlib
@@ -25,17 +25,38 @@ _global_form_variables = {
 }
 
 
-def _find_form(repr):
-    """Find a form according to ..."""
-    the_one = None
-    for form_id in _global_forms:
-        form = _global_forms[form_id]
-        if form._sym_repr == repr or form._lin_repr == repr:
-            the_one = form
-            break
-        else:
-            pass
+def _find_form(repr, upon=None):
+    """Find a form according to symbolic_representation or linguistic_representation."""
+    _global_form_variables['update_cache'] = False
+    if upon is None:
+        the_one = None
+        for form_id in _global_forms:
+            form = _global_forms[form_id]
+            if form._sym_repr == repr or form._lin_repr == repr:
+                the_one = form
+                break
+            else:
+                pass
 
+    else:
+        if upon in _operators:
+            the_one = None
+            for form_id in _global_forms:
+                form = _global_forms[form_id]
+                try:
+                    ds_f = upon(form)
+                except:
+                    continue
+                else:
+                    if ds_f._sym_repr == repr:
+                        the_one = form
+                        break
+                    else:
+                        pass
+        else:
+            raise NotImplementedError()
+
+    _global_form_variables['update_cache'] = True
     return the_one
 
 
@@ -46,47 +67,52 @@ def _list_forms(variable_range=None):
     else:
         col_name_0 = 'variable name'
 
-    cell_text = list()
-    for form_id in _global_forms:
-        form = _global_forms[form_id]
-
-        if variable_range is None:
-            var_name = form_id
-        else:
-            var_name = list()
-            for var in variable_range:
-                if variable_range[var] is form:
-                    var_name.append(var)
-
-            if len(var_name) == 0:  # a form is not involved in the variable_range.
-                continue
-            elif len(var_name) == 1:
-                var_name = var_name[0]
-            else:
-                var_name = ','.join(var_name)
-
-        cell_text.append([r'\texttt{' + str(var_name) + '}',
-                          rf"${form.space._sym_repr}$",
-                          f"${form._sym_repr}$",
-                          form._lin_repr,
-                          form.is_root()])
-
-    if len(cell_text) == 0:
-        return
+    if variable_range is None and len(_global_forms) >= 8:
+        for form_id in _global_forms:
+            form = _global_forms[form_id]
+            print('--->', form_id, '|', form._sym_repr, '=', form._lin_repr)
     else:
-        pass
+        cell_text = list()
+        for form_id in _global_forms:
+            form = _global_forms[form_id]
 
-    fig, ax = plt.subplots(figsize=(16, (1 + len(cell_text))))
-    fig.patch.set_visible(False)
-    ax.axis('off')
-    table = ax.table(cellText=cell_text, loc='center',
-                     colLabels=[col_name_0, 'space', 'symbolic', 'linguistic', 'is_root()'],
-                     colLoc='left', colColours='rgmcy',
-                     cellLoc='left', colWidths=[0.15, 0.125, 0.125, 0.375, 0.075])
-    table.scale(1, 8)
-    table.set_fontsize(50)
-    fig.tight_layout()
-    plt.show()
+            if variable_range is None:
+                var_name = form_id
+            else:
+                var_name = list()
+                for var in variable_range:
+                    if variable_range[var] is form:
+                        var_name.append(var)
+
+                if len(var_name) == 0:  # a form is not involved in the variable_range.
+                    continue
+                elif len(var_name) == 1:
+                    var_name = var_name[0]
+                else:
+                    var_name = ','.join(var_name)
+
+            cell_text.append([r'\texttt{' + str(var_name) + '}',
+                              rf"${form.space._sym_repr}$",
+                              f"${form._sym_repr}$",
+                              form._lin_repr,
+                              form.is_root()])
+
+        if len(cell_text) == 0:
+            return
+        else:
+            pass
+
+        fig, ax = plt.subplots(figsize=(16, (1 + len(cell_text))))
+        fig.patch.set_visible(False)
+        ax.axis('off')
+        table = ax.table(cellText=cell_text, loc='center',
+                         colLabels=[col_name_0, 'space', 'symbolic', 'linguistic', 'is_root()'],
+                         colLoc='left', colColours='rgmcy',
+                         cellLoc='left', colWidths=[0.15, 0.125, 0.125, 0.375, 0.075])
+        table.scale(1, 8)
+        table.set_fontsize(50)
+        fig.tight_layout()
+        plt.show()
 
 
 class Form(Frozen):
@@ -113,13 +139,21 @@ class Form(Frozen):
                 form = _global_forms[form_id]
                 assert sym_repr != form._sym_repr, \
                     f"root form symbolic representation={sym_repr} is taken. Pls use another one."
+                assert lin_repr != form._lin_repr, \
+                    f"root form linguistic representation={lin_repr} is taken. Pls use another one."
             assert 'emph' not in lin_repr, f"A safety check, almost trivial."
             assert lin_repr[:8] == r"\textsf{" and lin_repr[-1] == r'}', \
                 f"root form linguistic representation = {lin_repr} illegal, it be must be of form " + r"\textsf{...}."
-            _pure_lin_repr = lin_repr[8:-1].replace('-', '')
+            _net_lin_repr = lin_repr[8:-1]
+            if '@' in _net_lin_repr:
+                assert _net_lin_repr.count('@') == 1, f"trivial check!"
+                _pure_lin_repr = _net_lin_repr.split('@')[0]
+            else:
+                _pure_lin_repr = _net_lin_repr
+            _pure_lin_repr = _pure_lin_repr.replace('-', '')
             assert _pure_lin_repr.isalnum(), rf'lin_repr={lin_repr} illegal. ' + \
-                                             "In {}, it must only have letters, numbers and '-'."
-
+                                             "In {} (and before @ if existing), " \
+                                             "it must only have letters, numbers and '-'."
         else:
             pass
 
@@ -127,8 +161,11 @@ class Form(Frozen):
         self._lin_repr = lin_repr
         self._is_root = is_root
         if is_root is True:
-            assert elementary_forms is None, f"pls do not provide elementary forms for a root form."
-            elementary_forms = [self, ]
+            if elementary_forms is None:
+                elementary_forms = [self, ]
+            else:
+                _ = list(elementary_forms)
+                assert _[0] is self, f"A root form must have self as its elementary_form."
         else:
             assert elementary_forms is not None, f"must provide elementary forms for a non-root form."
             if elementary_forms .__class__.__name__ == 'Form':
@@ -149,10 +186,13 @@ class Form(Frozen):
         else:
             pass
         self._orientation = orientation
-        if _global_form_variables['update_cache']:  # not saved globally
+        if _global_form_variables['update_cache']:  # cache it
             _global_forms[id(self)] = self
         else:
             pass
+        self._ats = AbstractTimeSequence()
+        self._abf = dict()
+        self._abstracted_from = None
         self._freeze()
 
     def print_representations(self):
@@ -164,7 +204,12 @@ class Form(Frozen):
         plt.text(0, 3.5, f'spaces: ${self.space._sym_repr}$', ha='left', va='center', size=15)
         plt.text(0, 2.5, 'symbolic : ' + f"${self._sym_repr}$", ha='left', va='center', size=15)
         plt.text(0, 1.5, 'linguistic : ' + self._lin_repr, ha='left', va='center', size=15)
-        plt.text(0, 0.5, f'is_root: {self.is_root()}', ha='left', va='center', size=15)
+        root_text = f'is_root: {self.is_root()}'
+        if self._abstracted_from is None:
+            pass
+        else:
+            root_text += rf"  (abstracted from ${self._abstracted_from._sym_repr}$)"
+        plt.text(0, 0.5, root_text, ha='left', va='center', size=15)
         plt.axis('off')
         plt.show()
 
@@ -195,6 +240,32 @@ class Form(Frozen):
     def wedge(self, other):
         """Return a form representing `self` wedge `other`."""
         return wedge(self, other)
+
+    @property
+    def _abstract_forms(self):
+        """All abstract forms of self in a dictionary"""
+        return self._abf
+
+    def _abstract_at_time(self, k):
+        """"""
+        assert isinstance(k, str), f"abstract form must be at abstract time instant, so k must be a str."
+        assert self.is_root(), f"Can only abstract a root form."
+        assert k not in self._abstract_forms, f"abstract form at t['" + k + "'] is already existing."
+        sym_repr = self._sym_repr
+        lin_repr = self._lin_repr[:-1]
+        sym_repr = r"\left." + sym_repr + r"\right|^{(" + k + ')}'
+        lin_repr += "@t['" + k + "']}"
+
+        ftk = Form(
+            self._space,
+            sym_repr, lin_repr,
+            self._is_root,
+            None,  # elementary_forms
+            self._orientation,
+        )
+        ftk._abstracted_from = self
+        self._abf[k] = ftk
+        return ftk
 
 
 from src.spaces.operators import wedge as space_wedge
@@ -392,3 +463,11 @@ def trace(f):
     )
 
     return f
+
+_operators = (
+    Hodge,
+    d,
+    codifferential,
+    time_derivative,
+    trace,
+)

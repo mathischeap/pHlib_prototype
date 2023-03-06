@@ -25,6 +25,7 @@ __all__ = [
     'codifferential',
     'time_derivative',
     'pde',
+    'ode',
 ]
 
 import src.config as config
@@ -47,4 +48,5 @@ from src.operators import codifferential
 from src.operators import time_derivative
 
 from src.pde import pde
+from src.ode.main import ode
 
