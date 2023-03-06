@@ -17,7 +17,7 @@ _space_set = dict()
 
 def set_mesh(mesh):
     """"""
-    assert mesh.__class__.__name__  == 'Mesh', \
+    assert mesh.__class__.__name__ == 'Mesh', \
         f"I need a Mesh instance."
     sr = mesh._sym_repr
     if sr in _mesh_set:
@@ -29,7 +29,8 @@ def set_mesh(mesh):
     _config['current_mesh'] = sr
 
 
-from src.spaces.scalarValuedFormSpace import ScalarValuedFormSpace
+from src.spaces.scalar import ScalarValuedFormSpace
+
 
 # whenever new space is implemented, add it below.
 _implemented_spaces = {

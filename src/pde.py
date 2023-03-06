@@ -244,8 +244,8 @@ class PartialDifferentialEquations(Frozen):
         """How many equations we have?"""
         return len(self._form_dict)
 
-    def __getitem__(self, item):
-        return self._indexing[item]
+    def __getitem__(self, index):
+        return self._indexing[index]
 
     def __iter__(self):
         """"""

@@ -255,12 +255,13 @@ if __name__ == '__main__':
     from doctest import testmod
     testmod()
 
-    ct = ConstantTimeSequence([0, 100, 100], 1)
-    # t = ct['k']
-    # print(t)
+    ct = ConstantTimeSequence([0, 100, 100], 2)
+    t = ct['k+0.5']
+    print(t)
+    print(t(k=5.1))
 
-    at = AbstractTimeSequence()
-    t = at['k+j']
-    at.set_object(ct)
-    print(t(k=1.1, j=0.9))
+    # at = AbstractTimeSequence()
+    # t = at['k+j']
+    # at.set_object(ct)
+    # print(t(k=1.1, j=0.9))
     # print(ts[1+1/4])

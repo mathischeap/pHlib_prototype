@@ -187,8 +187,8 @@ class WeakFormulation(Frozen):
 
                         if indexing:
                             index = self._ind_dict[i][t][j].replace('-', r'\text{-}')
-                            term_sym_repr = r'\underbrace{'+ term_sym_repr + r'}_{' + \
-                                   rf"{index}" + '}'
+                            term_sym_repr = r'\underbrace{' + term_sym_repr + r'}_{' + \
+                                rf"{index}" + '}'
                         else:
                             pass
 
@@ -206,7 +206,7 @@ class WeakFormulation(Frozen):
                     symbolic += ' &= '
 
             symbolic += r'\quad &&\forall ' + self._test_forms[i]._sym_repr + r'\in ' + \
-                         self._test_spaces[i]._sym_repr
+                self._test_spaces[i]._sym_repr
 
             if i < number_equations - 1:
                 symbolic += r',\\'
@@ -303,8 +303,8 @@ class _Derive(Frozen):
                     else:
                         assert isinstance(new_term, list) and \
                                isinstance(new_sign, list) and \
-                               len(new_sign) == len(new_term), \
-                            f"Whenever we have a modification to a term, pls put it in a list."
+                               len(new_sign) == len(new_term), f"Whenever we have a " \
+                                                               f"modification to a term, pls put it in a list."
 
                         for term, sign in zip(new_term, new_sign):
 
@@ -340,7 +340,7 @@ class _Derive(Frozen):
 
         for i in rearrangement:
             assert isinstance(i, int), f"key:{i} is not integer, pls make sure use integer as dict keys."
-            assert  0 <= i < len(self._wf), f"I cannot find {i}th equation."
+            assert 0 <= i < len(self._wf), f"I cannot find {i}th equation."
 
             ri = rearrangement[i]
             if ri is None or ri == '':
@@ -359,11 +359,11 @@ class _Derive(Frozen):
                 left_terms = left_terms.split(',')
                 right_terms = right_terms.split(',')
                 _ = list()
-                if left_terms != ['',]:
+                if left_terms != ['', ]:
                     _.extend(left_terms)
                 else:
                     left_terms = 0
-                if right_terms != ['',]:
+                if right_terms != ['', ]:
                     _.extend(right_terms)
                 else:
                     right_terms = 0
@@ -443,9 +443,10 @@ class _Derive(Frozen):
 
 if __name__ == '__main__':
     # python src/wf/main.py
+
     import __init__ as ph
     # import phlib as ph
-    ph.config.set_embedding_space_dim(3)
+    # ph.config.set_embedding_space_dim(3)
     manifold = ph.manifold(3)
     mesh = ph.mesh(manifold)
 
@@ -455,16 +456,22 @@ if __name__ == '__main__':
     O2 = ph.space.new('Omega', k=2, p=3)
     O3 = ph.space.new('Omega', k=3, p=3)
 
+    # ph.list_spaces()
+    # ph.list_meshes()
+
     w = O1.make_form(r'\omega^1', "vorticity1")
-    u = O2.make_form(r'u^2', r"velocity2")
-    f = O2.make_form(r'f^2', r"body-force")
-    P = O3.make_form(r'P^3', r"total-pressure3")
+    u = O2.make_form(r'u^2', "velocity2")
+    f = O2.make_form(r'f^2', "body-force")
+    P = O3.make_form(r'P^3', "total-pressure3")
+
 
     wXu = w.wedge(ph.Hodge(u))
     dsP = ph.codifferential(P)
     dsu = ph.codifferential(u)
     du = ph.d(u)
     du_dt = ph.time_derivative(u)
+
+    # ph.list_forms(globals())
 
     exp = [
         'du_dt + wXu - dsP = f',
@@ -474,39 +481,45 @@ if __name__ == '__main__':
     pde = ph.pde(exp, globals())
     pde.unknowns = [u, w, P]
     # pde.print_representations(indexing=True)
+
     wf = pde.test_with([O2, O1, O3], sym_repr=[r'v^2', r'w^1', r'q^3'])
     # wf.print_representations(indexing=True)
 
     wf = wf.derive.integration_by_parts_wrt_codifferential('0-2')
     wf = wf.derive.integration_by_parts_wrt_codifferential('1-1')
     # wf.print_representations()
-
-    # wf = wf.derive.rearrange(
-    #     [
-    #         '0, 1, 2 = 4, 3',
-    #         '1, 0 = 2',
-    #         None,
-    #     ]
-    # )
+    #
+    # # wf = wf.derive.rearrange(
+    # #     [
+    # #         '0, 1, 2 = 4, 3',
+    # #         '1, 0 = 2',
+    # #         None,
+    # #     ]
+    # # )
 
     wf = wf.derive.rearrange(
         {
             0: '0, 1, 2 = 4, 3',
             1: '1, 0 = 2',
-            2: '0 = ',
+            2: ' = 0',
         }
     )
+    #
+    # for index in pde:
+    #     term = pde[index][2]
+    #     term.print_representations()
 
-    # wf.print_representations(indexing=True)
-    # print(wf.elementary_forms)
 
+    wf.print_representations(indexing=True)
+    # # print(wf.elementary_forms)
+    #
     # ph.list_forms(globals())
-    # for i in range(len(wf)):  # go through all weak equations
-
+    # # for i in range(len(wf)):  # go through all weak equations
+    #
     i = 0
     terms = wf._term_dict[i]
     signs = wf._sign_dict[i]
 
-    ode_i = ode(terms_and_signs = [terms, signs])
+    ode_i = ode(terms_and_signs=[terms, signs])
     ode_i.constant_elementary_forms = wf.test_forms[0]
     ode_i.print_representations()
