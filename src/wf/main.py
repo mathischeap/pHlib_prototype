@@ -450,10 +450,10 @@ if __name__ == '__main__':
     mesh = ph.mesh(manifold)
 
     ph.space.set_mesh(mesh)
-    O0 = ph.space.new('Omega', 0, p=3)
-    O1 = ph.space.new('Omega', 1, p=3)
-    O2 = ph.space.new('Omega', 2, p=3)
-    O3 = ph.space.new('Omega', 3, p=3)
+    O0 = ph.space.new('Omega', k=0, p=3)
+    O1 = ph.space.new('Omega', k=1, p=3)
+    O2 = ph.space.new('Omega', k=2, p=3)
+    O3 = ph.space.new('Omega', k=3, p=3)
 
     w = O1.make_form(r'\omega^1', "vorticity1")
     u = O2.make_form(r'u^2', r"velocity2")
@@ -502,6 +502,7 @@ if __name__ == '__main__':
 
     # ph.list_forms(globals())
     # for i in range(len(wf)):  # go through all weak equations
+
     i = 0
     terms = wf._term_dict[i]
     signs = wf._sign_dict[i]

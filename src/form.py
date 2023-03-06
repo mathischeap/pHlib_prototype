@@ -39,8 +39,6 @@ def _find_form(repr):
     return the_one
 
 
-
-
 def _list_forms(variable_range=None):
     """"""
     if variable_range is None:
@@ -92,7 +90,7 @@ def _list_forms(variable_range=None):
 
 
 class Form(Frozen):
-    """"""
+    """The form class."""
 
     def __init__(
             self, space,
@@ -107,10 +105,7 @@ class Form(Frozen):
         if is_root:  # we check the `sym_repr` only for root forms.
             assert isinstance(sym_repr, str), \
                 f"sym_repr must be a str of length > 0."
-            assert ' ' not in  sym_repr, f"root form symbolic represent cannot have space."  # this is important
-            assert 'textsf' not in sym_repr, f"A safety check, almost trivial."
-            # make sure it does not confuse form lin repr
-            assert 'emph' not in sym_repr, f"A safety check, almost trivial."
+            assert ' ' not in sym_repr, f"root form symbolic represent cannot have space."  # this is important
             # make sure it does not confuse operator lin repr
             assert len(sym_repr) > 0, \
                 f"sym_repr must be a str of length > 0."
@@ -118,6 +113,7 @@ class Form(Frozen):
                 form = _global_forms[form_id]
                 assert sym_repr != form._sym_repr, \
                     f"root form symbolic representation={sym_repr} is taken. Pls use another one."
+            assert 'emph' not in lin_repr, f"A safety check, almost trivial."
             assert lin_repr[:8] == r"\textsf{" and lin_repr[-1] == r'}', \
                 f"root form linguistic representation = {lin_repr} illegal, it be must be of form " + r"\textsf{...}."
             _pure_lin_repr = lin_repr[8:-1].replace('-', '')
@@ -160,7 +156,7 @@ class Form(Frozen):
         self._freeze()
 
     def print_representations(self):
-        """"""
+        """Print this form with matplotlib and latex."""
         my_id = r'\texttt{' + str(id(self)) + '}'
         plt.figure(figsize=(2 + len(self._sym_repr)/4, 4))
         plt.axis([0, 1, 0, 5])
@@ -168,7 +164,7 @@ class Form(Frozen):
         plt.text(0, 3.5, f'spaces: ${self.space._sym_repr}$', ha='left', va='center', size=15)
         plt.text(0, 2.5, 'symbolic : ' + f"${self._sym_repr}$", ha='left', va='center', size=15)
         plt.text(0, 1.5, 'linguistic : ' + self._lin_repr, ha='left', va='center', size=15)
-        plt.text(0, 0.5, f'is_root: {self.is_root()}' , ha='left', va='center', size=15)
+        plt.text(0, 0.5, f'is_root: {self.is_root()}', ha='left', va='center', size=15)
         plt.axis('off')
         plt.show()
 
@@ -179,24 +175,25 @@ class Form(Frozen):
 
     @property
     def orientation(self):
-        """"""
+        """The orientation of this form."""
         return self._orientation
 
     def is_root(self):
-        """"""
+        """Return True this form is a root form."""
         return self._is_root
 
     @property
     def space(self):
-        """"""
+        """The space this form is in."""
         return self._space
 
     @property
     def mesh(self):
-        """"""
+        """The mesh this form is on"""
         return self.space.mesh
 
     def wedge(self, other):
+        """Return a form representing `self` wedge `other`."""
         return wedge(self, other)
 
 
@@ -207,7 +204,7 @@ from src.spaces.operators import codifferential as space_codifferential
 
 
 def wedge(f1, f2):
-    """"""
+    """f1 wedge f2"""
     s1 = f1.space
     s2 = f2.space
 
@@ -216,7 +213,6 @@ def wedge(f1, f2):
     lr_term1 = f1._lin_repr
     lr_term2 = f2._lin_repr
     lr_operator = r" \emph{wedge} "
-
 
     sr_term1 = f1._sym_repr
     sr_term2 = f2._sym_repr
@@ -258,7 +254,7 @@ def wedge(f1, f2):
 
 def Hodge(f):
     """Metric Hodge of a form."""
-    Hs = space_Hodge(f.space)
+    hs = space_Hodge(f.space)
 
     lr = f._lin_repr
     sr = f._sym_repr
@@ -277,7 +273,7 @@ def Hodge(f):
     else:
         orientation = 'None'
     f = Form(
-        Hs,               # space
+        hs,               # space
         sr,   # symbolic representation
         lr,
         False,
@@ -341,7 +337,7 @@ def codifferential(f):
 
 
 def time_derivative(f):
-    """"""
+    """The time derivative operator."""
     if f.__class__.__name__ != 'Form':
         raise NotImplementedError(f"time_derivative on {f} is not implemented or even not possible at all.")
     else:
@@ -368,10 +364,12 @@ def time_derivative(f):
 
     return tdf
 
+
 from src.spaces.operators import trace as space_trace
 
+
 def trace(f):
-    """"""
+    """The trace operator."""
     trf_space = space_trace(f.space)
 
     lr = f._lin_repr
@@ -394,6 +392,3 @@ def trace(f):
     )
 
     return f
-
-
-

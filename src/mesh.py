@@ -44,7 +44,9 @@ class Mesh(Frozen):   # Mesh -
         self._manifold = manifold
 
         if sym_repr is None:
+
             number_existing_meshes = len(_global_meshes)
+
             while 1:
                 if number_existing_meshes == 0:
                     sym_repr = r'\mathfrak{M}'

@@ -48,11 +48,10 @@ class Manifold(Frozen):
                     else:
                         break
         else:
-            assert isinstance(sym_repr, str), \
-                f"sym_repr must be a str of length > 0."
-            sym_repr = sym_repr.replace(' ', '')
-            assert len(sym_repr) > 0, \
-                f"sym_repr must be a str of length > 0."
+            pass
+        assert isinstance(sym_repr, str), f"sym_repr must be a str of length > 0."
+        assert ' ' not in sym_repr, f"manifold symbolic representation cannot contain space."
+        assert len(sym_repr) > 0, f"sym_repr must be a str of length > 0."
 
         assert sym_repr not in _global_manifolds, \
             f"Manifold symbolic representation is illegal, pls specify a symbolic representation other than " \

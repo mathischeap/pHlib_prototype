@@ -13,13 +13,16 @@ from src.form import _global_forms, _global_form_variables, _find_form
 from src.form import codifferential, d, trace, Hodge
 
 
-class _WeakFormulaterTerm(Frozen):
+class _WeakFormulationTerm(Frozen):
+    """"""
 
     def __init__(self, mesh):
+        """"""
         self._mesh = mesh
 
     @property
     def mesh(self):
+        """The mesh."""
         return self._mesh
 
     @staticmethod
@@ -32,7 +35,17 @@ class _WeakFormulaterTerm(Frozen):
 
 
 def duality_pairing(f1, f2):
-    """"""
+    """
+
+    Parameters
+    ----------
+    f1
+    f2
+
+    Returns
+    -------
+
+    """
     s1 = f1.space
     s2 = f2.space
     if s1.__class__.__name__ == 'ScalarValuedFormSpace' and s2.__class__.__name__ == 'ScalarValuedFormSpace':
@@ -43,11 +56,23 @@ def duality_pairing(f1, f2):
     return DualityPairing(f1, f2)
 
 
-class DualityPairing(_WeakFormulaterTerm):
-    """"""
+class DualityPairing(_WeakFormulationTerm):
+    """
+
+    Parameters
+    ----------
+    f1
+    f2
+    """
 
     def __init__(self, f1, f2):
-        """"""
+        """
+
+        Parameters
+        ----------
+        f1
+        f2
+        """
         s1 = f1.space
         s2 = f2.space
         if s1.__class__.__name__ == 'ScalarValuedFormSpace' and s2.__class__.__name__ == 'ScalarValuedFormSpace':
@@ -78,9 +103,10 @@ class DualityPairing(_WeakFormulaterTerm):
 
         self._sym_repr = rf'\left<\left.{sr1}\right|{sr2}\right>_' + r"{" + self._mesh.manifold._sym_repr + "}"
         self._lin_repr = r"\emph{duality pairing between} " + lr1 + r' \emph{and} ' + lr2
-
         self._simple_patterns = _simpler_pattern_examiner(f1, f2)
 
+        for sp in self._simple_patterns:
+            assert sp in simple_patterns, f"found unknown simple pattern: {sp}."
         self._elementary_forms = set()
         self._elementary_forms.update(f1._elementary_forms)
         self._elementary_forms.update(f2._elementary_forms)
@@ -92,9 +118,19 @@ class DualityPairing(_WeakFormulaterTerm):
         return '<Duality Pairing ' + self._sym_repr + f'{super_repr}'
 
 
-
 def inner(f1, f2, method='L2'):
-    """"""
+    """
+
+    Parameters
+    ----------
+    f1
+    f2
+    method
+
+    Returns
+    -------
+
+    """
 
     if f1.__class__.__name__ == 'Form' or f2.__class__.__name__ == 'Form':
         pass
@@ -116,13 +152,23 @@ def inner(f1, f2, method='L2'):
         raise NotImplementedError()
 
 
+class L2InnerProductTerm(_WeakFormulationTerm):
+    """
 
-
-class L2InnerProductTerm(_WeakFormulaterTerm):
-    """"""
+    Parameters
+    ----------
+    f1
+    f2
+    """
 
     def __init__(self, f1, f2):
-        """"""
+        """
+
+        Parameters
+        ----------
+        f1
+        f2
+        """
         s1 = f1.space
         s2 = f2.space
         if s1.__class__.__name__ == 'ScalarValuedFormSpace' and s2.__class__.__name__ == 'ScalarValuedFormSpace':
@@ -149,7 +195,6 @@ class L2InnerProductTerm(_WeakFormulaterTerm):
             pass
         else:
             lr2 = rf'[{lr2}]'
-
 
         self._sym_repr = rf'\left({sr1},{sr2}\right)_' + r"{" + self._mesh.manifold._sym_repr + "}"
         self._lin_repr = r"\emph{L2 inner product between} " + lr1 + r' \emph{and} ' + lr2
@@ -203,8 +248,7 @@ class L2InnerProductTerm(_WeakFormulaterTerm):
             raise Exception(f"Cannot apply integration by parts to this term.")
 
 
-
-simple_patterns = {
+simple_patterns = {   # use only str to represent a pattern.
     '(partial_t root-sf, sf)',
     '(codifferential sf, sf)',
 }
@@ -221,7 +265,7 @@ def _simpler_pattern_examiner(f1, f2):
 
 
 def _simpler_pattern_examiner_scalar_valued_forms(f1, f2):
-    """"""
+    """ """
     patterns = list()
     if f1._sym_repr[:15] == r'\mathrm{d}^\ast':
         patterns.append('(codifferential sf, sf)')
