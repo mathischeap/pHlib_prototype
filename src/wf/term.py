@@ -55,14 +55,23 @@ class _WeakFormulationTerm(Frozen):
 
     def print_representations(self):
         """Print the representations of this term."""
-        plt.figure(figsize=(2 + len(self._sym_repr)/10, 2))
+        plt.figure(figsize=(5 + len(self._lin_repr)/20, 2))
         plt.axis([0, 1, 0, 1])
-        plt.text(0, 0.5, 'symbolic : ' + f"${self._sym_repr}$", ha='left', va='center', size=15)
+        plt.text(0, 0.75, 'linguistic : ' + f"{self._lin_repr}", ha='left', va='center', size=15)
+        plt.text(0, 0.25, 'symbolic : ' + f"${self._sym_repr}$", ha='left', va='center', size=15)
         plt.axis('off')
         plt.show()
 
     def _replace(self, f, by, which='all'):
-        """replace `f` by `by`, if there are more than one `f` found, apply the replacement to `which`."""
+        """replace `f` by `by`, if there are more than one `f` found, apply the replacement to `which`.
+        If there are 'f' in this term, which should be int or a list of int which indicating
+        `f` according the sequence of `f._lin_repr` in `self._lin_repr`.
+        """
+        raise NotImplementedError()
+
+    def _split(self, which, f, into):
+        """Split `which` `f` `into`."""
+
 
 
 
@@ -132,7 +141,7 @@ class DualityPairing(_WeakFormulationTerm):
             lr2 = rf'[{lr2}]'
 
         self._sym_repr = rf'\left<\left.{sr1}\right|{sr2}\right>_' + r"{" + self._mesh.manifold._sym_repr + "}"
-        self._lin_repr = r"\emph{duality pairing between} " + lr1 + r' \emph{and} ' + lr2
+        self._lin_repr = r"\emph{duality-pairing between} " + lr1 + r' \emph{and} ' + lr2
 
     def __repr__(self):
         """"""
@@ -217,7 +226,7 @@ class L2InnerProductTerm(_WeakFormulationTerm):
             lr2 = rf'[{lr2}]'
 
         self._sym_repr = rf'\left({sr1},{sr2}\right)_' + r"{" + self._mesh.manifold._sym_repr + "}"
-        self._lin_repr = r"\emph{L2 inner product between} " + lr1 + r' \emph{and} ' + lr2
+        self._lin_repr = r"\emph{L2-inner-product between} " + lr1 + r' \emph{and} ' + lr2
 
     def __repr__(self):
         """"""

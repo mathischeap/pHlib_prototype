@@ -259,22 +259,30 @@ class _Derive(Frozen):
         self._wf = wf
         self._freeze()
 
-    def _replace_term_by(self, index, new_terms, new_signs):
-        """Apply all derivations and return a new weak-formulation."""
-
-        new_term_dict = deepcopy(self._wf._ind_dict)  # must do deepcopy
-        new_sign_dict = deepcopy(self._wf._ind_dict)  # must do deepcopy
-
+    def _replace_term_by(self, index, terms, signs):
+        """_replace the term indicated by `index` by `terms` of `signs`"""
         i, j, k = self._wf._parse_index(index)
+        old_sign = self._wf._sign_dict[i][j][k]
+        if old_sign == '+':
+            signs_ = signs
+        else:
+            signs_ = list()
+            for s_ in signs:
+                signs_.append(self._switch_sign(s_))
+        signs = signs_
+
+        new_term_dict = deepcopy(self._wf._ind_dict)  # must do deepcopy, use `_ind_dict` not a typo
+        new_sign_dict = deepcopy(self._wf._ind_dict)  # must do deepcopy, use `_ind_dict` not a typo
+
         new_term_dict[i][j][k] = list()
         new_sign_dict[i][j][k] = list()
 
-        if isinstance(new_terms, (list, tuple)):
-            new_term_dict[i][j][k].extend(new_terms)
-            new_sign_dict[i][j][k].extend(new_signs)
+        if isinstance(terms, (list, tuple)):
+            new_term_dict[i][j][k].extend(terms)
+            new_sign_dict[i][j][k].extend(signs)
         else:
-            new_term_dict[i][j][k].append(new_terms)
-            new_sign_dict[i][j][k].append(new_signs)
+            new_term_dict[i][j][k].append(terms)
+            new_sign_dict[i][j][k].append(signs)
 
         new_term_dict, new_sign_dict = self._parse_new_weak_formulation_dict(new_term_dict, new_sign_dict)
 
@@ -284,7 +292,6 @@ class _Derive(Frozen):
         return new_wf
 
     def _parse_new_weak_formulation_dict(self, new_term_dict, new_sign_dict):
-        """"""
         term_dict = dict()
         sign_dict = dict()
 
@@ -445,10 +452,10 @@ class _Derive(Frozen):
 
     def integration_by_parts_wrt_codifferential(self, index):
         """integration by parts."""
-        sign, term = self._wf[index]
+        term = self._wf[index][1]
         assert term != 0, f"Cannot apply integration by parts to term '{index}': {term}"
-        new_terms, new_signs = term._integration_by_parts()
-        return self._replace_term_by(index, new_terms, new_signs)
+        terms, signs = term._integration_by_parts()
+        return self._replace_term_by(index, terms, signs)
 
 
 if __name__ == '__main__':

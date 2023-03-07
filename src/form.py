@@ -8,7 +8,6 @@ import sys
 
 if './' not in sys.path:
     sys.path.append('./')
-from src.tools.time_sequence import AbstractTimeSequence
 from src.tools.frozen import Frozen
 import matplotlib.pyplot as plt
 import matplotlib
@@ -25,14 +24,24 @@ _global_form_variables = {
 }
 
 
-def _find_form(repr, upon=None):
-    """Find a form according to symbolic_representation or linguistic_representation."""
+def _find_form(rp, upon=None):
+    """Find a form according to symbolic_representation or linguistic_representation.
+
+    If we do not find such a form, we return None. Otherwise, we return the first found one.
+
+    If upon is None, we seek the form whose either `sym_repr` or `lin_repr` is equal to `rp`.
+
+    If upon is not None:
+        If upon in _operators:
+            We seek the form for which `upon(form)._sym_repr` or `upon(form)._lin_repr` is equal to `rp`.
+
+    """
     _global_form_variables['update_cache'] = False  # during this process, we do not cache the intermediate forms.
     if upon is None:
         the_one = None
         for form_id in _global_forms:
             form = _global_forms[form_id]
-            if form._sym_repr == repr or form._lin_repr == repr:
+            if form._sym_repr == rp or form._lin_repr == rp:
                 the_one = form
                 break
             else:
@@ -44,11 +53,11 @@ def _find_form(repr, upon=None):
             for form_id in _global_forms:
                 form = _global_forms[form_id]
                 try:
-                    ds_f = upon(form)
+                    operator_of_f = upon(form)
                 except:
                     continue
                 else:
-                    if ds_f._sym_repr == repr:
+                    if operator_of_f._sym_repr == rp or operator_of_f._lin_repr == rp:
                         the_one = form
                         break
                     else:
@@ -174,6 +183,7 @@ class Form(Frozen):
                     all([f.__class__.__name__ == 'Form' for f in elementary_forms]), \
                     f'pls set only forms and put them in a list or tuple or set.'
         self._elementary_forms = set(elementary_forms)
+
         assert orientation in ('inner', 'outer', 'i', 'o', None, 'None'), \
             f"orientation={orientation} is wrong, must be one of ('inner', 'outer', 'i', 'o', None)."
         if orientation == 'i':
@@ -189,9 +199,9 @@ class Form(Frozen):
             _global_forms[id(self)] = self
         else:
             pass
-        self._ats = AbstractTimeSequence()
-        self._abf = dict()
-        self._abstracted_from = None
+        # self._ats = AbstractTimeSequence()
+        # self._abf = dict()
+        self._a_particular_time_instant_form_of = (None, None)  # (father_form, abstract_time_instant)
         self._freeze()
 
     def print_representations(self):
@@ -203,11 +213,17 @@ class Form(Frozen):
         plt.text(0, 3.5, f'spaces: ${self.space._sym_repr}$', ha='left', va='center', size=15)
         plt.text(0, 2.5, 'symbolic : ' + f"${self._sym_repr}$", ha='left', va='center', size=15)
         plt.text(0, 1.5, 'linguistic : ' + self._lin_repr, ha='left', va='center', size=15)
-        root_text = f'is_root: {self.is_root()}'
-        if self._abstracted_from is None:
+        root_text = rf'\noindent is_root: {self.is_root()}'
+        if self._a_particular_time_instant_form_of == (None, None):
             pass
         else:
-            root_text += rf"  (abstracted from ${self._abstracted_from._sym_repr}$)"
+            father_form, abstract_time_instant = self._a_particular_time_instant_form_of
+            # noinspection PyUnresolvedReferences
+            root_text += rf"\\\\(${father_form._sym_repr}$ at abstract time instant "
+            # noinspection PyUnresolvedReferences
+            root_text += r"\textsf{" + rf"t['{abstract_time_instant.k}']" + r"} of time sequence:"
+            # noinspection PyUnresolvedReferences
+            root_text += rf"${abstract_time_instant.time_sequence._sym_repr}$.)"
         plt.text(0, 0.5, root_text, ha='left', va='center', size=15)
         plt.axis('off')
         plt.show()
@@ -240,30 +256,57 @@ class Form(Frozen):
         """Return a form representing `self` wedge `other`."""
         return wedge(self, other)
 
-    @property
-    def _abstract_forms(self):
-        """All abstract forms of self in a dictionary."""
-        return self._abf
+    def __truediv__(self, other):
+        """self / other"""
+        if isinstance(other, (int, tuple)):
+            num_str = str(other)
+            lr = self._lin_repr
+            sr = self._sym_repr
 
-    def _abstract_at_time(self, k):
+            if self.is_root():
+                lr = lr + r" \emph{divided by} " + num_str
+            else:
+                lr = '[' + lr + ']' + r" \emph{divided by} " + num_str
+            sr = r"\dfrac{" + sr + r"}{" + num_str + "}"
+            f = Form(
+                self.space,  # space
+                sr,          # symbolic representation
+                lr,          # linguistic representation
+                False,
+                self._elementary_forms,
+                self.orientation,
+            )
+            return f
+        elif other.__class__.__name__ == 'AbstractTimeInterval':
+            print(111)
+
+        else:
+            raise NotImplementedError(f"form divided by <{other.__class__.__name__}> is not implemented.")
+
+    # @property
+    # def _abstract_forms(self):
+    #     """All abstract forms of self in a dictionary."""
+    #     return self._abf
+    #
+
+    def evaluate_at(self, ats):
         """"""
-        assert isinstance(k, str), f"abstract form must be at abstract time instant, so k must be a str."
-        assert self.is_root(), f"Can only abstract a root form."
-        assert k not in self._abstract_forms, f"abstract form at t['" + k + "'] is already existing."
+        assert ats.__class__.__name__ == 'AbstractTimeInstant'
+        assert self.is_root(), f"Can only evaluate a root form at an abstract time instant."
+        k = ats.k
         sym_repr = self._sym_repr
         lin_repr = self._lin_repr[:-1]
         sym_repr = r"\left." + sym_repr + r"\right|^{(" + k + ')}'
-        lin_repr += "@t['" + k + "']}"
+        lin_repr += "@" + ats.time_sequence._lin_repr + "['" + k + "']}"
 
         ftk = Form(
             self._space,
             sym_repr, lin_repr,
             self._is_root,
-            None,  # elementary_forms
+            None,    # elementary_forms
             self._orientation,
         )
-        ftk._abstracted_from = self
-        self._abf[k] = ftk
+        ftk._a_particular_time_instant_form_of = (self, ats)
         return ftk
 
 
@@ -362,10 +405,10 @@ def d(f):
     sr = f._sym_repr
 
     if f.is_root():
-        lr = r"\emph{exterior derivative of} " + lr
+        lr = r"\emph{exterior-derivative of} " + lr
         sr = r"\mathrm{d}" + sr
     else:
-        lr = r"\emph{exterior derivative of} [" + lr + ']'
+        lr = r"\emph{exterior-derivative of} [" + lr + ']'
         sr = r"\mathrm{d}\left(" + sr + r"\right)"
 
     f = Form(
@@ -417,10 +460,10 @@ def time_derivative(f):
     sr = f._sym_repr
 
     if f.is_root():
-        lr = r"\emph{time derivative of} " + lr
+        lr = r"\emph{time-derivative of} " + lr
         sr = r"\partial_t " + sr
     else:
-        lr = r"\emph{time derivative of} [" + lr + ']'
+        lr = r"\emph{time-derivative of} [" + lr + ']'
         sr = r"\partial_t\left(" + sr + r"\right)"
 
     tdf = Form(

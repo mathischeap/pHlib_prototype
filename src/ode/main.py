@@ -170,17 +170,18 @@ class OrdinaryDifferentialEquation(Frozen):
         return self._indexing[index]
 
     def __iter__(self):
+        """Iter"""
         for index in self._indexing:
             yield index
 
     @property
     def elementary_forms(self):
-        """"""
+        """The elementary forms."""
         return self._elementary_forms
 
     @property
     def constant_elementary_forms(self):
-        """"""
+        """constant_elementary_forms"""
         return self._constant_elementary_forms
 
     @constant_elementary_forms.setter
@@ -195,7 +196,7 @@ class OrdinaryDifferentialEquation(Frozen):
             self._constant_elementary_forms = set(cef)
 
     def print_representations(self, indexing=True):
-        """"""
+        """print_representations"""
         sym = 'elementary forms: '
         for ef in self.elementary_forms:
             sym += rf'${ef._sym_repr}$, '
@@ -295,14 +296,16 @@ if __name__ == '__main__':
     ode_i.constant_elementary_forms = wf.test_forms[0]
     # ode_i.print_representations()
 
+
     term0 = ode_i['0'][1]
-    term0.print_representations()
-    # print(ode_i)
-    # # for i in ode_i:
-    # #     print(ode_i[i])
+    ats = ph.time_sequence()
+    dt = ats.make_time_interval('k-1', 'k')
 
-    # uk = u._abstract_at_time('k')
-    # uk.print_representations()
-    # ph.list_forms(globals())
+    u_km1 = u.evaluate_at(dt.start)
+    u_km1.print_representations()
 
+    u2 = u / 2
+    # u2.print_representations()
+    ut = u / dt
+    # ut.print_representations()
 

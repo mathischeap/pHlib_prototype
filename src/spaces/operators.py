@@ -19,11 +19,11 @@ def wedge(s1, s2):
         assert s1.mesh == s2.mesh, f"two entries have different meshes."
 
         k = s1.k
-        l = s2.k
+        l_ = s2.k
 
-        assert k + l <= s1.mesh.ndim
+        assert k + l_ <= s1.mesh.ndim
 
-        return new('Omega', k + l, s1.p + s2.p, mesh=s1.mesh)
+        return new('Omega', k + l_, s1.p + s2.p, mesh=s1.mesh)
 
     else:
         raise NotImplementedError()
@@ -61,7 +61,7 @@ def trace(space):
         mesh = space.mesh
         assert 0 <= space.k < mesh.ndim, f"Cannot do trace on {space}."
         boundary_mesh = mesh.boundary()
-        return new('Omega', space.k, space.p, mesh = boundary_mesh)
+        return new('Omega', space.k, space.p, mesh=boundary_mesh)
 
     else:
         raise NotImplementedError(f"trace of {space} is not implemented or not even possible.")
