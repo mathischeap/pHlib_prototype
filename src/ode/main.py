@@ -296,16 +296,17 @@ if __name__ == '__main__':
     ode_i.constant_elementary_forms = wf.test_forms[0]
     # ode_i.print_representations()
 
-
     term0 = ode_i['0'][1]
     ats = ph.time_sequence()
-    dt = ats.make_time_interval('k-1', 'k')
+    dt = ats.make_time_interval('k-1/2', 'k')   # dt = t[k] - t[k-1/2]
 
     u_km1 = u.evaluate_at(dt.start)
-    u_km1.print_representations()
+    # print(dt._lin_repr, dt._sym_repr)
+    # print(dt.start._lin_repr)
+    # u_km1.print_representations()
 
     u2 = u / 2
-    # u2.print_representations()
+    u2.print_representations()
     ut = u / dt
-    # ut.print_representations()
+    ut.print_representations()
 

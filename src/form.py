@@ -9,6 +9,7 @@ import sys
 if './' not in sys.path:
     sys.path.append('./')
 from src.tools.frozen import Frozen
+from typing import List
 import matplotlib.pyplot as plt
 import matplotlib
 plt.rcParams.update({
@@ -64,7 +65,7 @@ def _find_form(rp, upon=None):
                         pass
         else:
             raise NotImplementedError()
-    _global_form_variables['update_cache'] = True
+    _global_form_variables['update_cache'] = True  # turn on cache! Very important!
     return the_one
 
 
@@ -199,31 +200,26 @@ class Form(Frozen):
             _global_forms[id(self)] = self
         else:
             pass
-        # self._ats = AbstractTimeSequence()
-        # self._abf = dict()
-        self._a_particular_time_instant_form_of = (None, None)  # (father_form, abstract_time_instant)
+        self._pAti_form: List = [None, None, None]  # (father_form, abstract_time_instant)
         self._freeze()
 
     def print_representations(self):
         """Print this form with matplotlib and latex."""
         my_id = r'\texttt{' + str(id(self)) + '}'
-        plt.figure(figsize=(2 + len(self._sym_repr)/4, 4))
+        if self._pAti_form == [None, None, None]:
+            pAti_text = ''
+        else:
+            father_form, ts, ati = self._pAti_form
+            pAti_text = rf"\\(${father_form._sym_repr}$ at abstract time instant ${ati._sym_repr}$,\\"
+            pAti_text += r"i.e. \textsf{" + rf"t['{ati.k}']" + r"} of abstract time sequence: "
+            pAti_text += rf"${ts._lin_repr}$.)"
+        plt.figure(figsize=(3 + len(self._sym_repr)/4, 4))
         plt.axis([0, 1, 0, 5])
         plt.text(0, 4.5, f'form id: {my_id}', ha='left', va='center', size=15)
         plt.text(0, 3.5, f'spaces: ${self.space._sym_repr}$', ha='left', va='center', size=15)
-        plt.text(0, 2.5, 'symbolic : ' + f"${self._sym_repr}$", ha='left', va='center', size=15)
+        plt.text(0, 2.5, rf'\noindent symbolic : ' + f"${self._sym_repr}$" + pAti_text, ha='left', va='center', size=15)
         plt.text(0, 1.5, 'linguistic : ' + self._lin_repr, ha='left', va='center', size=15)
-        root_text = rf'\noindent is_root: {self.is_root()}'
-        if self._a_particular_time_instant_form_of == (None, None):
-            pass
-        else:
-            father_form, abstract_time_instant = self._a_particular_time_instant_form_of
-            # noinspection PyUnresolvedReferences
-            root_text += rf"\\\\(${father_form._sym_repr}$ at abstract time instant "
-            # noinspection PyUnresolvedReferences
-            root_text += r"\textsf{" + rf"t['{abstract_time_instant.k}']" + r"} of time sequence:"
-            # noinspection PyUnresolvedReferences
-            root_text += rf"${abstract_time_instant.time_sequence._sym_repr}$.)"
+        root_text = rf'is_root: {self.is_root()}'
         plt.text(0, 0.5, root_text, ha='left', va='center', size=15)
         plt.axis('off')
         plt.show()
@@ -262,23 +258,42 @@ class Form(Frozen):
             num_str = str(other)
             lr = self._lin_repr
             sr = self._sym_repr
-
             if self.is_root():
-                lr = lr + r" \emph{divided by} " + num_str
+                lr = lr + r" \emph{divided by} (" + num_str + ")"
             else:
-                lr = '[' + lr + ']' + r" \emph{divided by} " + num_str
+                lr = '[' + lr + ']' + r" \emph{divided by} (" + num_str + ")"
             sr = r"\dfrac{" + sr + r"}{" + num_str + "}"
             f = Form(
                 self.space,  # space
                 sr,          # symbolic representation
                 lr,          # linguistic representation
-                False,
+                False,       # not a root-form anymore.
                 self._elementary_forms,
                 self.orientation,
             )
             return f
+
         elif other.__class__.__name__ == 'AbstractTimeInterval':
-            print(111)
+            ati = other
+            ati_sr = ati._sym_repr
+            ati_lr = ati._lin_repr
+            lr = self._lin_repr
+            sr = self._sym_repr
+
+            if self.is_root():
+                lr = lr + r" \emph{divided by} (" + ati_lr + ")"
+            else:
+                lr = '[' + lr + ']' + r" \emph{divided by} (" + ati_lr + ")"
+            sr = r"\dfrac{" + sr + r"}{" + ati_sr + "}"
+            f = Form(
+                self.space,  # space
+                sr,          # symbolic representation
+                lr,          # linguistic representation
+                False,       # not a root-form anymore.
+                self._elementary_forms,
+                self.orientation,
+            )
+            return f
 
         else:
             raise NotImplementedError(f"form divided by <{other.__class__.__name__}> is not implemented.")
@@ -291,23 +306,28 @@ class Form(Frozen):
 
     def evaluate_at(self, ats):
         """"""
-        assert ats.__class__.__name__ == 'AbstractTimeInstant'
-        assert self.is_root(), f"Can only evaluate a root form at an abstract time instant."
-        k = ats.k
-        sym_repr = self._sym_repr
-        lin_repr = self._lin_repr[:-1]
-        sym_repr = r"\left." + sym_repr + r"\right|^{(" + k + ')}'
-        lin_repr += "@" + ats.time_sequence._lin_repr + "['" + k + "']}"
+        if ats.__class__.__name__ == 'AbstractTimeInstant':
+            assert self.is_root(), f"Can only evaluate a root form at an abstract time instant."
+            k = ats.k
+            sym_repr = self._sym_repr
+            lin_repr = self._lin_repr[:-1]
+            sym_repr = r"\left." + sym_repr + r"\right|^{(" + k + ')}'
+            lin_repr += "@" + ats._lin_repr + "}"
 
-        ftk = Form(
-            self._space,
-            sym_repr, lin_repr,
-            self._is_root,
-            None,    # elementary_forms
-            self._orientation,
-        )
-        ftk._a_particular_time_instant_form_of = (self, ats)
-        return ftk
+            ftk = Form(
+                self._space,
+                sym_repr, lin_repr,
+                self._is_root,
+                None,    # elementary_forms
+                self._orientation,
+            )
+            ftk._pAti_form[0] = self
+            ftk._pAti_form[1] = ats.time_sequence
+            ftk._pAti_form[2] = ats
+
+            return ftk
+        else:
+            raise NotImplementedError(f"Cannot evaluate {self} at {ats}.")
 
 
 from src.spaces.operators import wedge as space_wedge

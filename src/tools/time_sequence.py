@@ -14,51 +14,45 @@ from src.tools.frozen import Frozen
 import traceback
 
 _global_abstract_time_sequence = dict()
+_global_abstract_time_interval = dict()
 
 
 class AbstractTimeSequence(Frozen):
     """"""
 
-    def __init__(self, sym_repr=None, lin_repr=None):
+    def __init__(self):
         """"""
-        if sym_repr is None:
-            number_ = len(_global_abstract_time_sequence)
-            if number_ == 0:
-                sym_repr = r"\mathsf{T}^S"
-            else:
-                num = 0
-                sym_repr = r"\mathsf{T}^S_{"
-                while 1:
-                    sym_repr += str(num) + '}'
-                    if sym_repr not in _global_abstract_time_sequence:
-                        break
-                    num += 1
+        number_ = len(_global_abstract_time_sequence)
+        if number_ == 0:
+            sym_repr = r"\mathtt{T}^S_0"
+            lin_repr = r"Ts0"
         else:
-            assert isinstance(sym_repr, str), "sym_repr must be str."
+            num = 1
+            sym_repr = r"\mathtt{T}^S_{"
+            lin_repr = r"Ts"
+            while 1:
+                sym_repr += str(num) + '}'
+                lin_repr += str(num)
+                if sym_repr not in _global_abstract_time_sequence:
+                    break
+                num += 1
 
-        if lin_repr is None:
-            number_ = len(_global_abstract_time_sequence)
-            if number_ == 0:
-                lin_repr = r"TS"
-            else:
-                num = 0
-                lin_repr = r"TS"
-                while 1:
-                    lin_repr += str(num)
-                    if lin_repr not in _global_abstract_time_sequence:
-                        break
-                    num += 1
-        else:
-            assert isinstance(lin_repr, str), "sym_repr must be str."
-            for sr in _global_abstract_time_sequence:
-                assert lin_repr != _global_abstract_time_sequence[sr]._lin_repr, \
-                    f"lin_repr={lin_repr} is taken."
+        lin_repr = r"\textsc{" + lin_repr + r"}"
+
+        assert isinstance(lin_repr, str), "sym_repr must be str."
+        for sr in _global_abstract_time_sequence:
+            assert lin_repr != _global_abstract_time_sequence[sr]._lin_repr, \
+                f"lin_repr={lin_repr} is taken."
 
         assert sym_repr not in _global_abstract_time_sequence, f"time sequence sym_repr={sym_repr} is taken."
         self._sym_repr = sym_repr
         self._lin_repr = lin_repr
         _global_abstract_time_sequence[sym_repr] = self
         self._object = None
+        # cache all abstract time instants of this abstract time sequence.
+        self._my_abstract_time_instants = dict()  # use sym_repr as cache key
+        # cache all abstract time intervals of this abstract time sequence.
+        self._my_abstract_time_interval = dict()  # use lin_repr as cache_key
         self._freeze()
 
     def specify(self, class_id, *args, **kwargs):
@@ -71,7 +65,13 @@ class AbstractTimeSequence(Frozen):
     def __getitem__(self, k):
         """return t[k], not return t=k."""
         assert isinstance(k, str), f"Can only set abstract time instant with str."
-        return AbstractTimeInstant(self, k)
+        sym_repr = self._sym_repr + r"[" + k + "]"
+        if sym_repr in self._my_abstract_time_instants:
+            return self._my_abstract_time_instants[sym_repr]
+        else:
+            ati = AbstractTimeInstant(self, k, sym_repr)
+            self._my_abstract_time_instants[sym_repr] = ati
+            return ati
 
     def __repr__(self):
         """customized repr."""
@@ -99,9 +99,21 @@ class AbstractTimeSequence(Frozen):
         -------
 
         """
-        t0 = self[ks]
-        t1 = self[ke]
-        return AbstractTimeInterval(t0, t1)
+        if ks.__class__.__name__ == 'AbstractTimeInstant':
+            ts = ks
+        else:
+            ts = self[ks]
+        if ke.__class__.__name__ == 'AbstractTimeInstant':
+            te = ke
+        else:
+            te = self[ke]
+        lin_repr = self._lin_repr + r"['" + ts.k + "','" + te.k + "']"
+        if lin_repr in self._my_abstract_time_interval:
+            return self._my_abstract_time_interval[lin_repr]
+        else:
+            ati = AbstractTimeInterval(ts, te, lin_repr)
+            self._my_abstract_time_interval[lin_repr] = ati
+            return ati
 
 
 class TimeSequence(Frozen):
@@ -134,21 +146,6 @@ class TimeSequence(Frozen):
         """A private tag."""
         return True
 
-    def make_time_interval(self, k_start, k_end):
-        """
-
-        Parameters
-        ----------
-        k_start
-        k_end
-
-        Returns
-        -------
-
-        """
-        t0 = self[k_start]
-        t1 = self[k_end]
-        return TimeInterval(t0, t1)
 
 
 class ConstantTimeSequence(TimeSequence):
@@ -192,23 +189,31 @@ class ConstantTimeSequence(TimeSequence):
         return self._k_max
 
     def __getitem__(self, k):
-        """return t[k], not return t=k."""
-        if isinstance(k, (int, float)):
-            time = self.t_0 + k * self._dt
-            remainder = round(k % 1, 8)
-            if time < self.t_0:
-                raise TimeInstantError(
-                    f"t[{k}] = {time} is lower than t0={self.t_0}.")
-            elif time > self.t_max:
-                raise TimeInstantError(
-                    f"t[{k}] = {time} is higher than t_max={self.t_max}.")
-            elif remainder not in self._allowed_reminder:
-                raise TimeInstantError(
-                    f"t[{k}] = {time} is not a valid time instance of the sequence.")
-            else:
-                return TimeInstant(time)
+        """return t[k], not return t=k.
+
+        examples
+        --------
+
+            >>> t = ConstantTimeSequence([0, 5, 5], 3)
+            >>> t = t[1+1/3]
+            >>> print(t)  # doctest: +ELLIPSIS
+            <TimeInstant t=4.0 at ...
+
+        """
+        assert isinstance(k, (int, float)), f"specific time sequence can not use number for time instant."
+        time = self.t_0 + k * self._dt
+        remainder = round(k % 1, 8)
+        if time < self.t_0:
+            raise TimeInstantError(
+                f"t[{k}] = {time} is lower than t0={self.t_0}.")
+        elif time > self.t_max:
+            raise TimeInstantError(
+                f"t[{k}] = {time} is higher than t_max={self.t_max}.")
+        elif remainder not in self._allowed_reminder:
+            raise TimeInstantError(
+                f"t[{k}] = {time} is not a valid time instance of the sequence.")
         else:
-            raise Exception()
+            return TimeInstant(time)
 
     def __repr__(self):
         super_repr = super().__repr__().split('object')[1]
@@ -247,9 +252,11 @@ class TimeInstant(Frozen):
 class AbstractTimeInstant(Frozen):
     """"""
 
-    def __init__(self, ts, k):
+    def __init__(self, ts, k, sym_repr):
         self._ts = ts
         self._k = k
+        self._sym_repr = sym_repr
+        self._lin_repr = ts._lin_repr + "['" + k + "']"
         self._freeze()
 
     @property
@@ -267,17 +274,7 @@ class AbstractTimeInstant(Frozen):
             self.k == other.k
 
     def __call__(self, **kwargs):
-        """
-
-        examples
-        --------
-
-            >>> t = ConstantTimeSequence([0, 5, 5], 3)
-            >>> t = t[1+1/3]
-            >>> print(t)  # doctest: +ELLIPSIS
-            <TimeInstant t=4.0 at ...
-
-        """
+        """call, return a TimeInstant object."""
         time_instance_str = self._k
         for key in kwargs:
             time_instance_str = time_instance_str.replace(key, str(kwargs[key]))
@@ -330,6 +327,7 @@ class TimeInterval(Frozen):
         return self._t_end
 
     def __call__(self):
+        """dt"""
         return self._dt
 
     def __repr__(self):
@@ -341,7 +339,7 @@ class TimeInterval(Frozen):
 class AbstractTimeInterval(Frozen):
     """"""
 
-    def __init__(self, t_start, t_end):
+    def __init__(self, t_start, t_end, lin_repr):
         """
 
         Parameters
@@ -353,6 +351,7 @@ class AbstractTimeInterval(Frozen):
             The start abstract time instant.
         t_end :
             The end abstract time instant.
+        lin_repr :
 
         """
         assert t_start.__class__.__name__ == 'AbstractTimeInstant' and \
@@ -364,6 +363,13 @@ class AbstractTimeInterval(Frozen):
         self._ts = ts0
         self._t_start = t_start
         self._t_end = t_end
+        self._lin_repr = lin_repr
+        num_global_ati = len(_global_abstract_time_interval)
+        if num_global_ati == 0:
+            sym_repr = r"\Delta t"
+        else:
+            sym_repr = r"\Delta t_{" + str(num_global_ati-1) + r"}"
+        self._sym_repr = sym_repr
         self._freeze()
 
     @property
@@ -379,7 +385,7 @@ class AbstractTimeInterval(Frozen):
         return self._t_end
 
     def __call__(self, **kwargs):
-        """call"""
+        """dt"""
         ts = self.start(**kwargs)
         te = self.end(**kwargs)
         return TimeInterval(ts, te)
@@ -408,16 +414,15 @@ if __name__ == '__main__':
     # print(ti.start, ti.end, ti)
 
     at = AbstractTimeSequence()
-    # t0 = at['k-1']
+    t0 = at['k-1']
     # t1 = at['k']
     # ti = AbstractTimeInterval(t0, t1)
     # at.specify('constant', [0, 100, 100], 2)
     # # for k in range(1,10):
     # print(ti.start(k=1), ti.end(k=1), ti(k=1))
 
-    t0 = at['0']
-    t1 = at['0.5']
-    ti = AbstractTimeInterval(t0, t1)
+    ti = at.make_time_interval('k+0', 'k+0.5')
     at.specify('constant', [0, 100, 100], 2)
     # for k in range(1,10):
-    print(ti.start(), ti.end(), ti())
+    print(ti.start(k=1)(), ti(k=1)())
+
