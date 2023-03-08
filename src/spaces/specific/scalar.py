@@ -15,33 +15,23 @@ class ScalarValuedFormSpace(SpaceBase):
     mesh :
     k :
         k-form spaces
-    p :
-        The degree of the fintie element spaces.
 
     Examples
     --------
 
     """
 
-    def __init__(self, mesh, k, p):
-        """"""
+    def __init__(self, mesh, k):
         super().__init__(mesh)
         assert isinstance(k, int) and 0 <= k <= mesh.ndim, f" k={k} illegal on {mesh}."
         self._k = k
-        assert isinstance(p, int) and p >= 1, f"basis function degree p = {p} is wrong."
-        self._p = p
-        self._sym_repr = r"\Omega^{(" + str(self.k) + r')}' + rf"_{self.p}({mesh._sym_repr})"
+        self._sym_repr = r"\Omega^{(" + str(self.k) + r')}' + rf"({mesh._sym_repr})"
         self._freeze()
 
     @property
     def k(self):
         """I am k-form."""
         return self._k
-
-    @property
-    def p(self):
-        """Basis function degree."""
-        return self._p
 
     def __repr__(self):
         """By construction, it will be unique."""

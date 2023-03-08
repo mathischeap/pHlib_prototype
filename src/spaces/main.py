@@ -7,12 +7,19 @@ import sys
 
 if './' not in sys.path:
     sys.path.append('./')
+from importlib import import_module
 
 _config = {
     'current_mesh': '',
 }
 _mesh_set = dict()
 _space_set = dict()
+
+# whenever new space is implemented, add it below.
+_implemented_spaces = {
+    # abbr : (class                                               , description                 , parameters),
+    'Omega': ('src.spaces.specific.scalar : ScalarValuedFormSpace', 'scalar valued k-form space', ['k', ]),
+}
 
 
 def set_mesh(mesh):
@@ -27,16 +34,6 @@ def set_mesh(mesh):
         _space_set[sr] = dict()
 
     _config['current_mesh'] = sr
-
-
-from src.spaces.scalar import ScalarValuedFormSpace
-
-
-# whenever new space is implemented, add it below.
-_implemented_spaces = {
-    # abbr : (class                , description                 , parameters),
-    'Omega': (ScalarValuedFormSpace, 'scalar valued k-form space', ['k', 'p']),
-}
 
 
 def _list_spaces():
@@ -97,7 +94,8 @@ def new(abbrs, *args, mesh=None, **kwargs):
     for abbr in abbrs:
         assert abbr in _implemented_spaces, \
             f"space abbr.={abbr} not implemented. do `ph.space.list_()` to see all implemented spaces."
-        space_class = _implemented_spaces[abbr][0]
+        space_class_path, space_class_name = _implemented_spaces[abbr][0].split(' : ')
+        space_class = getattr(import_module(space_class_path), space_class_name)
 
         space = space_class(mesh, *args, **kwargs)
         srp = space._sym_repr  # do not use __repr__()

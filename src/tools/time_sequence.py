@@ -107,7 +107,7 @@ class AbstractTimeSequence(Frozen):
             te = ke
         else:
             te = self[ke]
-        lin_repr = self._lin_repr + r"['" + ts.k + "','" + te.k + "']"
+        lin_repr = self._lin_repr[:-1] + r"[" + ts.k + "," + te.k + "]}"
         if lin_repr in self._my_abstract_time_interval:
             return self._my_abstract_time_interval[lin_repr]
         else:
@@ -145,7 +145,6 @@ class TimeSequence(Frozen):
     def _is_time_sequence():
         """A private tag."""
         return True
-
 
 
 class ConstantTimeSequence(TimeSequence):
@@ -425,4 +424,3 @@ if __name__ == '__main__':
     at.specify('constant', [0, 100, 100], 2)
     # for k in range(1,10):
     print(ti.start(k=1)(), ti(k=1)())
-

@@ -18,18 +18,29 @@ plt.rcParams.update({
 matplotlib.use('TkAgg')
 
 from src.tools.frozen import Frozen
-from src.form import _find_form
-from src.form import codifferential, d, trace, Hodge
+from src.form.tools import _find_form
+from src.form.operators import codifferential, d, trace, Hodge, time_derivative
+from src.form.operators import _parse_related_time_derivative
 
 
 class _WeakFormulationTerm(Frozen):
-    """"""
+    """Factor multiplies the term, <f1|f2> or (f1, f2).
+    """
 
-    def __init__(self, mesh, f1, f2):
+    def __init__(self, mesh, f1, f2, factor=None):
         """"""
         self._mesh = mesh
         self._f1 = f1
         self._f2 = f2
+        self._factor = factor
+
+        if factor is None:
+            self._factor_sym_repr = None
+            self._factor_lin_repr = None
+        elif isinstance(factor, (int, float)):
+            self._factor_sym_repr = str(factor)
+            self._factor_lin_repr = rf"({str(factor)})"
+
         self._simple_patterns = _simpler_pattern_examiner(f1, f2)
         for sp in self._simple_patterns:
             assert sp in simple_patterns, f"found unknown simple pattern: {sp}."
@@ -62,16 +73,34 @@ class _WeakFormulationTerm(Frozen):
         plt.axis('off')
         plt.show()
 
-    def _replace(self, f, by, which='all'):
-        """replace `f` by `by`, if there are more than one `f` found, apply the replacement to `which`.
+    def replace(self, f, by, which='all'):
+        """replace form `f` in this term by `by`, if there are more than one `f` found, apply the replacement to `which`.
         If there are 'f' in this term, which should be int or a list of int which indicating
         `f` according the sequence of `f._lin_repr` in `self._lin_repr`.
         """
         raise NotImplementedError()
 
-    def _split(self, which, f, into):
+    def split(self, f, into, signs, which=None):
         """Split `which` `f` `into`."""
+        if f in ('f1', 'f2'):
+            assert which is None, f"When specify f1 or f2, no need to set `which`."
+            term_class = self.__class__
+            f2 = self._f2
+            assert isinstance(into, (list, tuple)), f"put split objects into a list or tuple."
+            assert len(into) > 1, f"number of split objects must be larger than 1."
+            assert len(into) == len(signs), f"objects and signs length dis-match."
+            new_terms = list()
+            for i, ifi in enumerate(into):
+                assert signs[i] in ('+', '-'), f"{i}th sign = {signs[i]} is wrong."
+                assert ifi.__class__.__name__ == 'Form', f"{i}th object = {ifi} is not a form."
+                assert ifi.mesh == f2.mesh, f"mesh of {i}th object = {ifi.mesh} does not fit."
+                # noinspection PyArgumentList
+                term = term_class(ifi, f2)
+                new_terms.append(term)
+            return new_terms, signs
 
+        else:
+            raise NotImplementedError()
 
 
 
@@ -94,10 +123,10 @@ def duality_pairing(f1, f2):
             f"cannot do duality pairing between {f1} in {s1} and {f2} in {s2}."
     else:
         raise Exception(f'cannot do duality pairing between {f1} in {s1} and {f2} in {s2}.')
-    return DualityPairing(f1, f2)
+    return DualityPairingTerm(f1, f2)
 
 
-class DualityPairing(_WeakFormulationTerm):
+class DualityPairingTerm(_WeakFormulationTerm):
     """
 
     Parameters
@@ -106,7 +135,7 @@ class DualityPairing(_WeakFormulationTerm):
     f2
     """
 
-    def __init__(self, f1, f2):
+    def __init__(self, f1, f2, factor=None):
         """
 
         Parameters
@@ -122,7 +151,7 @@ class DualityPairing(_WeakFormulationTerm):
         else:
             raise Exception(f'cannot do duality pairing between {f1} in {s1} and {f2} in {s2}.')
 
-        super().__init__(f1.mesh, f1, f2)
+        super().__init__(f1.mesh, f1, f2, factor=factor)
 
         sr1 = f1._sym_repr
         sr2 = f2._sym_repr
@@ -140,8 +169,12 @@ class DualityPairing(_WeakFormulationTerm):
         else:
             lr2 = rf'[{lr2}]'
 
-        self._sym_repr = rf'\left<\left.{sr1}\right|{sr2}\right>_' + r"{" + self._mesh.manifold._sym_repr + "}"
-        self._lin_repr = r"\emph{duality-pairing between} " + lr1 + r' \emph{and} ' + lr2
+        sym_repr = rf'\left<\left.{sr1}\right|{sr2}\right>_' + r"{" + self._mesh.manifold._sym_repr + "}"
+        lin_repr = r"\emph{duality-pairing between} " + lr1 + r' \emph{and} ' + lr2
+
+        self._sym_repr = sym_repr
+        self._lin_repr = lin_repr
+
 
     def __repr__(self):
         """"""
@@ -192,7 +225,7 @@ class L2InnerProductTerm(_WeakFormulationTerm):
     f2
     """
 
-    def __init__(self, f1, f2):
+    def __init__(self, f1, f2, factor=None):
         """
 
         Parameters
@@ -203,11 +236,11 @@ class L2InnerProductTerm(_WeakFormulationTerm):
         s1 = f1.space
         s2 = f2.space
         if s1.__class__.__name__ == 'ScalarValuedFormSpace' and s2.__class__.__name__ == 'ScalarValuedFormSpace':
-            assert s1.mesh == s2.mesh and s1.k == s2.k, f"spaces dis-match."   # mesh consistence checked here.
+            assert s1 == s2, f"spaces dis-match."   # mesh consistence checked here.
         else:
             raise NotImplementedError()
 
-        super().__init__(f1.mesh, f1, f2)
+        super().__init__(f1.mesh, f1, f2, factor=factor)
 
         sr1 = f1._sym_repr
         sr2 = f2._sym_repr
@@ -237,7 +270,7 @@ class L2InnerProductTerm(_WeakFormulationTerm):
         """"""
         if '(codifferential sf, sf)' in self._simple_patterns:
             # we try to find the sf by testing all existing forms, this is bad. Update this in the future.
-            bf = _find_form(self._f1._sym_repr, upon=codifferential)
+            bf = _find_form(self._f1._lin_repr, upon=codifferential)
             assert bf is not None, f"something is wrong, we do not found the base form " \
                                    f"(codifferential of base form = f1)."
             term_manifold = L2InnerProductTerm(bf, d(self._f2))
@@ -273,12 +306,12 @@ def _simpler_pattern_examiner(f1, f2):
 def _simpler_pattern_examiner_scalar_valued_forms(f1, f2):
     """ """
     patterns = list()
-    if f1._sym_repr[:15] == r'\mathrm{d}^\ast':
+    if f1._lin_repr[:24] == r'\emph{codifferential of}':
         patterns.append('(codifferential sf, sf)')
 
-    if f1._sym_repr[:10] == r'\partial_t':
-        bf1 = _find_form(f1._sym_repr[11:])  # use 11 as there is a space between `\partial_t` and root form sym_repr.
-        if bf1.is_root and r'\partial_t' not in f2._sym_repr:
+    if f1._lin_repr[:25] == r'\emph{time-derivative of}':
+        bf1 = _find_form(f1._lin_repr, upon=time_derivative)
+        if bf1.is_root and _parse_related_time_derivative(f2) == list():
             patterns.append('(partial_t root-sf, sf)')
 
     return tuple(patterns)

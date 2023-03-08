@@ -10,7 +10,7 @@ if './' not in sys.path:
     sys.path.append('./')
 
 from src.tools.frozen import Frozen
-from src.form import Form
+from src.form.main import Form
 import matplotlib.pyplot as plt
 import matplotlib
 plt.rcParams.update({

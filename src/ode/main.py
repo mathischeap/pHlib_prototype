@@ -9,7 +9,7 @@ import sys
 if './' not in sys.path:
     sys.path.append('./')
 from src.tools.frozen import Frozen
-from src.form import _find_form
+from src.form.tools import _find_form
 import matplotlib.pyplot as plt
 import matplotlib
 plt.rcParams.update({
@@ -259,9 +259,9 @@ if __name__ == '__main__':
     manifold = ph.manifold(3)
     mesh = ph.mesh(manifold)
     ph.space.set_mesh(mesh)
-    O1 = ph.space.new('Omega', k=1, p=3)
-    O2 = ph.space.new('Omega', k=2, p=3)
-    O3 = ph.space.new('Omega', k=3, p=3)
+    O1 = ph.space.new('Omega', 1)
+    O2 = ph.space.new('Omega', 2)
+    O3 = ph.space.new('Omega', 3)
     # ph.list_meshes()
     w = O1.make_form(r'\omega^1', "vorticity1")
     u = O2.make_form(r'u^2', "velocity2")
@@ -280,8 +280,8 @@ if __name__ == '__main__':
     pde = ph.pde(exp, globals())
     pde.unknowns = [u, w, P]
     wf = pde.test_with([O2, O1, O3], sym_repr=[r'v^2', r'w^1', r'q^3'])
-    wf = wf.derive.integration_by_parts_wrt_codifferential('0-2')
-    wf = wf.derive.integration_by_parts_wrt_codifferential('1-1')
+    wf = wf.derive.integration_by_parts('0-2')
+    wf = wf.derive.integration_by_parts('1-1')
     wf = wf.derive.rearrange(
         {
             0: '0, 1, 2 = 4, 3',
@@ -298,15 +298,19 @@ if __name__ == '__main__':
 
     term0 = ode_i['0'][1]
     ats = ph.time_sequence()
-    dt = ats.make_time_interval('k-1/2', 'k')   # dt = t[k] - t[k-1/2]
+    dt = ats.make_time_interval('k-1', 'k')   # dt = t[k] - t[k-1/2]
+    # term0.print_representations()
 
     u_km1 = u.evaluate_at(dt.start)
+    u_k = u.evaluate_at(dt.end)
     # print(dt._lin_repr, dt._sym_repr)
     # print(dt.start._lin_repr)
     # u_km1.print_representations()
 
-    u2 = u / 2
-    u2.print_representations()
-    ut = u / dt
-    ut.print_representations()
+    u_km1_dt = u_km1 / dt
+    u_k_dt = u_k / dt
+    # ut.print_representations()
 
+    new_terms, signs = term0.split('f1', [u_km1_dt, u_k_dt], ['-', '+'])
+    new_terms[0].print_representations()
+    new_terms[1].print_representations()

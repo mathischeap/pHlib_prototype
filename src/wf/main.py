@@ -259,8 +259,17 @@ class _Derive(Frozen):
         self._wf = wf
         self._freeze()
 
-    def _replace_term_by(self, index, terms, signs):
+    def replace(self, index, terms, signs):
         """_replace the term indicated by `index` by `terms` of `signs`"""
+        if isinstance(terms, (list, tuple)):
+            pass
+        else:
+            terms = [terms, ]
+            signs = [signs, ]
+        assert len(terms) == len(signs), f"new terms length is not equal to the length of new signs."
+        for _, sign in enumerate(signs):
+            assert sign in ('+', '-'), f"{_}th sign = {sign} is wrong. Must be '+' or '-'."
+
         i, j, k = self._wf._parse_index(index)
         old_sign = self._wf._sign_dict[i][j][k]
         if old_sign == '+':
@@ -271,18 +280,14 @@ class _Derive(Frozen):
                 signs_.append(self._switch_sign(s_))
         signs = signs_
 
-        new_term_dict = deepcopy(self._wf._ind_dict)  # must do deepcopy, use `_ind_dict` not a typo
-        new_sign_dict = deepcopy(self._wf._ind_dict)  # must do deepcopy, use `_ind_dict` not a typo
+        new_term_dict = deepcopy(self._wf._ind_dict)  # must do deepcopy, use `_ind_dict`, not a typo
+        new_sign_dict = deepcopy(self._wf._ind_dict)  # must do deepcopy, use `_ind_dict`, not a typo
 
         new_term_dict[i][j][k] = list()
         new_sign_dict[i][j][k] = list()
 
-        if isinstance(terms, (list, tuple)):
-            new_term_dict[i][j][k].extend(terms)
-            new_sign_dict[i][j][k].extend(signs)
-        else:
-            new_term_dict[i][j][k].append(terms)
-            new_sign_dict[i][j][k].append(signs)
+        new_term_dict[i][j][k].extend(terms)
+        new_sign_dict[i][j][k].extend(signs)
 
         new_term_dict, new_sign_dict = self._parse_new_weak_formulation_dict(new_term_dict, new_sign_dict)
 
@@ -450,12 +455,12 @@ class _Derive(Frozen):
         else:
             raise Exception()
 
-    def integration_by_parts_wrt_codifferential(self, index):
+    def integration_by_parts(self, index):
         """integration by parts."""
         term = self._wf[index][1]
         assert term != 0, f"Cannot apply integration by parts to term '{index}': {term}"
         terms, signs = term._integration_by_parts()
-        return self._replace_term_by(index, terms, signs)
+        return self.replace(index, terms, signs)
 
 
 if __name__ == '__main__':
@@ -468,10 +473,10 @@ if __name__ == '__main__':
     mesh = ph.mesh(manifold)
 
     ph.space.set_mesh(mesh)
-    O0 = ph.space.new('Omega', k=0, p=3)
-    O1 = ph.space.new('Omega', k=1, p=3)
-    O2 = ph.space.new('Omega', k=2, p=3)
-    O3 = ph.space.new('Omega', k=3, p=3)
+    O0 = ph.space.new('Omega', 0)
+    O1 = ph.space.new('Omega', 1)
+    O2 = ph.space.new('Omega', 2)
+    O3 = ph.space.new('Omega', 3)
 
     # ph.list_spaces()
     # ph.list_meshes()
@@ -496,15 +501,15 @@ if __name__ == '__main__':
     ]
     pde = ph.pde(exp, globals())
     pde.unknowns = [u, w, P]
-    # pde.print_representations(indexing=True)
+    pde.print_representations(indexing=True)
 
     wf = pde.test_with([O2, O1, O3], sym_repr=[r'v^2', r'w^1', r'q^3'])
     print(wf)
     wf.print_representations(indexing=True)
 
-    wf = wf.derive.integration_by_parts_wrt_codifferential('0-2')
-    wf = wf.derive.integration_by_parts_wrt_codifferential('1-1')
-    # wf.print_representations()
+    wf = wf.derive.integration_by_parts('0-2')
+    wf = wf.derive.integration_by_parts('1-1')
+    wf.print_representations()
 
     # # wf = wf.derive.rearrange(
     # #     [
@@ -539,3 +544,4 @@ if __name__ == '__main__':
     ode_i = ph.ode(terms_and_signs=[terms, signs])
     ode_i.constant_elementary_forms = wf.test_forms[0]
     ode_i.print_representations()
+    ph.list_forms()

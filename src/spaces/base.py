@@ -7,7 +7,7 @@
 
 from src.tools.frozen import Frozen
 from src.config import get_embedding_space_dim
-from src.form import Form
+from src.form.main import Form
 
 _global_spaces = dict()
 
