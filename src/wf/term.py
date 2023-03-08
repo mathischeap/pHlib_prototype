@@ -74,7 +74,8 @@ class _WeakFormulationTerm(Frozen):
         plt.show()
 
     def replace(self, f, by, which='all'):
-        """replace form `f` in this term by `by`, if there are more than one `f` found, apply the replacement to `which`.
+        """replace form `f` in this term by `by`,
+        if there are more than one `f` found, apply the replacement to `which`.
         If there are 'f' in this term, which should be int or a list of int which indicating
         `f` according the sequence of `f._lin_repr` in `self._lin_repr`.
         """
@@ -101,7 +102,6 @@ class _WeakFormulationTerm(Frozen):
 
         else:
             raise NotImplementedError()
-
 
 
 def duality_pairing(f1, f2):

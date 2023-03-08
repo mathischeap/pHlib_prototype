@@ -26,6 +26,7 @@ _global_form_variables = {
     'update_cache': True
 }
 
+
 class Form(Frozen):
     """The form class."""
 
