@@ -106,7 +106,7 @@ class Manifold(Frozen):
         super_repr = super().__repr__().split('object')[-1]
         return f'<Manifold {self._sym_repr}' + super_repr  # this must be unique.
 
-    def boundary(self, sym_repr=None):
+    def boundary(self):
         """Give a manifold of dimensions (n-1)"""
         if self._boundary is None:
             if self.ndim == 0:
@@ -114,13 +114,9 @@ class Manifold(Frozen):
             elif self.is_periodic():
                 return NullManifold(self.ndim-1)
             else:
-                if sym_repr is None:
-                    sym_repr = r'\partial' + self._sym_repr
-                else:
-                    pass
                 self._boundary = Manifold(
                     self.ndim-1,
-                    sym_repr=sym_repr,
+                    sym_repr=r'\partial' + self._sym_repr,
                     lin_repr=f'boundary-of-{self._pure_pure_lin_repr}',
                     is_periodic=True,
                 )
