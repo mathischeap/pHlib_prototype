@@ -52,3 +52,4 @@ from src.pde import pde
 from src.ode.main import ode
 
 from src.tools.time_sequence import AbstractTimeSequence as time_sequence
+from src.form.parameters import constant_scalar

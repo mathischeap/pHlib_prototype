@@ -25,7 +25,7 @@ _implemented_operators = {  # coded operators
 
 
 _time_derivative_related_operators = {
-    'time_derivative': r'\emph{time-derivative of}',
+    'time_derivative': _implemented_operators['time_derivative'],
 }
 
 

@@ -21,7 +21,7 @@ matplotlib.use('TkAgg')
 
 
 def ode(*args, **kwargs):
-    """"""
+    """A wrapper of the ODE class."""
     return OrdinaryDifferentialEquation(*args, **kwargs)
 
 
@@ -263,6 +263,7 @@ if __name__ == '__main__':
     O2 = ph.space.new('Omega', 2)
     O3 = ph.space.new('Omega', 3)
     # ph.list_meshes()
+
     w = O1.make_form(r'\omega^1', "vorticity1")
     u = O2.make_form(r'u^2', "velocity2")
     f = O2.make_form(r'f^2', "body-force")
@@ -277,6 +278,7 @@ if __name__ == '__main__':
         'w = dsu',
         'du = 0',
     ]
+
     pde = ph.pde(exp, globals())
     pde.unknowns = [u, w, P]
     wf = pde.test_with([O2, O1, O3], sym_repr=[r'v^2', r'w^1', r'q^3'])
@@ -297,6 +299,9 @@ if __name__ == '__main__':
     # ode_i.print_representations()
 
     term0 = ode_i['0'][1]
+    term4 = ode_i['4'][1]
+    # term4.print_representations()
+
     ats = ph.time_sequence()
     dt = ats.make_time_interval('k-1', 'k')   # dt = t[k] - t[k-1/2]
     # term0.print_representations()
@@ -305,12 +310,19 @@ if __name__ == '__main__':
     u_k = u.evaluate_at(dt.end)
     # print(dt._lin_repr, dt._sym_repr)
     # print(dt.start._lin_repr)
-    # u_km1.print_representations()
+    u_km1.print_representations()
 
     u_km1_dt = u_km1 / dt
     u_k_dt = u_k / dt
+    u_2 = u / 2
+    # u_km1.print_representations()
+    # u_2.print_representations()
+    # u_km1_dt.print_representations()
     # ut.print_representations()
 
     new_terms, signs = term0.split('f1', [u_km1_dt, u_k_dt], ['-', '+'])
-    new_terms[0].print_representations()
-    new_terms[1].print_representations()
+    # new_terms[0].print_representations()
+    # new_terms[1].print_representations()
+
+    ph.list_forms(globals())
+

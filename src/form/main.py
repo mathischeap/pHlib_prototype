@@ -19,7 +19,10 @@ plt.rcParams.update({
 })
 matplotlib.use('TkAgg')
 
+from src.config import _parse_lin_repr
 from src.form.operators import wedge
+from src.config import _check_sym_repr
+from src.form.parameters import constant_scalar
 
 _global_forms = dict()
 _global_form_variables = {
@@ -47,28 +50,17 @@ class Form(Frozen):
             # make sure it does not confuse operator lin repr
             assert len(sym_repr) > 0, \
                 f"sym_repr must be a str of length > 0."
+            lin_repr, self._pure_lin_repr = _parse_lin_repr('form', lin_repr)
             for form_id in _global_forms:
                 form = _global_forms[form_id]
                 assert sym_repr != form._sym_repr, \
                     f"root form symbolic representation={sym_repr} is taken. Pls use another one."
                 assert lin_repr != form._lin_repr, \
                     f"root form linguistic representation={lin_repr} is taken. Pls use another one."
-            assert 'emph' not in lin_repr, f"A safety check, almost trivial."
-            assert lin_repr[:8] == r"\textsf{" and lin_repr[-1] == r'}', \
-                f"root form linguistic representation = {lin_repr} illegal, it be must be of form " + r"\textsf{...}."
-            _net_lin_repr = lin_repr[8:-1]
-            if '@' in _net_lin_repr:
-                assert _net_lin_repr.count('@') == 1, f"trivial check!"
-                _pure_lin_repr = _net_lin_repr.split('@')[0]
-            else:
-                _pure_lin_repr = _net_lin_repr
-            _pure_lin_repr = _pure_lin_repr.replace('-', '')
-            assert _pure_lin_repr.isalnum(), rf'lin_repr={lin_repr} illegal. ' + \
-                                             "In {} (and before @ if existing), " \
-                                             "it must only have letters, numbers and '-'."
         else:
-            pass
+            self._pure_lin_repr = None
 
+        sym_repr = _check_sym_repr(sym_repr)
         self._sym_repr = sym_repr
         self._lin_repr = lin_repr
         self._is_root = is_root
@@ -117,13 +109,13 @@ class Form(Frozen):
             pti_text = ''
         else:
             base_form, ats, ati = self._pAti_form['base_form'], self._pAti_form['ats'], self._pAti_form['ati']
-            pti_text = rf"\\(${base_form._sym_repr}$ at abstract time instant ${ati._sym_repr}$,\\"
-            pti_text += r"i.e. \textsf{" + rf"t['{ati.k}']" + r"} of abstract time sequence: "
-            pti_text += rf"${ats._lin_repr}$.)"
+            pti_text = rf"\\(${base_form._sym_repr}$ at abstract time instant ${ati._sym_repr}$"
+        space_text = f'spaces: ${self.space._sym_repr}$'
+        space_text += rf"\ \ \ \ in ({self.mesh._lin_repr})"
         plt.figure(figsize=(3 + len(self._sym_repr)/4, 4))
         plt.axis([0, 1, 0, 5])
         plt.text(0, 4.5, f'form id: {my_id}', ha='left', va='center', size=15)
-        plt.text(0, 3.5, f'spaces: ${self.space._sym_repr}$', ha='left', va='center', size=15)
+        plt.text(0, 3.5, space_text, ha='left', va='center', size=15)
         plt.text(0, 2.5, rf'\noindent symbolic : ' + f"${self._sym_repr}$" + pti_text, ha='left', va='center', size=15)
         plt.text(0, 1.5, 'linguistic : ' + self._lin_repr, ha='left', va='center', size=15)
         root_text = rf'is_root: {self.is_root()}'
@@ -182,14 +174,18 @@ class Form(Frozen):
     def __truediv__(self, other):
         """self / other"""
         if isinstance(other, (int, tuple)):
-            num_str = str(other)
+            cs = constant_scalar(other)
+            return self / cs
+
+        elif other.__class__.__name__ == 'ConstantScalar0Form':
             lr = self._lin_repr
             sr = self._sym_repr
+            cs = other
             if self.is_root():
-                lr = lr + r" \emph{divided by} (" + num_str + ")"
+                lr = lr + r" \emph{divided by} " + cs._lin_repr
             else:
-                lr = '[' + lr + ']' + r" \emph{divided by} (" + num_str + ")"
-            sr = r"\dfrac{" + sr + r"}{" + num_str + "}"
+                lr = '[' + lr + ']' + r" \emph{divided by} " + cs._lin_repr
+            sr = r"\dfrac{" + sr + r"}{" + cs._sym_repr + "}"
             f = Form(
                 self.space,  # space
                 sr,          # symbolic representation
@@ -208,9 +204,9 @@ class Form(Frozen):
             sr = self._sym_repr
 
             if self.is_root():
-                lr = lr + r" \emph{divided by} (" + ati_lr + ")"
+                lr = lr + r" \emph{divided by} " + ati_lr
             else:
-                lr = '[' + lr + ']' + r" \emph{divided by} (" + ati_lr + ")"
+                lr = '[' + lr + ']' + r" \emph{divided by} " + ati_lr
             sr = r"\dfrac{" + sr + r"}{" + ati_sr + "}"
             f = Form(
                 self.space,  # space
@@ -226,14 +222,13 @@ class Form(Frozen):
             raise NotImplementedError(f"form divided by <{other.__class__.__name__}> is not implemented.")
 
     def evaluate_at(self, ati):
-        """"""
+        """evaluate_at"""
         if ati.__class__.__name__ == 'AbstractTimeInstant':
             assert self.is_root(), f"Can only evaluate a root form at an abstract time instant."
-            k = ati.k
             sym_repr = self._sym_repr
-            lin_repr = self._lin_repr[:-1]
-            sym_repr = r"\left." + sym_repr + r"\right|^{(" + k + ')}'
-            lin_repr += "@" + ati._lin_repr + "}"
+            lin_repr = self._pure_lin_repr
+            sym_repr = r"\left." + sym_repr + r"\right|^{(" + ati.k + ')}'
+            lin_repr += "@" + ati._pure_lin_repr
 
             ftk = Form(
                 self._space,

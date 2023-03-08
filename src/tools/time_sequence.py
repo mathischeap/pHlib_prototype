@@ -12,9 +12,14 @@ if './' not in sys.path:
 
 from src.tools.frozen import Frozen
 import traceback
+from src.config import _parse_lin_repr
+from src.config import _abstract_time_sequence_default_sym_repr
+from src.config import _abstract_time_interval_default_sym_repr
+from src.config import _abstract_time_sequence_default_lin_repr
+from src.config import _check_sym_repr
 
 _global_abstract_time_sequence = dict()
-_global_abstract_time_interval = dict()
+_global_abstract_time_interval = list()
 
 
 class AbstractTimeSequence(Frozen):
@@ -22,37 +27,22 @@ class AbstractTimeSequence(Frozen):
 
     def __init__(self):
         """"""
-        number_ = len(_global_abstract_time_sequence)
-        if number_ == 0:
-            sym_repr = r"\mathtt{T}^S_0"
-            lin_repr = r"Ts0"
+        num = str(len(_global_abstract_time_sequence))
+        base_sym_repr = _abstract_time_sequence_default_sym_repr
+        if num == '0':
+            sym_repr = base_sym_repr
+            lin_repr = _abstract_time_sequence_default_lin_repr
         else:
-            num = 1
-            sym_repr = r"\mathtt{T}^S_{"
-            lin_repr = r"Ts"
-            while 1:
-                sym_repr += str(num) + '}'
-                lin_repr += str(num)
-                if sym_repr not in _global_abstract_time_sequence:
-                    break
-                num += 1
-
-        lin_repr = r"\textsc{" + lin_repr + r"}"
-
-        assert isinstance(lin_repr, str), "sym_repr must be str."
-        for sr in _global_abstract_time_sequence:
-            assert lin_repr != _global_abstract_time_sequence[sr]._lin_repr, \
-                f"lin_repr={lin_repr} is taken."
-
-        assert sym_repr not in _global_abstract_time_sequence, f"time sequence sym_repr={sym_repr} is taken."
+            sym_repr = base_sym_repr + '_{' + num + '}'
+            lin_repr = _abstract_time_sequence_default_lin_repr + num
+        sym_repr = _check_sym_repr(sym_repr)
+        lin_repr, self._pure_lin_repr = _parse_lin_repr('abstract_time_sequence', lin_repr)
         self._sym_repr = sym_repr
         self._lin_repr = lin_repr
-        _global_abstract_time_sequence[sym_repr] = self
+        _global_abstract_time_sequence[lin_repr] = self
         self._object = None
-        # cache all abstract time instants of this abstract time sequence.
-        self._my_abstract_time_instants = dict()  # use sym_repr as cache key
-        # cache all abstract time intervals of this abstract time sequence.
-        self._my_abstract_time_interval = dict()  # use lin_repr as cache_key
+        self._my_abstract_time_instants = dict()  # cache all abstract time instants of this abstract time sequence.
+        self._my_abstract_time_interval = dict()  # cache all abstract time intervals of this abstract time sequence.
         self._freeze()
 
     def specify(self, class_id, *args, **kwargs):
@@ -65,12 +55,13 @@ class AbstractTimeSequence(Frozen):
     def __getitem__(self, k):
         """return t[k], not return t=k."""
         assert isinstance(k, str), f"Can only set abstract time instant with str."
-        sym_repr = self._sym_repr + r"[" + k + "]"
-        if sym_repr in self._my_abstract_time_instants:
-            return self._my_abstract_time_instants[sym_repr]
+        lin_repr = self._pure_lin_repr + r"[" + k + "]"
+        lin_repr, pure_lin_repr = _parse_lin_repr('abstract_time_instant', lin_repr)
+        if lin_repr in self._my_abstract_time_instants:
+            return self._my_abstract_time_instants[lin_repr]
         else:
-            ati = AbstractTimeInstant(self, k, sym_repr)
-            self._my_abstract_time_instants[sym_repr] = ati
+            ati = AbstractTimeInstant(self, k, lin_repr, pure_lin_repr)
+            self._my_abstract_time_instants[lin_repr] = ati
             return ati
 
     def __repr__(self):
@@ -107,11 +98,12 @@ class AbstractTimeSequence(Frozen):
             te = ke
         else:
             te = self[ke]
-        lin_repr = self._lin_repr[:-1] + r"[" + ts.k + "," + te.k + "]}"
+        lin_repr = self._pure_lin_repr + r"[" + ts.k + "," + te.k + "]"
+        lin_repr, pure_lin_repr = _parse_lin_repr('abstract_time_interval', lin_repr)
         if lin_repr in self._my_abstract_time_interval:
             return self._my_abstract_time_interval[lin_repr]
         else:
-            ati = AbstractTimeInterval(ts, te, lin_repr)
+            ati = AbstractTimeInterval(ts, te, lin_repr, pure_lin_repr)
             self._my_abstract_time_interval[lin_repr] = ati
             return ati
 
@@ -251,11 +243,14 @@ class TimeInstant(Frozen):
 class AbstractTimeInstant(Frozen):
     """"""
 
-    def __init__(self, ts, k, sym_repr):
+    def __init__(self, ts, k, lin_repr, pure_lin_repr):
         self._ts = ts
         self._k = k
+        sym_repr = ts._sym_repr + f'[{k}]'
+        sym_repr = _check_sym_repr(sym_repr)
         self._sym_repr = sym_repr
-        self._lin_repr = ts._lin_repr + "['" + k + "']"
+        self._lin_repr = lin_repr
+        self._pure_lin_repr = pure_lin_repr
         self._freeze()
 
     @property
@@ -338,7 +333,7 @@ class TimeInterval(Frozen):
 class AbstractTimeInterval(Frozen):
     """"""
 
-    def __init__(self, t_start, t_end, lin_repr):
+    def __init__(self, t_start, t_end, lin_repr, pure_lin_repr):
         """
 
         Parameters
@@ -363,11 +358,15 @@ class AbstractTimeInterval(Frozen):
         self._t_start = t_start
         self._t_end = t_end
         self._lin_repr = lin_repr
-        num_global_ati = len(_global_abstract_time_interval)
-        if num_global_ati == 0:
-            sym_repr = r"\Delta t"
+        self._pure_lin_repr = pure_lin_repr
+        num = len(_global_abstract_time_interval)
+        base_sym_repr = _abstract_time_interval_default_sym_repr
+        if num == 0:
+            sym_repr = base_sym_repr
         else:
-            sym_repr = r"\Delta t_{" + str(num_global_ati-1) + r"}"
+            sym_repr = base_sym_repr + r"_{" + str(num) + r"}"
+        sym_repr = _check_sym_repr(sym_repr)
+        _global_abstract_time_interval.append(sym_repr)
         self._sym_repr = sym_repr
         self._freeze()
 

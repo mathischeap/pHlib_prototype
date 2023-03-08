@@ -10,13 +10,21 @@ if './' not in sys.path:
 
 from src.tools.frozen import Frozen
 from src.config import get_embedding_space_dim
+from src.config import _manifold_default_sym_repr
+from src.config import _check_sym_repr
+from src.config import _parse_lin_repr
+from src.config import _manifold_default_lin_repr
 
 _global_manifolds = dict()
 
 
-def manifold(*args,  **kwargs):
+def manifold(
+        ndim,
+        is_periodic=False,
+        udg_repr=None
+):
     """A function wrapper of the Manifold class."""
-    return Manifold(*args,  **kwargs)
+    return Manifold(ndim, is_periodic=is_periodic, udg_repr=udg_repr)
 
 
 class Manifold(Frozen):
@@ -25,6 +33,7 @@ class Manifold(Frozen):
     def __init__(
             self, ndim,
             sym_repr=None,
+            lin_repr=None,
             is_periodic=False,
             udg_repr=None,   # the undirected graph representation of this manifold
             # add other representations here.
@@ -36,29 +45,39 @@ class Manifold(Frozen):
             f"You change change the dimensions of the embedding space using function `config.set_embedding_space_dim`."
         self._ndim = ndim
         if sym_repr is None:
+            base_repr = _manifold_default_sym_repr
             number_existing_manifolds = len(_global_manifolds)
-            while 1:
-                if number_existing_manifolds == 0:
-                    sym_repr = r'\mathcal{M}'
-                    break
-                else:
-                    sym_repr = r'\mathcal{M}_{' + str(number_existing_manifolds) + '}'
-                    if sym_repr in _global_manifolds:
-                        number_existing_manifolds += 1
-                    else:
-                        break
+
+            if number_existing_manifolds == 0:
+                sym_repr = base_repr
+            else:
+                sym_repr = base_repr + r'_{' + str(number_existing_manifolds) + '}'
         else:
             pass
-        assert isinstance(sym_repr, str), f"sym_repr must be a str of length > 0."
-        assert ' ' not in sym_repr, f"manifold symbolic representation cannot contain space."
-        assert len(sym_repr) > 0, f"sym_repr must be a str of length > 0."
+        sym_repr = _check_sym_repr(sym_repr)
+
+        if lin_repr is None:
+            base_repr = _manifold_default_lin_repr
+            number_existing_manifolds = len(_global_manifolds)
+
+            if number_existing_manifolds == 0:
+                lin_repr = base_repr
+            else:
+                lin_repr = base_repr + str(number_existing_manifolds)
 
         assert sym_repr not in _global_manifolds, \
             f"Manifold symbolic representation is illegal, pls specify a symbolic representation other than " \
             f"{set(_global_manifolds.keys())}"
 
-        _global_manifolds[sym_repr] = self
+        for _ in _global_manifolds:
+            _m = _global_manifolds[_]
+            assert lin_repr != _m._lin_repr
+        lin_repr, pure_lin_repr = _parse_lin_repr('manifold', lin_repr)
+
         self._sym_repr = sym_repr
+        self._lin_repr = lin_repr
+        self._pure_pure_lin_repr = pure_lin_repr
+        _global_manifolds[sym_repr] = self
 
         assert isinstance(is_periodic, bool), f"is_periodic must be bool type."
         self._is_periodic = is_periodic
@@ -102,6 +121,7 @@ class Manifold(Frozen):
                 self._boundary = Manifold(
                     self.ndim-1,
                     sym_repr=sym_repr,
+                    lin_repr=f'boundary-of-{self._pure_pure_lin_repr}',
                     is_periodic=True,
                 )
                 self._boundary._inclusion = self

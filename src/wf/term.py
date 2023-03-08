@@ -20,7 +20,7 @@ matplotlib.use('TkAgg')
 from src.tools.frozen import Frozen
 from src.form.tools import _find_form
 from src.form.operators import codifferential, d, trace, Hodge, time_derivative
-from src.form.operators import _parse_related_time_derivative
+from src.form.operators import _parse_related_time_derivative, _implemented_operators
 
 
 class _WeakFormulationTerm(Frozen):
@@ -73,13 +73,13 @@ class _WeakFormulationTerm(Frozen):
         plt.axis('off')
         plt.show()
 
-    def replace(self, f, by, which='all'):
-        """replace form `f` in this term by `by`,
-        if there are more than one `f` found, apply the replacement to `which`.
-        If there are 'f' in this term, which should be int or a list of int which indicating
-        `f` according the sequence of `f._lin_repr` in `self._lin_repr`.
-        """
-        raise NotImplementedError()
+    # def replace(self, f, by, which='all'):
+    #     """replace form `f` in this term by `by`,
+    #     if there are more than one `f` found, apply the replacement to `which`.
+    #     If there are 'f' in this term, which should be int or a list of int which indicating
+    #     `f` according the sequence of `f._lin_repr` in `self._lin_repr`.
+    #     """
+    #     raise NotImplementedError()
 
     def split(self, f, into, signs, which=None):
         """Split `which` `f` `into`."""
@@ -143,6 +143,8 @@ class DualityPairingTerm(_WeakFormulationTerm):
         f1
         f2
         """
+        f2.print_representations()
+
         s1 = f1.space
         s2 = f2.space
         if s1.__class__.__name__ == 'ScalarValuedFormSpace' and s2.__class__.__name__ == 'ScalarValuedFormSpace':
@@ -171,10 +173,9 @@ class DualityPairingTerm(_WeakFormulationTerm):
 
         sym_repr = rf'\left<\left.{sr1}\right|{sr2}\right>_' + r"{" + self._mesh.manifold._sym_repr + "}"
         lin_repr = r"\emph{duality-pairing between} " + lr1 + r' \emph{and} ' + lr2
-
+        lin_repr += r" \emph{over} " + self.mesh.manifold._lin_repr
         self._sym_repr = sym_repr
         self._lin_repr = lin_repr
-
 
     def __repr__(self):
         """"""
@@ -258,8 +259,12 @@ class L2InnerProductTerm(_WeakFormulationTerm):
         else:
             lr2 = rf'[{lr2}]'
 
-        self._sym_repr = rf'\left({sr1},{sr2}\right)_' + r"{" + self._mesh.manifold._sym_repr + "}"
-        self._lin_repr = r"\emph{L2-inner-product between} " + lr1 + r' \emph{and} ' + lr2
+        sym_repr = rf'\left({sr1},{sr2}\right)_' + r"{" + self._mesh.manifold._sym_repr + "}"
+        lin_repr = r"\emph{L2-inner-product between} " + lr1 + r' \emph{and} ' + lr2
+        lin_repr += r" \emph{over} " + self.mesh.manifold._lin_repr
+
+        self._sym_repr = sym_repr
+        self._lin_repr = lin_repr
 
     def __repr__(self):
         """"""
@@ -306,10 +311,10 @@ def _simpler_pattern_examiner(f1, f2):
 def _simpler_pattern_examiner_scalar_valued_forms(f1, f2):
     """ """
     patterns = list()
-    if f1._lin_repr[:24] == r'\emph{codifferential of}':
+    if f1._lin_repr[:24] == _implemented_operators['codifferential']:
         patterns.append('(codifferential sf, sf)')
 
-    if f1._lin_repr[:25] == r'\emph{time-derivative of}':
+    if f1._lin_repr[:25] == _implemented_operators['time_derivative']:
         bf1 = _find_form(f1._lin_repr, upon=time_derivative)
         if bf1.is_root and _parse_related_time_derivative(f2) == list():
             patterns.append('(partial_t root-sf, sf)')

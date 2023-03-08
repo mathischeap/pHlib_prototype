@@ -10,13 +10,17 @@ if './' not in sys.path:
     sys.path.append('./')
 
 from src.tools.frozen import Frozen
+from src.config import _mesh_default_sym_repr
+from src.config import _check_sym_repr
+from src.config import _parse_lin_repr
+from src.config import _mesh_default_lin_repr
 
 _global_meshes = dict()  # we monitor all meshes to avoid that we use the same representation for different meshes.
 
 
-def mesh(*args, **kwargs):
+def mesh(manifold):
     """A wrapper of the Mesh class."""
-    return Mesh(*args, **kwargs)
+    return Mesh(manifold)
 
 
 def _list_meshes():
@@ -31,7 +35,7 @@ def _list_meshes():
 class Mesh(Frozen):   # Mesh -
     """"""
 
-    def __init__(self, manifold, sym_repr=None):
+    def __init__(self, manifold, sym_repr=None, lin_repr=None):
         """
 
         Parameters
@@ -44,32 +48,39 @@ class Mesh(Frozen):   # Mesh -
         self._manifold = manifold
 
         if sym_repr is None:
+            number_existing_meshes = len(_global_meshes)
+            base_repr = _mesh_default_sym_repr
+            if number_existing_meshes == 0:
+                sym_repr = base_repr
+            else:
+                sym_repr = base_repr + r'_{' + str(number_existing_meshes) + '}'
+        else:
+            pass
+        sym_repr = _check_sym_repr(sym_repr)
 
+        if lin_repr is None:
+            base_repr = _mesh_default_lin_repr
             number_existing_meshes = len(_global_meshes)
 
-            while 1:
-                if number_existing_meshes == 0:
-                    sym_repr = r'\mathfrak{M}'
-                    break
-                else:
-                    sym_repr = r'\mathfrak{M}_{' + str(number_existing_meshes) + '}'
-                    if sym_repr in _global_meshes:
-                        number_existing_meshes += 1
-                    else:
-                        break
-        else:
-            assert isinstance(sym_repr, str), \
-                f"sym_repr must be a str of length > 0."
-            sym_repr = sym_repr.replace(' ', '')
-            assert len(sym_repr) > 0, \
-                f"sym_repr must be a str of length > 0."
+            if number_existing_meshes == 0:
+                lin_repr = base_repr
+            else:
+                lin_repr = base_repr + str(number_existing_meshes)
 
         assert sym_repr not in _global_meshes, \
             f"Manifold symbolic representation is illegal, pls specify a symbolic representation other than " \
             f"{set(_global_meshes.keys())}"
 
-        _global_meshes[sym_repr] = self
+        for _ in _global_meshes:
+            _m = _global_meshes[_]
+            assert lin_repr != _m._lin_repr
+        lin_repr, pure_lin_repr = _parse_lin_repr('mesh', lin_repr)
+
         self._sym_repr = sym_repr
+        self._lin_repr = lin_repr
+        self._pure_pure_lin_repr = pure_lin_repr
+        _global_meshes[sym_repr] = self
+
         self._boundary = None
         self._interface = None
         self._inclusion = None
@@ -90,18 +101,15 @@ class Mesh(Frozen):   # Mesh -
         """The manifold this mesh is based on."""
         return self._manifold
 
-    def boundary(self, sym_repr=None):
+    def boundary(self):
         """Give a mesh of dimensions (n-1) on the boundary manifold."""
         if self._boundary is None:
             manifold_boundary = self.manifold.boundary()
             if manifold_boundary.__class__.__name__ == 'Manifold':
-                if sym_repr is None:
-                    sym_repr = r'\eth' + self._sym_repr
-                else:
-                    pass
                 self._boundary = Mesh(
                     manifold_boundary,
-                    sym_repr
+                    sym_repr=r'\eth' + self._sym_repr,
+                    lin_repr=r'boundary-of-' + self._pure_pure_lin_repr
                 )
                 self._boundary._inclusion = self
             elif manifold_boundary.__class__.__name__ == 'NullManifold':

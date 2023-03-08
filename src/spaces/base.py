@@ -33,11 +33,6 @@ class SpaceBase(Frozen):
     def make_form(self, sym_repr, lin_repr, orientation='outer'):
         """"""
         assert isinstance(sym_repr, str), f"symbolic representation must be a str."
-        assert isinstance(lin_repr, str), f"symbolic representation must be a str."
-        if lin_repr[:8] == r"\textsf{":
-            pass
-        else:
-            lin_repr = r'\textsf{' + lin_repr + r'}'
         return Form(
             self, sym_repr, lin_repr,
             True,  # is_root
