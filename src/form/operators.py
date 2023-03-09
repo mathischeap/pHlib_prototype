@@ -13,19 +13,11 @@ from src.spaces.operators import Hodge as space_Hodge
 from src.spaces.operators import d as space_d
 from src.spaces.operators import codifferential as space_codifferential
 
-
-_implemented_operators = {  # coded operators
-    'wedge': r"\emph{wedge}",
-    'Hodge': r'\emph{Hodge of}',
-    'd': r'\emph{exterior-derivative of}',
-    'codifferential': r'\emph{codifferential of}',
-    'time_derivative': r'\emph{time-derivative of}',
-    'trace': r'\emph{trace of}',
-}
-
+from src.config import _global_operator_lin_repr_setting
+from src.config import _global_operator_sym_repr_setting
 
 _time_derivative_related_operators = {
-    'time_derivative': _implemented_operators['time_derivative'],
+    'time_derivative': _global_operator_lin_repr_setting['time_derivative'],
 }
 
 
@@ -52,7 +44,7 @@ def wedge(f1, f2):
 
     sr_term1 = f1._sym_repr
     sr_term2 = f2._sym_repr
-    sr_operator = r'\wedge '
+    sr_operator = _global_operator_sym_repr_setting['wedge']
 
     if f1.is_root():
         pass
@@ -60,7 +52,7 @@ def wedge(f1, f2):
         lr_term1 = '[' + lr_term1 + ']'
         sr_term1 = r'\left(' + sr_term1 + r'\right)'
     if f2.is_root():
-        pass
+        sr_term2 = r' ' + sr_term2
     else:
         lr_term2 = '[' + lr_term2 + ']'
         sr_term2 = r'\left(' + sr_term2 + r'\right)'
@@ -95,7 +87,8 @@ def Hodge(f):
     lr = f._lin_repr
     sr = f._sym_repr
 
-    op_lin_repr = _implemented_operators['Hodge']
+    op_lin_repr = _global_operator_lin_repr_setting['Hodge']
+    sr_operator = _global_operator_sym_repr_setting['Hodge']
 
     if f.is_root():
         lr = op_lin_repr + " " + lr
@@ -103,9 +96,9 @@ def Hodge(f):
         lr = op_lin_repr + " [" + lr + ']'
 
     if f.is_root():
-        sr = r"\star " + sr
+        sr = sr_operator + r" " + sr
     else:
-        sr = r"\star \left(" + sr + r"\right)"
+        sr = sr_operator + r"\left(" + sr + r"\right)"
 
     if f.orientation == 'inner':
         orientation = 'outer'
@@ -132,7 +125,8 @@ def d(f):
     lr = f._lin_repr
     sr = f._sym_repr
 
-    op_lin_repr = _implemented_operators['d']
+    op_lin_repr = _global_operator_lin_repr_setting['d']
+    sr_operator = _global_operator_sym_repr_setting['d']
 
     if f.is_root():
         lr = op_lin_repr + " " + lr
@@ -140,9 +134,9 @@ def d(f):
         lr = op_lin_repr + " [" + lr + ']'
 
     if f.is_root():
-        sr = r"\mathrm{d}" + sr
+        sr = sr_operator + sr
     else:
-        sr = r"\mathrm{d}\left(" + sr + r"\right)"
+        sr = sr_operator + r"\left(" + sr + r"\right)"
 
     f = f.__class__(
         ds,  # space
@@ -163,7 +157,8 @@ def codifferential(f):
     lr = f._lin_repr
     sr = f._sym_repr
 
-    op_lin_repr = _implemented_operators['codifferential']
+    op_lin_repr = _global_operator_lin_repr_setting['codifferential']
+    sr_operator = _global_operator_sym_repr_setting['codifferential']
 
     if f.is_root():
         lr = op_lin_repr + " " + lr
@@ -171,9 +166,9 @@ def codifferential(f):
         lr = op_lin_repr + " [" + lr + ']'
 
     if f.is_root():
-        sr = r"\mathrm{d}^\ast " + sr
+        sr = sr_operator + r" " + sr
     else:
-        sr = r"\mathrm{d}^\ast\left(" + sr + r"\right)"
+        sr = sr_operator + r"\left(" + sr + r"\right)"
 
     f = f.__class__(
         ds,  # space
@@ -197,7 +192,8 @@ def time_derivative(f):
     lr = f._lin_repr
     sr = f._sym_repr
 
-    op_lin_repr = _implemented_operators['time_derivative']
+    op_lin_repr = _global_operator_lin_repr_setting['time_derivative']
+    sr_operator = _global_operator_sym_repr_setting['time_derivative']
 
     if f.is_root():
         lr = op_lin_repr + " " + lr
@@ -205,9 +201,9 @@ def time_derivative(f):
         lr = op_lin_repr + " [" + lr + ']'
 
     if f.is_root():
-        sr = r"\partial_t " + sr
+        sr = sr_operator + r" " + sr
     else:
-        sr = r"\partial_t\left(" + sr + r"\right)"
+        sr = sr_operator + r"\left(" + sr + r"\right)"
 
     tdf = f.__class__(
         f.space,
@@ -231,7 +227,8 @@ def trace(f):
     lr = f._lin_repr
     sr = f._sym_repr
 
-    op_lin_repr = _implemented_operators['trace']
+    op_lin_repr = _global_operator_lin_repr_setting['trace']
+    sr_operator = _global_operator_sym_repr_setting['trace']
 
     if f.is_root():
         lr = op_lin_repr + " " + lr
@@ -239,9 +236,9 @@ def trace(f):
         lr = op_lin_repr + " [" + lr + ']'
 
     if f.is_root():
-        sr = r"\mathrm{tr}" + sr
+        sr = sr_operator + sr
     else:
-        sr = r"\mathrm{tr}\left(" + sr + r"\right)"
+        sr = sr_operator + r"\left(" + sr + r"\right)"
 
     f = f.__class__(
         trf_space,  # space

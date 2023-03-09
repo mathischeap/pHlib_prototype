@@ -18,7 +18,7 @@ plt.rcParams.update({
 matplotlib.use('TkAgg')
 
 from types import FunctionType
-from src.form.operators import _implemented_operators
+from src.config import _global_operator_lin_repr_setting
 from src.form.main import _global_forms, _global_form_variables
 
 
@@ -51,7 +51,7 @@ def _find_form(rp, upon=None):
         else:
             raise NotImplementedError()
 
-        if upon_name in _implemented_operators:
+        if upon_name in _global_operator_lin_repr_setting:
             the_one = None
             for form_id in _global_forms:
                 form = _global_forms[form_id]

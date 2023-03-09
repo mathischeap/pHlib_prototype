@@ -291,6 +291,8 @@ if __name__ == '__main__':
             2: ' = 0',
         }
     )
+    wf.print_representations()
+
     i = 0
     terms = wf._term_dict[i]
     signs = wf._sign_dict[i]
@@ -325,4 +327,3 @@ if __name__ == '__main__':
     # new_terms[1].print_representations()
 
     ph.list_forms(globals())
-

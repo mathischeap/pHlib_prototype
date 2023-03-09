@@ -44,12 +44,6 @@ class Form(Frozen):
         self._space = space
 
         if is_root:  # we check the `sym_repr` only for root forms.
-            assert isinstance(sym_repr, str), \
-                f"sym_repr must be a str of length > 0."
-            assert ' ' not in sym_repr, f"root form symbolic represent cannot have space."  # this is important
-            # make sure it does not confuse operator lin repr
-            assert len(sym_repr) > 0, \
-                f"sym_repr must be a str of length > 0."
             lin_repr, self._pure_lin_repr = _parse_lin_repr('form', lin_repr)
             for form_id in _global_forms:
                 form = _global_forms[form_id]
@@ -111,7 +105,7 @@ class Form(Frozen):
             base_form, ats, ati = self._pAti_form['base_form'], self._pAti_form['ats'], self._pAti_form['ati']
             pti_text = rf"\\(${base_form._sym_repr}$ at abstract time instant ${ati._sym_repr}$"
         space_text = f'spaces: ${self.space._sym_repr}$'
-        space_text += rf"\ \ \ \ in ({self.mesh._lin_repr})"
+        space_text += rf"\ \ \ \ on ({self.mesh._lin_repr})"
         plt.figure(figsize=(3 + len(self._sym_repr)/4, 4))
         plt.axis([0, 1, 0, 5])
         plt.text(0, 4.5, f'form id: {my_id}', ha='left', va='center', size=15)
