@@ -17,7 +17,7 @@ _global_root_constant_scalars = dict()   # only cache root scalar parameters
 
 
 def constant_scalar(*args):
-    """constant scalar"""
+    """make root constant scalar"""
     num_args = len(args)
 
     if num_args == 1:
