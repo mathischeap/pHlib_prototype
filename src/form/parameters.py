@@ -11,8 +11,9 @@ if './' not in sys.path:
 from src.tools.frozen import Frozen
 from src.config import _parse_lin_repr
 from src.config import _check_sym_repr
+from src.config import _global_operator_lin_repr_setting
 
-_global_parameters = dict()
+_global_root_constant_scalars = dict()   # only cache root scalar parameters
 
 
 def constant_scalar(*args):
@@ -38,27 +39,26 @@ def constant_scalar(*args):
     # --- now we have gotten sym_repr, lin_repr and is_real ------
     assert all([_ is not None for _ in (sym_repr, lin_repr)])
     sym_repr = _check_sym_repr(sym_repr)
-    lin_repr, pure_lin_repr = _parse_lin_repr('parameters', lin_repr)
-    for pid in _global_parameters:
-        p = _global_parameters[pid]
-        if lin_repr == p._lin_repr and sym_repr == p._sym_repr:
+
+    for pid in _global_root_constant_scalars:
+        p = _global_root_constant_scalars[pid]
+        if lin_repr == p._pure_lin_repr and sym_repr == p._sym_repr:
             return p
         else:
             continue
 
-    for pid in _global_parameters:
-        p = _global_parameters[pid]
-        assert lin_repr != p._lin_repr, f"lin_repr={lin_repr} is taken."
+    for pid in _global_root_constant_scalars:
+        p = _global_root_constant_scalars[pid]
+        assert lin_repr != p._pure_lin_repr, f"lin_repr={lin_repr} is taken."
         assert sym_repr != p._sym_repr, f"sym_repr={sym_repr} is taken."
     assert isinstance(is_real, bool), f"Almost trivial check."
     cs = ConstantScalar0Form(
         sym_repr,
         lin_repr,
-        pure_lin_repr,
         is_real,
         True,  # is_root, generate root obj only.
     )
-    _global_parameters[id(cs)] = cs
+    _global_root_constant_scalars[id(cs)] = cs
     return cs
 
 
@@ -71,16 +71,21 @@ class ConstantScalar0Form(Frozen):
             self,
             sym_repr,
             lin_repr,
-            pure_lin_repr,
             is_real,
             is_root,
     ):
         """"""
         self._sym_repr = sym_repr
+        if is_root:
+            lin_repr, pure_lin_repr = _parse_lin_repr('scalar_parameter', lin_repr)
+        else:
+            pure_lin_repr = None
         self._lin_repr = lin_repr
         self._pure_lin_repr = pure_lin_repr
         self._is_real = is_real
         self._is_root = is_root
+        if self._is_real:
+            assert self._is_root, f"safety, almost trivial check."
         self._freeze()
 
     def print_representations(self):
@@ -91,7 +96,7 @@ class ConstantScalar0Form(Frozen):
         """repr"""
         real_text = 'real' if self.is_real() else 'abstract'
         super_repr = super().__repr__().split('object')[1]
-        return f"<ConstantScalar0Form {real_text} {(self._sym_repr, self._lin_repr)}" + super_repr
+        return f"<ConstantScalar0Form {real_text}: {self._lin_repr}" + super_repr
 
     def is_real(self):
         r"""Return True if it is a real number in \mathbb{R}."""
@@ -103,9 +108,49 @@ class ConstantScalar0Form(Frozen):
 
     def __add__(self, other):
         """self + other"""
+        if isinstance(other, (int, float)):
+            if self.is_real():
+                number = float(self._sym_repr) + other
+                if int(number) == number:
+                    number = int(number)
+                else:
+                    pass
+                return constant_scalar(number)
+            else:
+                op_lin_repr = _global_operator_lin_repr_setting['plus']
+                sym_repr = self._sym_repr + '+' + str(other)   # no need to check is_root.
+                lin_repr = self._lin_repr + f' {op_lin_repr} ' + _parse_lin_repr('scalar_parameter', str(other))[0]
+                return ConstantScalar0Form(sym_repr, lin_repr, False, False)
+        elif other.__class__.__name__ == self.__class__.__name__:
+            if other.is_real():
+                number = float(other._sym_repr)
+                return self + number
+            else:
+                op_lin_repr = _global_operator_lin_repr_setting['plus']
+                sym_repr = self._sym_repr + '+' + other._sym_repr   # no need to check is_root.
+                lin_repr = self._lin_repr + f' {op_lin_repr} ' + other._lin_repr
+                return ConstantScalar0Form(sym_repr, lin_repr, False, False)
+
+        else:
+            raise NotImplementedError()
 
     def __radd__(self, other):
         """other + self """
+        if isinstance(other, (int, float)):
+            if self.is_real():
+                number = float(self._sym_repr) + other
+                if int(number) == number:
+                    number = int(number)
+                else:
+                    pass
+                return constant_scalar(number)
+            else:
+                op_lin_repr = _global_operator_lin_repr_setting['plus']
+                sym_repr = str(other) + '+' + self._sym_repr   # no need to check is_root.
+                lin_repr = _parse_lin_repr('scalar_parameter', str(other))[0] + f' {op_lin_repr} ' + self._lin_repr
+                return ConstantScalar0Form(sym_repr, lin_repr, False, False)
+        else:
+            raise NotImplementedError()
 
 
 if __name__ == '__main__':
@@ -113,6 +158,6 @@ if __name__ == '__main__':
     import __init__ as ph
 
     Rn = ph.constant_scalar('R', "Rn")
-    print(Rn)
     Rs = ph.constant_scalar(2)
-    print(Rs)
+    R5 = ph.constant_scalar(5)
+    print(Rs + Rn + 5)

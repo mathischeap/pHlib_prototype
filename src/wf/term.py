@@ -144,8 +144,6 @@ class DualityPairingTerm(_WeakFormulationTerm):
         f1
         f2
         """
-        f2.print_representations()
-
         s1 = f1.space
         s2 = f2.space
         if s1.__class__.__name__ == 'ScalarValuedFormSpace' and s2.__class__.__name__ == 'ScalarValuedFormSpace':

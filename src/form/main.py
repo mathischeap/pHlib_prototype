@@ -23,6 +23,7 @@ from src.config import _parse_lin_repr
 from src.form.operators import wedge
 from src.config import _check_sym_repr
 from src.form.parameters import constant_scalar
+from src.config import _global_operator_lin_repr_setting
 
 _global_forms = dict()
 _global_form_variables = {
@@ -167,8 +168,16 @@ class Form(Frozen):
 
     def __truediv__(self, other):
         """self / other"""
+        operator_lin = _global_operator_lin_repr_setting['divided']
         if isinstance(other, (int, tuple)):
             cs = constant_scalar(other)
+            return self / cs
+
+        elif other.__class__.__name__ == 'AbstractTimeInterval':
+            ati = other
+            ati_sr = ati._sym_repr
+            ati_lr = ati._pure_lin_repr
+            cs = constant_scalar(ati_sr, ati_lr)
             return self / cs
 
         elif other.__class__.__name__ == 'ConstantScalar0Form':
@@ -176,32 +185,10 @@ class Form(Frozen):
             sr = self._sym_repr
             cs = other
             if self.is_root():
-                lr = lr + r" \emph{divided by} " + cs._lin_repr
+                lr = lr + " " + operator_lin + " " + cs._lin_repr
             else:
-                lr = '[' + lr + ']' + r" \emph{divided by} " + cs._lin_repr
+                lr = '[' + lr + ']' + " " + operator_lin + " " + cs._lin_repr
             sr = r"\dfrac{" + sr + r"}{" + cs._sym_repr + "}"
-            f = Form(
-                self.space,  # space
-                sr,          # symbolic representation
-                lr,          # linguistic representation
-                False,       # not a root-form anymore.
-                self._elementary_forms,
-                self.orientation,
-            )
-            return f
-
-        elif other.__class__.__name__ == 'AbstractTimeInterval':
-            ati = other
-            ati_sr = ati._sym_repr
-            ati_lr = ati._lin_repr
-            lr = self._lin_repr
-            sr = self._sym_repr
-
-            if self.is_root():
-                lr = lr + r" \emph{divided by} " + ati_lr
-            else:
-                lr = '[' + lr + ']' + r" \emph{divided by} " + ati_lr
-            sr = r"\dfrac{" + sr + r"}{" + ati_sr + "}"
             f = Form(
                 self.space,  # space
                 sr,          # symbolic representation

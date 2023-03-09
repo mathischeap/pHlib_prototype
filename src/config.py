@@ -26,9 +26,9 @@ _global_lin_repr_setting = {
     'manifold': [r'\underline{', '}'],
     'mesh': [r'\textbf{', r'}'],
     'form': [r'\textsf{', r'}'],
-    'parameters': [r'\textsc{', r'}'],
+    'scalar_parameter': [r'\textsc{', r'}'],
     'abstract_time_sequence': [r'\textit{', r'}'],
-    'abstract_time_interval': [r'\texttt{', r'}'],
+    'abstract_time_interval': [r'\textsc{', r'}'],
     'abstract_time_instant': [r'\textsl{', r'}'],
 }
 
@@ -60,12 +60,15 @@ def _check_sym_repr(sym_repr):
 
 
 _global_operator_lin_repr_setting = {  # coded operators
+    'plus': r"+",
+    'minus': r"-",
     'wedge': r"\emph{wedge}",
     'Hodge': r'\emph{Hodge of}',
     'd': r'\emph{exterior-derivative of}',
     'codifferential': r'\emph{codifferential of}',
     'time_derivative': r'\emph{time-derivative of}',
     'trace': r'\emph{trace of}',
+    'divided': '\emph{divided by}'
 }
 
 _global_operator_sym_repr_setting = {  # coded operators

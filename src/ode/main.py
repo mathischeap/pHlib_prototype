@@ -291,7 +291,7 @@ if __name__ == '__main__':
             2: ' = 0',
         }
     )
-    wf.print_representations()
+    # wf.print_representations()
 
     i = 0
     terms = wf._term_dict[i]
@@ -312,18 +312,20 @@ if __name__ == '__main__':
     u_k = u.evaluate_at(dt.end)
     # print(dt._lin_repr, dt._sym_repr)
     # print(dt.start._lin_repr)
-    u_km1.print_representations()
+    # u_km1.print_representations()
 
     u_km1_dt = u_km1 / dt
     u_k_dt = u_k / dt
     u_2 = u / 2
     # u_km1.print_representations()
-    # u_2.print_representations()
-    # u_km1_dt.print_representations()
+    u_2.print_representations()
+    u_km1_dt.print_representations()
+    u_k_dt.print_representations()
+
     # ut.print_representations()
 
     new_terms, signs = term0.split('f1', [u_km1_dt, u_k_dt], ['-', '+'])
     # new_terms[0].print_representations()
     # new_terms[1].print_representations()
 
-    ph.list_forms(globals())
+    # ph.list_forms(globals())
