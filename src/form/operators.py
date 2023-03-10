@@ -52,7 +52,7 @@ def wedge(f1, f2):
         lr_term1 = '[' + lr_term1 + ']'
         sr_term1 = r'\left(' + sr_term1 + r'\right)'
     if f2.is_root():
-        sr_term2 = r' ' + sr_term2
+        pass
     else:
         lr_term2 = '[' + lr_term2 + ']'
         sr_term2 = r'\left(' + sr_term2 + r'\right)'
@@ -96,7 +96,7 @@ def Hodge(f):
         lr = op_lin_repr + "[" + lr + ']'
 
     if f.is_root():
-        sr = sr_operator + r" " + sr
+        sr = sr_operator + sr
     else:
         sr = sr_operator + r"\left(" + sr + r"\right)"
 
@@ -166,7 +166,7 @@ def codifferential(f):
         lr = op_lin_repr + "[" + lr + ']'
 
     if f.is_root():
-        sr = sr_operator + r" " + sr
+        sr = sr_operator + sr
     else:
         sr = sr_operator + r"\left(" + sr + r"\right)"
 
@@ -201,7 +201,7 @@ def time_derivative(f):
         lr = op_lin_repr + "[" + lr + ']'
 
     if f.is_root():
-        sr = sr_operator + r" " + sr
+        sr = sr_operator + sr
     else:
         sr = sr_operator + r"\left(" + sr + r"\right)"
 

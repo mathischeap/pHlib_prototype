@@ -64,18 +64,18 @@ _global_operator_lin_repr_setting = {  # coded operators
     'minus': r" - ",
     'wedge': r" $\wedge$ ",
     'Hodge': r'$\star$ ',
-    'd': r'\emph{exterior-derivative of} ',
-    'codifferential': r'\emph{codifferential of} ',
-    'time_derivative': r'\emph{time-derivative of} ',
+    'd': r'$\mathrm{d} $ \emph{of} ',
+    'codifferential': r'$\mathrm{d}^{\ast}$ \emph{of} ',
+    'time_derivative': r'$\partial_{t}$ \emph{of} ',
     'trace': r'\emph{tr} ',
     'divided': r' \emph{divided by} '
 }
 
 _global_operator_sym_repr_setting = {  # coded operators
-    'wedge': r"\wedge",
-    'Hodge': r'\star',
+    'wedge': r"{\wedge}",
+    'Hodge': r'{\star}',
     'd': r'\mathrm{d}',
-    'codifferential': r'\mathrm{d}^\ast',
-    'time_derivative': r'\partial_t',
+    'codifferential': r'\mathrm{d}^{\ast}',
+    'time_derivative': r'\partial_{t}',
     'trace': r'\mathrm{tr}',
 }
