@@ -27,6 +27,7 @@ __all__ = [
     'pde',
     'ode',
     'time_sequence',
+    'constant_scalar',
 ]
 
 import src.config as config

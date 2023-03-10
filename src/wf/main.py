@@ -23,7 +23,7 @@ from copy import deepcopy
 class WeakFormulation(Frozen):
     """Weak Formulation."""
 
-    def __init__(self, term_sign_dict=None, test_forms=None, expression=None):
+    def __init__(self, term_sign_dict=None, test_forms=None, expression=None, weak_formulations=None):
         """
 
         Parameters
@@ -33,11 +33,26 @@ class WeakFormulation(Frozen):
         expression
         """
         if term_sign_dict is not None:
-            assert expression is None, f"Only allow one of `term_sign_dict` and `expression` being provided."
+            assert test_forms is not None
+            assert expression is None
+            assert weak_formulations is None
             self._parse_term_sign_dict(term_sign_dict, test_forms)
-        else:
-            assert expression is not None, f"Please provide one of `term_sign_dict` and `expression`."
+
+        elif expression is not None:
+            assert term_sign_dict is None
+            assert test_forms is None
+            assert weak_formulations is None
             self._parse_expression(expression)
+
+        elif weak_formulations is not None:
+            assert term_sign_dict is None
+            assert test_forms is None
+            assert expression is None
+            raise NotImplementedError(f"merge weak formulations not coded.")
+
+        else:
+            raise Exception()
+
         self._consistence_checker()
         self._unknowns = None
         self._derive = None
@@ -169,7 +184,16 @@ class WeakFormulation(Frozen):
 
     def print_representations(self, indexing=True):
         """Print the representations"""
-        seek_text = r'Seek $\left('
+        seek_text = r'\noindent '
+        given_text = r'Given'
+        for ef in self._elementary_forms:
+            if ef not in self.unknowns and ef not in self._test_forms:
+                given_text += rf' ${ef._sym_repr} \in {ef.space._sym_repr}$,'
+        if given_text == r'Given':
+            seek_text += r'Seek $\left('
+        else:
+            seek_text += given_text
+            seek_text += r' seek $\left('
         form_sr_list = list()
         space_sr_list = list()
         for un in self.unknowns:
@@ -504,7 +528,7 @@ if __name__ == '__main__':
     pde.print_representations(indexing=True)
 
     wf = pde.test_with([O2, O1, O3], sym_repr=[r'v^2', r'w^1', r'q^3'])
-    print(wf)
+    # print(wf)
     wf.print_representations(indexing=True)
 
     wf = wf.derive.integration_by_parts('0-2')
@@ -544,4 +568,4 @@ if __name__ == '__main__':
     ode_i = ph.ode(terms_and_signs=[terms, signs])
     ode_i.constant_elementary_forms = wf.test_forms[0]
     ode_i.print_representations()
-    ph.list_forms()
+    # ph.list_forms()

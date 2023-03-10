@@ -22,6 +22,7 @@ from src.form.tools import _find_form
 from src.form.operators import codifferential, d, trace, Hodge, time_derivative
 from src.form.operators import _parse_related_time_derivative
 from src.config import _global_operator_lin_repr_setting
+from src.config import _wf_term_default_simple_patterns as _simple_patterns
 
 
 class _WeakFormulationTerm(Frozen):
@@ -44,7 +45,7 @@ class _WeakFormulationTerm(Frozen):
 
         self._simple_patterns = _simpler_pattern_examiner(f1, f2)
         for sp in self._simple_patterns:
-            assert sp in simple_patterns, f"found unknown simple pattern: {sp}."
+            assert sp in _simple_patterns.values(), f"found unknown simple pattern: {sp}."
         self._elementary_forms = set()
         self._elementary_forms.update(f1._elementary_forms)
         self._elementary_forms.update(f2._elementary_forms)
@@ -291,12 +292,6 @@ class L2InnerProductTerm(_WeakFormulationTerm):
             raise Exception(f"Cannot apply integration by parts to this term.")
 
 
-simple_patterns = {   # use only str to represent a pattern.
-    '(partial_t root-sf, sf)',
-    '(codifferential sf, sf)',
-}
-
-
 def _simpler_pattern_examiner(f1, f2):
     """"""
     s1 = f1.space
@@ -311,13 +306,13 @@ def _simpler_pattern_examiner_scalar_valued_forms(f1, f2):
     """ """
     patterns = list()
     lin_codifferential = _global_operator_lin_repr_setting['codifferential']
-    if f1._lin_repr[:len(lin_codifferential)] == _global_operator_lin_repr_setting['codifferential']:
-        patterns.append('(codifferential sf, sf)')
+    if f1._lin_repr[:len(lin_codifferential)] == lin_codifferential:
+        patterns.append(_simple_patterns['(cd,)'])
 
     lin_td = _global_operator_lin_repr_setting['time_derivative']
     if f1._lin_repr[:len(lin_td)] == lin_td:
         bf1 = _find_form(f1._lin_repr, upon=time_derivative)
         if bf1.is_root and _parse_related_time_derivative(f2) == list():
-            patterns.append('(partial_t root-sf, sf)')
+            patterns.append(_simple_patterns['(pt,)'])
 
     return tuple(patterns)

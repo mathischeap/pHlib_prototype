@@ -54,7 +54,7 @@ class AbstractTimeSequence(Frozen):
 
     def __getitem__(self, k):
         """return t[k], not return t=k."""
-        assert isinstance(k, str), f"Can only set abstract time instant with str."
+        assert isinstance(k, str) and ' ' not in k, f"Can only set abstract time instant with str of no space."
         lin_repr = self._pure_lin_repr + r"[" + k + "]"
         lin_repr, pure_lin_repr = _parse_lin_repr('abstract_time_instant', lin_repr)
         if lin_repr in self._my_abstract_time_instants:
@@ -391,7 +391,7 @@ class AbstractTimeInterval(Frozen):
     def __repr__(self):
         """"""
         super_repr = super().__repr__().split('object')[1]
-        return f"<AbstractTimeInterval from t['{self.start.k}]' to t['{self.end.k}']" + \
+        return f"<AbstractTimeInterval from t['{self.start.k}]' to t['{self.end.k}'], {self._sym_repr}," + \
             super_repr[:-1] + f' of {self.time_sequence}>'
 
 

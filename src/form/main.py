@@ -95,6 +95,7 @@ class Form(Frozen):
             'ats': None,
             'ati': None
         }
+        self._abstract_forms = dict()   # the abstract forms based on this form.
         self._freeze()
 
     def print_representations(self):
@@ -211,17 +212,22 @@ class Form(Frozen):
             sym_repr = r"\left." + sym_repr + r"\right|^{(" + ati.k + ')}'
             lin_repr += "@" + ati._pure_lin_repr
 
-            ftk = Form(
-                self._space,
-                sym_repr, lin_repr,
-                self._is_root,
-                None,    # elementary_forms
-                self._orientation,
-            )
-            ftk._pAti_form['base_form'] = self
-            ftk._pAti_form['ats'] = ati.time_sequence
-            ftk._pAti_form['ati'] = ati
+            if lin_repr in self._abstract_forms:   # we cache it, this is very important.
+                pass
+            else:
+                ftk = Form(
+                    self._space,
+                    sym_repr, lin_repr,
+                    self._is_root,
+                    None,    # elementary_forms
+                    self._orientation,
+                )
+                ftk._pAti_form['base_form'] = self
+                ftk._pAti_form['ats'] = ati.time_sequence
+                ftk._pAti_form['ati'] = ati
+                self._abstract_forms[lin_repr] = ftk
 
-            return ftk
+            return self._abstract_forms[lin_repr]
+
         else:
             raise NotImplementedError(f"Cannot evaluate {self} at {ati}.")

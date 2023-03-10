@@ -10,6 +10,7 @@ if './' not in sys.path:
     sys.path.append('./')
 from src.tools.frozen import Frozen
 from src.form.tools import _find_form
+from src.config import _wf_term_default_simple_patterns as _simple_patterns
 import matplotlib.pyplot as plt
 import matplotlib
 plt.rcParams.update({
@@ -18,6 +19,7 @@ plt.rcParams.update({
     "text.latex.preamble": r"\usepackage{amsmath, amssymb}",
 })
 matplotlib.use('TkAgg')
+from src.ode.discretize import OrdinaryDifferentialEquationDiscretize
 
 
 def ode(*args, **kwargs):
@@ -43,6 +45,7 @@ class OrdinaryDifferentialEquation(Frozen):
             raise Exception(f'Pls provide only one of `expression` or `term_sign_dict`.')
         self._constant_elementary_forms = set()
         self._analyze_terms()
+        self._discretize = None
         self._freeze()
 
     def _parse_terms_and_signs(self, terms_and_signs):
@@ -105,7 +108,7 @@ class OrdinaryDifferentialEquation(Frozen):
         self._order = partial_t_orders
         self._pterm = partial_t_terms
         self._other = other_terms
-        self._pattern = pattern
+        self._pattern = pattern   # each time can only have one pattern.
         self._elementary_forms = elementary_forms
 
     def _parse_expression(self, expression):
@@ -117,8 +120,8 @@ class OrdinaryDifferentialEquation(Frozen):
     def _recognized_pattern(cls):
         """"""
         return {
-            # pattern name           : order
-            '(partial_t root-sf, sf)': 1,    # inner product of time-derivative of a root-s-form and another s-form.
+            # pattern indicator      : order
+            _simple_patterns['(pt,)']: 1,  # inner product of time-derivative of a root-s-form and another s-form.
         }
 
     def _analyze_terms(self):
@@ -131,7 +134,8 @@ class OrdinaryDifferentialEquation(Frozen):
         for i, terms in enumerate(self._pterm):
             for j, term in enumerate(terms):
                 if term is not None:
-                    overall_order.append(self._order[i][j])
+                    order = self._order[i][j]
+                    overall_order.append(order)
                     pattern = self._pattern[i][j]
                     assert pattern is not None, f"trivial check."
                     if pattern == '(partial_t root-sf, sf)':
@@ -144,10 +148,12 @@ class OrdinaryDifferentialEquation(Frozen):
                         raise NotImplementedError()
 
                 else:
+                    order = 0
                     term = self._other[i][j]
+                    pattern = None
 
                 index = str(k)
-                indexing[index] = (self._signs[i][j], term)
+                indexing[index] = (self._signs[i][j], term, pattern, order)
                 ind[i].append(index)
                 k += 1
 
@@ -167,6 +173,11 @@ class OrdinaryDifferentialEquation(Frozen):
         return index in self._indexing
 
     def __getitem__(self, index):
+        if isinstance(index, int):
+            index = str(index)
+        else:
+            pass
+        assert index in self._indexing, f"Cannot find term indexed {index} for {self}."
         return self._indexing[index]
 
     def __iter__(self):
@@ -197,16 +208,22 @@ class OrdinaryDifferentialEquation(Frozen):
 
     def print_representations(self, indexing=True):
         """print_representations"""
-        sym = 'elementary forms: '
-        for ef in self.elementary_forms:
-            sym += rf'${ef._sym_repr}$, '
+        sym = r'\noindent ODE about: '
+        sym += rf'${self._about._sym_repr}$, '
+        if len(self.elementary_forms) > 1:  # as it must contain the `about` form.
+            sym += 'elementary forms: '
+            for ef in self.elementary_forms:
+                if ef is self._about:
+                    pass
+                else:
+                    sym += rf'${ef._sym_repr}$, '
+
         if len(self.constant_elementary_forms) > 0:
-            sym += '(constant: '
+            sym += 'constant forms: '
             for cef in self.constant_elementary_forms:
                 sym += rf"${cef._sym_repr}$, "
-            sym = sym[:-2] + '):'
         else:
-            sym = sym[:-2] + ':'
+            pass
 
         sym += r'\\\\$'
         for i, terms in enumerate(self._pterm):
@@ -241,14 +258,23 @@ class OrdinaryDifferentialEquation(Frozen):
         fig, ax = plt.subplots(figsize=figsize)
         fig.patch.set_visible(False)
         ax.axis('off')
-        table = ax.table(cellText=[[sym, ], ],
-                         rowLabels=['symbolic', ], rowColours='gcy',
-                         colLoc='left', loc='center', cellLoc='left')
+        table = ax.table(
+            cellText=[[sym, ], ],
+            rowLabels=['symbolic', ], rowColours='gcy',
+            colLoc='left', loc='center', cellLoc='left',
+        )
 
         table.scale(1, 8)
         table.set_fontsize(20)
         fig.tight_layout()
         plt.show()
+
+    @property
+    def discretize(self):
+        """To discretize this ode."""
+        if self._discretize is None:
+            self._discretize = OrdinaryDifferentialEquationDiscretize(self)
+        return self._discretize
 
 
 if __name__ == '__main__':
@@ -317,10 +343,11 @@ if __name__ == '__main__':
     u_km1_dt = u_km1 / dt
     u_k_dt = u_k / dt
     u_2 = u / 2
+
     # u_km1.print_representations()
-    u_2.print_representations()
-    u_km1_dt.print_representations()
-    u_k_dt.print_representations()
+    # u_2.print_representations()
+    # u_km1_dt.print_representations()
+    # u_k_dt.print_representations()
 
     # ut.print_representations()
 
@@ -328,4 +355,4 @@ if __name__ == '__main__':
     # new_terms[0].print_representations()
     # new_terms[1].print_representations()
 
-    ph.list_forms(globals())
+    # ph.list_forms(globals())

@@ -79,3 +79,9 @@ _global_operator_sym_repr_setting = {  # coded operators
     'time_derivative': r'\partial_{t}',
     'trace': r'\mathrm{tr}',
 }
+
+_wf_term_default_simple_patterns = {   # use only str to represent a pattern.
+    # indicator     # simple pattern
+    '(pt,)': '(partial_t root-sf, sf)',
+    '(cd,)': '(codifferential sf, sf)',
+}
