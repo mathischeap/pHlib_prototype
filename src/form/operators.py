@@ -40,7 +40,7 @@ def wedge(f1, f2):
 
     lr_term1 = f1._lin_repr
     lr_term2 = f2._lin_repr
-    lr_operator = r" \emph{wedge} "
+    lr_operator = _global_operator_lin_repr_setting['wedge']
 
     sr_term1 = f1._sym_repr
     sr_term2 = f2._sym_repr
@@ -91,9 +91,9 @@ def Hodge(f):
     sr_operator = _global_operator_sym_repr_setting['Hodge']
 
     if f.is_root():
-        lr = op_lin_repr + " " + lr
+        lr = op_lin_repr + lr
     else:
-        lr = op_lin_repr + " [" + lr + ']'
+        lr = op_lin_repr + "[" + lr + ']'
 
     if f.is_root():
         sr = sr_operator + r" " + sr
@@ -129,9 +129,9 @@ def d(f):
     sr_operator = _global_operator_sym_repr_setting['d']
 
     if f.is_root():
-        lr = op_lin_repr + " " + lr
+        lr = op_lin_repr + lr
     else:
-        lr = op_lin_repr + " [" + lr + ']'
+        lr = op_lin_repr + "[" + lr + ']'
 
     if f.is_root():
         sr = sr_operator + sr
@@ -161,9 +161,9 @@ def codifferential(f):
     sr_operator = _global_operator_sym_repr_setting['codifferential']
 
     if f.is_root():
-        lr = op_lin_repr + " " + lr
+        lr = op_lin_repr + lr
     else:
-        lr = op_lin_repr + " [" + lr + ']'
+        lr = op_lin_repr + "[" + lr + ']'
 
     if f.is_root():
         sr = sr_operator + r" " + sr
@@ -196,9 +196,9 @@ def time_derivative(f):
     sr_operator = _global_operator_sym_repr_setting['time_derivative']
 
     if f.is_root():
-        lr = op_lin_repr + " " + lr
+        lr = op_lin_repr + lr
     else:
-        lr = op_lin_repr + " [" + lr + ']'
+        lr = op_lin_repr + "[" + lr + ']'
 
     if f.is_root():
         sr = sr_operator + r" " + sr
@@ -231,9 +231,9 @@ def trace(f):
     sr_operator = _global_operator_sym_repr_setting['trace']
 
     if f.is_root():
-        lr = op_lin_repr + " " + lr
+        lr = op_lin_repr + lr
     else:
-        lr = op_lin_repr + " [" + lr + ']'
+        lr = op_lin_repr + "[" + lr + ']'
 
     if f.is_root():
         sr = sr_operator + sr

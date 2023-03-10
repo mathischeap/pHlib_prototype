@@ -117,8 +117,8 @@ class OrdinaryDifferentialEquation(Frozen):
     def _recognized_pattern(cls):
         """"""
         return {
-            # pattern name                : order
-            '(partial_t root-sf, sf)': 1,  # inner product of time-derivative of a root-s-form and another s-form.
+            # pattern name           : order
+            '(partial_t root-sf, sf)': 1,    # inner product of time-derivative of a root-s-form and another s-form.
         }
 
     def _analyze_terms(self):
@@ -328,4 +328,4 @@ if __name__ == '__main__':
     # new_terms[0].print_representations()
     # new_terms[1].print_representations()
 
-    # ph.list_forms(globals())
+    ph.list_forms(globals())

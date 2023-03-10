@@ -60,15 +60,15 @@ def _check_sym_repr(sym_repr):
 
 
 _global_operator_lin_repr_setting = {  # coded operators
-    'plus': r"+",
-    'minus': r"-",
-    'wedge': r"\emph{wedge}",
-    'Hodge': r'\emph{Hodge of}',
-    'd': r'\emph{exterior-derivative of}',
-    'codifferential': r'\emph{codifferential of}',
-    'time_derivative': r'\emph{time-derivative of}',
-    'trace': r'\emph{trace of}',
-    'divided': '\emph{divided by}'
+    'plus': r" +  ",
+    'minus': r" - ",
+    'wedge': r" $\wedge$ ",
+    'Hodge': r'$\star$ ',
+    'd': r'\emph{exterior-derivative of} ',
+    'codifferential': r'\emph{codifferential of} ',
+    'time_derivative': r'\emph{time-derivative of} ',
+    'trace': r'\emph{tr} ',
+    'divided': r' \emph{divided by} '
 }
 
 _global_operator_sym_repr_setting = {  # coded operators

@@ -185,9 +185,9 @@ class Form(Frozen):
             sr = self._sym_repr
             cs = other
             if self.is_root():
-                lr = lr + " " + operator_lin + " " + cs._lin_repr
+                lr = lr + operator_lin + cs._lin_repr
             else:
-                lr = '[' + lr + ']' + " " + operator_lin + " " + cs._lin_repr
+                lr = '[' + lr + ']' + operator_lin + cs._lin_repr
             sr = r"\dfrac{" + sr + r"}{" + cs._sym_repr + "}"
             f = Form(
                 self.space,  # space

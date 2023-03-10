@@ -310,10 +310,12 @@ def _simpler_pattern_examiner(f1, f2):
 def _simpler_pattern_examiner_scalar_valued_forms(f1, f2):
     """ """
     patterns = list()
-    if f1._lin_repr[:24] == _global_operator_lin_repr_setting['codifferential']:
+    lin_codifferential = _global_operator_lin_repr_setting['codifferential']
+    if f1._lin_repr[:len(lin_codifferential)] == _global_operator_lin_repr_setting['codifferential']:
         patterns.append('(codifferential sf, sf)')
 
-    if f1._lin_repr[:25] == _global_operator_lin_repr_setting['time_derivative']:
+    lin_td = _global_operator_lin_repr_setting['time_derivative']
+    if f1._lin_repr[:len(lin_td)] == lin_td:
         bf1 = _find_form(f1._lin_repr, upon=time_derivative)
         if bf1.is_root and _parse_related_time_derivative(f2) == list():
             patterns.append('(partial_t root-sf, sf)')
