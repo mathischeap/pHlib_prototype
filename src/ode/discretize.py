@@ -9,6 +9,7 @@ if './' not in sys.path:
     sys.path.append('./')
 
 from src.tools.frozen import Frozen
+from src.config import _wf_term_default_simple_patterns as simple_patterns
 import warnings
 
 
@@ -25,7 +26,7 @@ class OrdinaryDifferentialEquationDiscretize(Frozen):
         self._ats = None
         self._at_instants = dict()
         self._at_intervals = dict()
-        self._afterward_terms = dict()
+        self._equation = dict()
         self._freeze()
 
     @property
@@ -68,27 +69,27 @@ class OrdinaryDifferentialEquationDiscretize(Frozen):
             self._at_intervals[key] = ati
             return ati
 
-
     def _differentiate(self, index, ks, ke, degree=1):
         """Differentiate a term at time interval [ati0, ati1] using a Gauss integrator of degree 1."""
         term = self._ode[index]
         dt = self._get_abstract_time_interval(ks, ke)
         if degree == 1:
             pattern = term[2]
-            if pattern == '(partial_t root-sf, sf)':
+            if pattern == simple_patterns['(pt,)']:
                 print('cool')
+
+            else:
+                raise NotImplementedError()
+
         else:
             raise NotImplementedError()
-
 
     def __call__(self):
         """return the resulting weak formulation (of one single equation of course.)"""
 
         # print(self._ode._pterm)
         # print(self._ode._signs)
-        return self._afterward_terms   # you'd better check that it is None before using it. -.-
-
-
+        return self._equation   # you'd better check it before using it. -.-
 
 
 if __name__ == '__main__':
@@ -120,6 +121,9 @@ if __name__ == '__main__':
 
     pde = ph.pde(exp, globals())
     pde.unknowns = [u, w, P]
+
+    pde.print_representations()
+
     wf = pde.test_with([O2, O1, O3], sym_repr=[r'v^2', r'w^1', r'q^3'])
     wf = wf.derive.integration_by_parts('0-2')
     wf = wf.derive.integration_by_parts('1-1')

@@ -31,10 +31,14 @@ def pde(*args, **kwargs):
 class PartialDifferentialEquations(Frozen):
     """PDE"""
 
-    def __init__(self, expression, interpreter):
-        expression = self._check_expression(expression)
-        interpreter = self._filter_interpreter(interpreter)
-        self._parse_expression(expression, interpreter)
+    def __init__(self, expression=None, interpreter=None, terms_and_signs=None):
+        if terms_and_signs is None:  # provided terms and signs
+            expression = self._check_expression(expression)
+            interpreter = self._filter_interpreter(interpreter)
+            self._parse_expression(expression, interpreter)
+        else:
+            assert expression is None and interpreter is None
+            self._parse_terms_and_signs(terms_and_signs)
         self._unknowns = None
         self._freeze()
 
@@ -69,7 +73,7 @@ class PartialDifferentialEquations(Frozen):
         """Keep upgrading this method to let it understand more equations."""
         indi_dict = dict()
         sign_dict = dict()
-        form_dict = dict()
+        term_dict = dict()
         ind_dict = dict()
         indexing = dict()
         for i, equation in enumerate(expression):
@@ -79,7 +83,7 @@ class PartialDifferentialEquations(Frozen):
 
             indi_dict[i] = ([], [])  # for left terms and right terms of ith equation
             sign_dict[i] = ([], [])  # for left terms and right terms of ith equation
-            form_dict[i] = ([], [])  # for left terms and right terms of ith equation
+            term_dict[i] = ([], [])  # for left terms and right terms of ith equation
             ind_dict[i] = ([], [])  # for left terms and right terms of ith equation
 
             k = 0
@@ -97,16 +101,16 @@ class PartialDifferentialEquations(Frozen):
                                 assert loc_term[1:] in interpreter, f"found term {loc_term[1:]} not interpreted."
                                 indi = loc_term[1:]
                                 sign = '-'
-                                form = interpreter[loc_term[1:]]
+                                term = interpreter[loc_term[1:]]
                             else:
                                 assert loc_term in interpreter, f"found term {loc_term} not interpreted"
                                 indi = loc_term
                                 sign = '+'
-                                form = interpreter[loc_term]
+                                term = interpreter[loc_term]
 
                             indi_dict[i][j].append(indi)
                             sign_dict[i][j].append(sign)
-                            form_dict[i][j].append(form)
+                            term_dict[i][j].append(term)
                             if j == 0:
                                 index = str(i) + '-' + str(k)
                             elif j == 1:
@@ -114,22 +118,19 @@ class PartialDifferentialEquations(Frozen):
                             else:
                                 raise Exception()
                             k += 1
-                            indexing[index] = (indi, sign, form)
+                            indexing[index] = (indi, sign, term)
                             ind_dict[i][j].append(index)
 
-        self._indi_dict = indi_dict
+        self._indi_dict = indi_dict   # a not very import attribute. Only for print representations.
         self._sign_dict = sign_dict
-        self._form_dict = form_dict
+        self._term_dict = term_dict   # can be form or (for example L2-inner-product- or duality-) terms
         self._ind_dict = ind_dict
         self._indexing = indexing
 
-        self._expression = expression
-        self._interpreter = interpreter
-
         elementary_forms = list()
         mesh = None
-        for i in self._form_dict:
-            for terms in self._form_dict[i]:
+        for i in self._term_dict:
+            for terms in self._term_dict[i]:
                 for term in terms:
                     if term == 0:
                         pass
@@ -143,6 +144,21 @@ class PartialDifferentialEquations(Frozen):
         self._elementary_forms = set(elementary_forms)
         self._mesh = mesh
 
+    def _parse_terms_and_signs(self, terms_and_signs):
+        """We get an equation from terms and signs."""
+        self._indi_dict = None  # in this case, we will not have indi_dict; it is only used for print representations
+        terms, signs = terms_and_signs
+        assert len(terms) == len(signs) == 2 and len(terms[1]) == len(signs[1]) and len(signs[0]) == len(terms[0]), \
+            f"Pls put terms and signs in ([], []) and ([], []) of same length."
+        # ------ need to implement attributes below:
+        self._sign_dict = None
+        self._term_dict = None
+        self._ind_dict = None
+        self._indexing = None
+        self._elementary_forms = None
+        self._mesh = None
+        raise NotImplementedError()  # TODO
+
     @property
     def mesh(self):
         """The mesh"""
@@ -150,25 +166,50 @@ class PartialDifferentialEquations(Frozen):
 
     def print_representations(self, indexing=False):
         """Print representations"""
+        number_equations = len(self._term_dict)
         indicator = ''
+        if self._indi_dict is None:
+            pass
+        else:
+            for i in self._indi_dict:
+                for t, terms in enumerate(self._indi_dict[i]):
+                    if len(terms) == 0:
+                        indicator += '0'
+                    else:
+                        for j, term in enumerate(terms):
+                            term = r'\text{\texttt{' + term + '}}'
+                            if indexing:
+                                index = self._ind_dict[i][t][j].replace('-', r'\text{-}')
+                                term = r'\underbrace{' + term + r'}_{' + \
+                                       rf"{index}" + '}'
+                            else:
+                                pass
+                            sign = self._sign_dict[i][t][j]
+                            if j == 0:
+                                if sign == '+':
+                                    indicator += term
+                                elif sign == '-':
+                                    indicator += '-' + term
+                                else:
+                                    raise Exception()
+                            else:
+                                indicator += ' ' + sign + ' ' + term
+
+                    if t == 0:
+                        indicator += ' &= '
+                if i < number_equations - 1:
+                    indicator += r' \\ '
+                else:
+                    pass
+
         symbolic = ''
-        number_equations = len(self._indi_dict)
-        for i in self._indi_dict:
-            for t, terms in enumerate(self._indi_dict[i]):
+        for i in self._term_dict:
+            for t, terms in enumerate(self._term_dict[i]):
                 if len(terms) == 0:
-                    indicator += '0'
                     symbolic += '0'
                 else:
-                    for j, term in enumerate(terms):
-                        term = r'\text{\texttt{' + term + '}}'
-                        if indexing:
-                            index = self._ind_dict[i][t][j].replace('-', r'\text{-}')
-                            term = r'\underbrace{' + term + r'}_{' + \
-                                   rf"{index}" + '}'
-                        else:
-                            pass
+                    for j, form in enumerate(terms):
                         sign = self._sign_dict[i][t][j]
-                        form = self._form_dict[i][t][j]
                         form_sym_repr = form._sym_repr
                         if indexing:
                             index = self._ind_dict[i][t][j].replace('-', r'\text{-}')
@@ -179,26 +220,25 @@ class PartialDifferentialEquations(Frozen):
 
                         if j == 0:
                             if sign == '+':
-                                indicator += term
                                 symbolic += form_sym_repr
                             elif sign == '-':
-                                indicator += '-' + term
                                 symbolic += '-' + form_sym_repr
                             else:
                                 raise Exception()
                         else:
-                            indicator += ' ' + sign + ' ' + term
                             symbolic += ' ' + sign + ' ' + form_sym_repr
 
                 if t == 0:
-                    indicator += ' &= '
                     symbolic += ' &= '
             if i < number_equations - 1:
-                indicator += r' \\ '
                 symbolic += r' \\ '
             else:
                 pass
-        indicator = r"$\left\lbrace\begin{aligned}" + indicator + r"\end{aligned}\right.$"
+
+        if indicator != '':
+            indicator = r"$\left\lbrace\begin{aligned}" + indicator + r"\end{aligned}\right.$"
+        else:
+            pass
         symbolic = r"$\left\lbrace\begin{aligned}" + symbolic + r"\end{aligned}\right.$"
 
         if self._unknowns is None:
@@ -221,28 +261,33 @@ class PartialDifferentialEquations(Frozen):
             ef_text = ef_text_unknowns + '\n' + ef_text_others
 
         if indexing:
-            length = max([len(i) for i in indicator.split(r'\\')]) / 20
-            height = 2 * len(self._form_dict) * 1.5
+            length = max([len(i) for i in symbolic.split(r'\\')]) / 20
+            height = 2 * len(self._term_dict) * 1.5
         else:
-            length = max([len(i) for i in indicator.split(r'\\')]) / 15
-            height = 2 * len(self._form_dict) * 0.75
+            length = max([len(i) for i in symbolic.split(r'\\')]) / 15
+            height = 2 * len(self._term_dict) * 0.75
         fig, ax = plt.subplots(figsize=(length, height))
         fig.patch.set_visible(False)
         ax.axis('off')
-        table = ax.table(cellText=[[indicator, ], [symbolic, ], [ef_text, ]],
-                         rowLabels=['expression', 'symbolic', 'elementary forms'], rowColours='gcy',
-                         colLoc='left', loc='center', cellLoc='left')
-        if indexing:
-            table.scale(1, 5*len(self._form_dict))
+        if indicator == '':
+            table = ax.table(cellText=[[symbolic, ], [ef_text, ]],
+                             rowLabels=['symbolic', 'elementary forms'], rowColours='cy',
+                             colLoc='left', loc='center', cellLoc='left')
         else:
-            table.scale(1, 2.25*len(self._form_dict))
+            table = ax.table(cellText=[[indicator, ], [symbolic, ], [ef_text, ]],
+                             rowLabels=['expression', 'symbolic', 'elementary forms'], rowColours='gcy',
+                             colLoc='left', loc='center', cellLoc='left')
+        if indexing:
+            table.scale(1, 5 * len(self._term_dict))
+        else:
+            table.scale(1, 2.25 * len(self._term_dict))
         table.set_fontsize(20)
         fig.tight_layout()
         plt.show()
 
     def __len__(self):
         """How many equations we have?"""
-        return len(self._form_dict)
+        return len(self._term_dict)
 
     def __getitem__(self, index):
         return self._indexing[index]
@@ -331,9 +376,9 @@ class PartialDifferentialEquations(Frozen):
             tfs.append(tf)
 
         term_dict = dict()
-        for i in self._form_dict:   # ith equation
+        for i in self._term_dict:   # ith equation
             term_dict[i] = ([], [])
-            for j, terms in enumerate(self._form_dict[i]):
+            for j, terms in enumerate(self._term_dict[i]):
                 for k, term in enumerate(terms):
                     raw_weak_term = inner(term, tfs[i], method=test_method)
                     term_dict[i][j].append(raw_weak_term)

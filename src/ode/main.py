@@ -307,6 +307,9 @@ if __name__ == '__main__':
 
     pde = ph.pde(exp, globals())
     pde.unknowns = [u, w, P]
+
+    pde.print_representations()
+
     wf = pde.test_with([O2, O1, O3], sym_repr=[r'v^2', r'w^1', r'q^3'])
     wf = wf.derive.integration_by_parts('0-2')
     wf = wf.derive.integration_by_parts('1-1')
