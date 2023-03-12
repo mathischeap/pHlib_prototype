@@ -106,6 +106,10 @@ class ConstantScalar0Form(Frozen):
         """Return True if I am a root obj."""
         return self._is_root
 
+    def __eq__(self, other):
+        """self == other"""
+        return self.__repr__() == other.__repr__()
+
     def __add__(self, other):
         """self + other"""
         if isinstance(other, (int, float)):
@@ -119,7 +123,7 @@ class ConstantScalar0Form(Frozen):
             else:
                 op_lin_repr = _global_operator_lin_repr_setting['plus']
                 sym_repr = self._sym_repr + '+' + str(other)   # no need to check is_root.
-                lin_repr = self._lin_repr + f' {op_lin_repr} ' + _parse_lin_repr('scalar_parameter', str(other))[0]
+                lin_repr = self._lin_repr + op_lin_repr + _parse_lin_repr('scalar_parameter', str(other))[0]
                 return ConstantScalar0Form(sym_repr, lin_repr, False, False)
         elif other.__class__.__name__ == self.__class__.__name__:
             if other.is_real():
@@ -128,7 +132,7 @@ class ConstantScalar0Form(Frozen):
             else:
                 op_lin_repr = _global_operator_lin_repr_setting['plus']
                 sym_repr = self._sym_repr + '+' + other._sym_repr   # no need to check is_root.
-                lin_repr = self._lin_repr + f' {op_lin_repr} ' + other._lin_repr
+                lin_repr = self._lin_repr + op_lin_repr + other._lin_repr
                 return ConstantScalar0Form(sym_repr, lin_repr, False, False)
 
         else:
@@ -147,7 +151,7 @@ class ConstantScalar0Form(Frozen):
             else:
                 op_lin_repr = _global_operator_lin_repr_setting['plus']
                 sym_repr = str(other) + '+' + self._sym_repr   # no need to check is_root.
-                lin_repr = _parse_lin_repr('scalar_parameter', str(other))[0] + f' {op_lin_repr} ' + self._lin_repr
+                lin_repr = _parse_lin_repr('scalar_parameter', str(other))[0] + op_lin_repr + self._lin_repr
                 return ConstantScalar0Form(sym_repr, lin_repr, False, False)
         else:
             raise NotImplementedError()

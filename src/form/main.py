@@ -19,13 +19,16 @@ plt.rcParams.update({
 })
 matplotlib.use('TkAgg')
 
+from src.config import _global_lin_repr_setting
 from src.config import _parse_lin_repr
 from src.form.operators import wedge
 from src.config import _check_sym_repr
 from src.form.parameters import constant_scalar
 from src.config import _global_operator_lin_repr_setting
+from src.config import _global_operator_sym_repr_setting
 
 _global_forms = dict()
+_global_root_forms_lin_dict = dict()
 _global_form_variables = {
     'update_cache': True
 }
@@ -38,9 +41,13 @@ class Form(Frozen):
             self, space,
             sym_repr, lin_repr,
             is_root,
-            elementary_forms,
             orientation,
     ):
+        if is_root is None:  # we will parse is_root from lin_repr
+            assert isinstance(lin_repr, str) and len(lin_repr) > 0, f"lin_repr={lin_repr} illegal."
+            is_root, lin_repr = self._parse_is_root(lin_repr)
+        else:
+            pass
         assert isinstance(is_root, bool), f"is_root must be bool."
         self._space = space
 
@@ -59,22 +66,7 @@ class Form(Frozen):
         self._sym_repr = sym_repr
         self._lin_repr = lin_repr
         self._is_root = is_root
-        if is_root is True:
-            if elementary_forms is None:
-                elementary_forms = [self, ]
-            else:
-                _ = list(elementary_forms)
-                assert _[0] is self, f"A root form must have self as its elementary_form."
-        else:
-            assert elementary_forms is not None, f"must provide elementary forms for a non-root form."
-            if elementary_forms .__class__.__name__ == 'Form':
-                elementary_forms = [elementary_forms, ]
-            else:
-                assert isinstance(elementary_forms, (list, tuple, set)) and \
-                    all([f.__class__.__name__ == 'Form' for f in elementary_forms]), \
-                    f'pls set only forms and put them in a list or tuple or set.'
-        self._elementary_forms = set(elementary_forms)
-
+        self._efs = None   # elementary elements
         assert orientation in ('inner', 'outer', 'i', 'o', None, 'None'), \
             f"orientation={orientation} is wrong, must be one of ('inner', 'outer', 'i', 'o', None)."
         if orientation == 'i':
@@ -88,6 +80,10 @@ class Form(Frozen):
         self._orientation = orientation
         if _global_form_variables['update_cache']:  # cache it
             _global_forms[id(self)] = self
+            if self._is_root:
+                _global_root_forms_lin_dict[self._lin_repr] = self
+            else:
+                pass
         else:
             pass
         self._pAti_form: Dict = {
@@ -97,6 +93,30 @@ class Form(Frozen):
         }
         self._abstract_forms = dict()   # the abstract forms based on this form.
         self._freeze()
+
+    @staticmethod
+    def _parse_is_root(lin_repr):
+        """Study is_root through lin_repr."""
+        try:
+            _parse_lin_repr('form', lin_repr)
+        except Exception:
+            pass
+        else:
+            return True, lin_repr
+
+        start, end = _global_lin_repr_setting['form']
+
+        if lin_repr[:len(start)] == start and lin_repr[-len(end):] == end:
+
+            try:
+                _parse_lin_repr('form', lin_repr[len(start):-len(end)])
+            except Exception:
+                return False, lin_repr
+            else:
+                return True, lin_repr[len(start):-len(end)]
+
+        else:
+            return False, lin_repr
 
     def print_representations(self):
         """Print this form with matplotlib and latex."""
@@ -123,6 +143,17 @@ class Form(Frozen):
         """"""
         super_repr = super().__repr__().split('object')[-1]
         return '<Form ' + self._sym_repr + super_repr  # this will be unique.
+
+    @property
+    def elementary_forms(self):
+        """parse the elementary_forms from the linguistic representation only. A texting solution only!"""
+        if self._efs is None:
+            efs = list()
+            for root_lin_repr in _global_root_forms_lin_dict:
+                if root_lin_repr in self._lin_repr:
+                    efs.append(_global_root_forms_lin_dict[root_lin_repr])
+            self._efs = set(efs)
+        return self._efs
 
     @property
     def orientation(self):
@@ -153,11 +184,61 @@ class Form(Frozen):
 
     def __add__(self, other):
         """self + other"""
-        raise NotImplementedError()
+        if other.__class__.__name__ == 'Form':
+            assert other.mesh == self.mesh, f"mesh does not match."
+            assert self.orientation == other.orientation
+            assert self.space == other.space
+            self_lr = self._lin_repr
+            self_sr = self._sym_repr
+            other_lr = other._lin_repr
+            other_sr = other._sym_repr
+
+            operator_lin = _global_operator_lin_repr_setting['plus']
+            operator_sym = _global_operator_sym_repr_setting['plus']
+
+            lin_repr = self_lr + operator_lin + other_lr
+            sym_repr = self_sr + operator_sym + other_sr
+
+            f = Form(
+                self.space,  # space
+                sym_repr,          # symbolic representation
+                lin_repr,          # linguistic representation
+                False,       # must not be a root-form anymore.
+                self.orientation,
+            )
+            return f
+
+        else:
+            raise NotImplementedError(f"{other}")
 
     def __sub__(self, other):
         """self-other"""
-        raise NotImplementedError()
+        if other.__class__.__name__ == 'Form':
+            assert other.mesh == self.mesh, f"mesh does not match."
+            assert self.orientation == other.orientation
+            assert self.space == other.space
+            self_lr = self._lin_repr
+            self_sr = self._sym_repr
+            other_lr = other._lin_repr
+            other_sr = other._sym_repr
+
+            operator_lin = _global_operator_lin_repr_setting['minus']
+            operator_sym = _global_operator_sym_repr_setting['minus']
+
+            lin_repr = self_lr + operator_lin + other_lr
+            sym_repr = self_sr + operator_sym + other_sr
+
+            f = Form(
+                self.space,  # space
+                sym_repr,          # symbolic representation
+                lin_repr,          # linguistic representation
+                False,       # must not be a root-form anymore.
+                self.orientation,
+            )
+            return f
+
+        else:
+            raise NotImplementedError(f"{other}")
 
     def __mul__(self, other):
         """self * other"""
@@ -192,7 +273,6 @@ class Form(Frozen):
                 sr,          # symbolic representation
                 lr,          # linguistic representation
                 False,       # not a root-form anymore.
-                self._elementary_forms,
                 self.orientation,
             )
             return f
@@ -200,23 +280,23 @@ class Form(Frozen):
         else:
             raise NotImplementedError(f"form divided by <{other.__class__.__name__}> is not implemented.")
 
-    def evaluate_at(self, ati):
+    def _evaluate_at(self, other):
         """evaluate_at"""
-        if ati.__class__.__name__ == 'AbstractTimeInstant':
+        if other.__class__.__name__ == 'AbstractTimeInstant':
+            ati = other
             assert self.is_root(), f"Can only evaluate a root form at an abstract time instant."
             sym_repr = self._sym_repr
             lin_repr = self._pure_lin_repr
             sym_repr = r"\left." + sym_repr + r"\right|^{(" + ati.k + ')}'
             lin_repr += "@" + ati._pure_lin_repr
 
-            if lin_repr in self._abstract_forms:   # we cache it, this is very important.
+            if lin_repr in self._abstract_forms:   # we must cache it, this is very important.
                 pass
             else:
                 ftk = Form(
                     self._space,
                     sym_repr, lin_repr,
                     self._is_root,
-                    None,    # elementary_forms
                     self._orientation,
                 )
                 ftk._pAti_form['base_form'] = self
@@ -227,4 +307,35 @@ class Form(Frozen):
             return self._abstract_forms[lin_repr]
 
         else:
-            raise NotImplementedError(f"Cannot evaluate {self} at {ati}.")
+            raise NotImplementedError(f"Cannot evaluate {self} at {other}.")
+
+    def __matmul__(self, other):
+        """self @ other"""
+        return self._evaluate_at(other)
+
+    def replace(self, f, by, which='all'):
+        """replace `which` `f` by `by`."""
+        assert by.space == f.space, f"spaces do not match."
+        if f._lin_repr not in self._lin_repr:
+            return self
+        elif self._lin_repr == f._lin_repr:
+            return by
+
+        else:
+            if which == 'all':
+                lin_repr = self._lin_repr.replace(f._lin_repr, by._lin_repr)
+                sym_repr = self._sym_repr.replace(f._sym_repr, by._sym_repr)
+            else:
+                raise NotImplementedError()
+
+            return Form(
+                self.space,
+                sym_repr,
+                lin_repr,
+                None,
+                self.orientation
+            )
+
+    def reform(self, into):
+        """reform self into `forms` of `signs`."""
+        raise NotImplementedError()

@@ -43,7 +43,6 @@ class OrdinaryDifferentialEquation(Frozen):
             self._parse_expression(expression)
         else:
             raise Exception(f'Pls provide only one of `expression` or `term_sign_dict`.')
-        self._constant_elementary_forms = set()
         self._analyze_terms()
         self._discretize = None
         self._freeze()
@@ -74,14 +73,14 @@ class OrdinaryDifferentialEquation(Frozen):
         other_terms = ([], [])
         pattern = ([], [])
 
-        elementary_forms = set()
+        efs = set()
         number_valid_terms = 0
         for i, terms in enumerate([left_terms, right_terms]):
             for j, term in enumerate(terms):
                 sign = signs[i][j]
                 assert sign in ('+', '-'), rf"sign[{i}][{j}] = {sign} is wrong."
                 assert term._is_real_number_valued(), f"{j}th term in left terms is not real number valued."
-                elementary_forms.update(term._elementary_forms)
+                efs.update(term.elementary_forms)
                 valid_pattern, order = None, None
                 for sp in term._simple_patterns:
                     if sp in self._recognized_pattern():
@@ -109,12 +108,12 @@ class OrdinaryDifferentialEquation(Frozen):
         self._pterm = partial_t_terms
         self._other = other_terms
         self._pattern = pattern   # each time can only have one pattern.
-        self._elementary_forms = elementary_forms
+        self._efs = efs
 
     def _parse_expression(self, expression):
         """"""
         raise NotImplementedError(f"must set `sign`, `_order`, `pterm`, `_other`, "
-                                  f"`_pattern` `_elementary_forms` properties.")
+                                  f"`_pattern` `_efs` properties.")
 
     @classmethod
     def _recognized_pattern(cls):
@@ -166,7 +165,7 @@ class OrdinaryDifferentialEquation(Frozen):
 
     def __repr__(self):
         super_repr = super().__repr__().split('object')[1]
-        ele_form_repr = set([form._sym_repr for form in self._elementary_forms])
+        ele_form_repr = set([form._sym_repr for form in self._efs])
         return f"<ODE of {self._about._sym_repr} for {ele_form_repr}" + super_repr
 
     def __contains__(self, index):
@@ -197,30 +196,15 @@ class OrdinaryDifferentialEquation(Frozen):
             l_o_r = 1
             ith_term = k - number_left_terms
         return l_o_r, ith_term
+
     @property
     def elementary_forms(self):
         """The elementary forms."""
-        return self._elementary_forms
-
-    @property
-    def constant_elementary_forms(self):
-        """constant_elementary_forms"""
-        return self._constant_elementary_forms
-
-    @constant_elementary_forms.setter
-    def constant_elementary_forms(self, cef):
-        """"""
-        if not isinstance(cef, (list, tuple)):
-            cef = [cef, ]
-        else:
-            pass
-        for f in cef:
-            assert f in self.elementary_forms, f"f={f} is not an elementary form."
-            self._constant_elementary_forms = set(cef)
+        return self._efs
 
     def print_representations(self, indexing=True):
         """print_representations"""
-        sym = r'\noindent ODE about: '
+        sym = r'\noindent Time derivative of: '
         sym += rf'${self._about._sym_repr}$, '
         if len(self.elementary_forms) > 1:  # as it must contain the `about` form.
             sym += 'elementary forms: '
@@ -229,13 +213,6 @@ class OrdinaryDifferentialEquation(Frozen):
                     pass
                 else:
                     sym += rf'${ef._sym_repr}$, '
-
-        if len(self.constant_elementary_forms) > 0:
-            sym += 'constant forms: '
-            for cef in self.constant_elementary_forms:
-                sym += rf"${cef._sym_repr}$, "
-        else:
-            pass
 
         sym += r'\\\\$'
         for i, terms in enumerate(self._pterm):
@@ -338,7 +315,6 @@ if __name__ == '__main__':
     terms = wf._term_dict[i]
     signs = wf._sign_dict[i]
     ode_i = ph.ode(terms_and_signs=[terms, signs])
-    ode_i.constant_elementary_forms = wf.test_forms[0]
     # ode_i.print_representations()
 
     term0 = ode_i['0'][1]
@@ -349,8 +325,8 @@ if __name__ == '__main__':
     dt = ats.make_time_interval('k-1', 'k')   # dt = t[k] - t[k-1/2]
     # term0.print_representations()
 
-    u_km1 = u.evaluate_at(dt.start)
-    u_k = u.evaluate_at(dt.end)
+    u_km1 = u @ dt.start
+    u_k = u @ dt.end
     # print(dt._lin_repr, dt._sym_repr)
     # print(dt.start._lin_repr)
     # u_km1.print_representations()
@@ -366,8 +342,8 @@ if __name__ == '__main__':
 
     # ut.print_representations()
 
-    new_terms, signs = term0.split('f1', [u_km1_dt, u_k_dt], ['-', '+'])
-    # new_terms[0].print_representations()
+    signs, new_terms = term0.reform('f1', [u_km1_dt, u_k_dt], ['-', '+'])
+    new_terms[0].print_representations()
     # new_terms[1].print_representations()
 
     # ph.list_forms(globals())

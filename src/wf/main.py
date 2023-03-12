@@ -95,13 +95,13 @@ class WeakFormulation(Frozen):
             ts.append(tf.space)
         self._test_spaces = ts
 
-        elementary_forms = set()
+        efs = set()
         for i in self._term_dict:   # ith equation
             for terms in self._term_dict[i]:
                 for term in terms:
-                    elementary_forms.update(term._elementary_forms)
+                    efs.update(term.elementary_forms)
 
-        self._elementary_forms = elementary_forms
+        self._efs = efs
 
     def __repr__(self):
         """Customize the __repr__."""
@@ -151,7 +151,7 @@ class WeakFormulation(Frozen):
     @property
     def elementary_forms(self):
         """Return a set of root forms that this equation involves."""
-        return self._elementary_forms
+        return self._efs
 
     @property
     def unknowns(self):
@@ -174,7 +174,7 @@ class WeakFormulation(Frozen):
         for i, unknown in enumerate(unknowns):
             assert unknown.__class__.__name__ == 'Form' and unknown.is_root(), \
                 f"{i}th variable is not a root form."
-            assert unknown in self._elementary_forms, f"{i}th variable is not an elementary form."
+            assert unknown in self._efs, f"{i}th variable is not an elementary form."
 
         self._unknowns = unknowns
 
@@ -186,7 +186,7 @@ class WeakFormulation(Frozen):
         """Print the representations"""
         seek_text = r'\noindent '
         given_text = r'Given'
-        for ef in self._elementary_forms:
+        for ef in self._efs:
             if ef not in self.unknowns and ef not in self._test_forms:
                 given_text += rf' ${ef._sym_repr} \in {ef.space._sym_repr}$,'
         if given_text == r'Given':
@@ -566,6 +566,5 @@ if __name__ == '__main__':
     signs = wf._sign_dict[i]
 
     ode_i = ph.ode(terms_and_signs=[terms, signs])
-    ode_i.constant_elementary_forms = wf.test_forms[0]
     ode_i.print_representations()
     # ph.list_forms()

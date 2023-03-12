@@ -59,10 +59,6 @@ def wedge(f1, f2):
     lin_repr = lr_term1 + lr_operator + lr_term2
     sym_repr = sr_term1 + sr_operator + sr_term2
 
-    elementary_forms = set()
-    elementary_forms.update(f1._elementary_forms)
-    elementary_forms.update(f2._elementary_forms)
-
     if f1.orientation == f2.orientation:
         orientation = f1.orientation
     else:
@@ -73,7 +69,6 @@ def wedge(f1, f2):
         sym_repr,  # symbolic representation
         lin_repr,
         False,
-        elementary_forms,
         orientation,
     )
 
@@ -111,7 +106,6 @@ def Hodge(f):
         sr,  # symbolic representation
         lr,
         False,
-        f._elementary_forms,
         orientation,
     )
 
@@ -143,7 +137,6 @@ def d(f):
         sr,  # symbolic representation
         lr,
         False,
-        f._elementary_forms,
         f.orientation,
     )
 
@@ -175,7 +168,6 @@ def codifferential(f):
         sr,  # symbolic representation
         lr,
         False,
-        f._elementary_forms,
         f.orientation,
     )
 
@@ -210,7 +202,6 @@ def time_derivative(f):
         sr,
         lr,
         False,
-        f._elementary_forms,
         f.orientation,
     )
 
@@ -245,7 +236,6 @@ def trace(f):
         sr,  # symbolic representation
         lr,
         False,
-        f._elementary_forms,
         f.orientation,
     )
 

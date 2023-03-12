@@ -13,11 +13,10 @@ from src.config import _wf_term_default_simple_patterns as simple_patterns
 from src.form.tools import _find_form
 from src.form.operators import time_derivative
 from src.pde import PartialDifferentialEquations
-import warnings
 
-
-class ExistingAbstractTimeInstantWarning(UserWarning):
-    pass
+# import warnings
+# class ExistingAbstractTimeInstantWarning(UserWarning):
+#     pass
 
 
 class OrdinaryDifferentialEquationDiscretize(Frozen):
@@ -53,7 +52,8 @@ class OrdinaryDifferentialEquationDiscretize(Frozen):
         assert self.time_sequence is not None, f"set the abstract time sequence first."
         for i, k in enumerate(atis):
             if k in self._at_instants:
-                warnings.warn(f"Abstract time instant {k} already exists", ExistingAbstractTimeInstantWarning)
+                pass
+                # warnings.warn(f"Abstract time instant {k} already exists", ExistingAbstractTimeInstantWarning)
             else:
                 assert isinstance(k, str), f"{i}th abstract time instant {k} is not a string. pls use only str."
                 self._at_instants[k] = self.time_sequence[k]
@@ -86,14 +86,12 @@ class OrdinaryDifferentialEquationDiscretize(Frozen):
         if degree == 1:
             if pattern == simple_patterns['(pt,)']:
                 bf1 = _find_form(ptm._f1._lin_repr, upon=time_derivative)
-                bf1_ks = bf1.evaluate_at(dt.start)
-                bf1_ke = bf1.evaluate_at(dt.end)
+                bf1_ks = bf1 @ dt.start
+                bf1_ke = bf1 @ dt.end
                 bf2 = ptm._f2
-                bf1_ks_divided_by_dt = bf1_ks / dt
-                bf1_ke_divided_by_dt = bf1_ke / dt
-                diff_term1 = ('+', ptm.__class__(bf1_ke_divided_by_dt, bf2))
-                diff_term2 = ('-', ptm.__class__(bf1_ks_divided_by_dt, bf2))
-                self._eq_terms[index] = (diff_term1, diff_term2)
+                term1 = (bf1_ke - bf1_ks) / dt
+                diff_term = ('+', ptm.__class__(term1, bf2))
+                self._eq_terms[index] = [diff_term, ]
                 self._unknown = bf1_ke
             else:
                 raise NotImplementedError()
@@ -101,7 +99,42 @@ class OrdinaryDifferentialEquationDiscretize(Frozen):
         else:
             raise NotImplementedError()
 
-    # def
+    def average(self, index, f, time_instants):
+        """Use average at time instants `time_instants` for form `f` in term indexed `index`
+        """
+        if isinstance(index, int):
+            index = str(index)
+        else:
+            pass
+        term = self._ode[index][1]
+
+        if isinstance(time_instants, str):
+            time_instants = [time_instants, ]
+        else:
+            pass
+
+        self.define_abstract_time_instants(*time_instants)
+
+        f_ = list()
+        for ti in time_instants:
+            f_.append(f @ self._at_instants[ti])
+
+        num = len(f_)
+
+        if num == 1:
+            f_ = f_[0]
+        else:
+            sum_f = f_[0] + f_[1]
+            if num > 2:
+                for _ in f_[2:]:
+                    sum_f += _
+            else:
+                pass
+            f_ = sum_f / num
+
+        new_term = term.replace(f, f_)
+
+        self._eq_terms[index] = [('+', new_term), ]
 
     def __call__(self):
         """return the resulting weak formulation (of one single equation of course.)"""
@@ -149,49 +182,44 @@ if __name__ == '__main__':
     u = O2.make_form(r'u^2', "velocity2")
     f = O2.make_form(r'f^2', "body-force")
     P = O3.make_form(r'P^3', "total-pressure3")
-    wXu = w.wedge(ph.Hodge(u))
+
     dsP = ph.codifferential(P)
-    dsu = ph.codifferential(u)
+
     du = ph.d(u)
     du_dt = ph.time_derivative(u)
     exp = [
-        'du_dt + wXu - dsP = f',
-        'w = dsu',
+        'du_dt - dsP = f',
         'du = 0',
     ]
 
     pde = ph.pde(exp, globals())
-    pde.unknowns = [u, w, P]
+    pde.unknowns = [u, P]
 
-    pde.print_representations()
+    # pde.print_representations()
 
-    wf = pde.test_with([O2, O1, O3], sym_repr=[r'v^2', r'w^1', r'q^3'])
-    wf = wf.derive.integration_by_parts('0-2')
-    wf = wf.derive.integration_by_parts('1-1')
+    wf = pde.test_with([O2, O3], sym_repr=[r'v^2', r'q^3'])
+    wf = wf.derive.integration_by_parts('0-1')
     wf = wf.derive.rearrange(
         {
-            0: '0, 1, 2 = 4, 3',
-            1: '1, 0 = 2',
-            2: ' = 0',
+            0: '0, 1 = 3, 2',
         }
     )
     # wf.print_representations()
 
-    i = 0
-    terms = wf._term_dict[i]
-    signs = wf._sign_dict[i]
-    ode_i = ph.ode(terms_and_signs=[terms, signs])
-    ode_i.constant_elementary_forms = wf.test_forms[0]
-    # ode_i.print_representations()
+    terms = wf._term_dict[0]
+    signs = wf._sign_dict[0]
+    ode = ph.ode(terms_and_signs=[terms, signs])
+
+    # ode.print_representations()
 
     ts1 = ph.time_sequence()
-    td = ode_i.discretize
-
+    td = ode.discretize
     td.time_sequence = ts1
     td.define_abstract_time_instants('k-1', 'k-0.5', 'k')
     td.differentiate(0, 'k-1', 'k')
+    td.average(2, f, ['k-1', 'k'])
+    td.average(1, P, 'k-1/2')
+    td.average(3, P, 'k-1/2')
 
-    eq = ode_i.discretize()
-    print(eq)
+    eq = ode.discretize()
     eq.print_representations()
-    # ph.list_forms(globals())

@@ -40,7 +40,7 @@ _mesh_default_lin_repr = r'Mesh'
 def _parse_lin_repr(obj, lin_repr):
     """"""
     assert isinstance(lin_repr, str) and len(lin_repr) > 0, f"linguistic_representation must be str of length > 0."
-    assert all([_ not in r"{\}" for _ in lin_repr]), f"lin_repr={lin_repr} illegal, cannot contain" + r"'{\}'."
+    assert all([_ not in r"{$\}" for _ in lin_repr]), f"lin_repr={lin_repr} illegal, cannot contain" + r"'{\}'."
     start, end = _global_lin_repr_setting[obj]
     return start + lin_repr + end, lin_repr
 
@@ -60,18 +60,25 @@ def _check_sym_repr(sym_repr):
 
 
 _global_operator_lin_repr_setting = {  # coded operators
-    'plus': r" +  ",
-    'minus': r" - ",
+    'plus': r" $+$ ",
+    'minus': r" $-$ ",
     'wedge': r" $\wedge$ ",
     'Hodge': r'$\star$ ',
     'd': r'$\mathrm{d} $ ',
     'codifferential': r'$\mathrm{d}^{\ast}$ ',
     'time_derivative': r'$\partial_{t}$ ',
     'trace': r'\emph{tr} ',
-    'divided': r' \emph{divided by} '
+
+    'L2-inner-product': [r"$($", r'\emph{,} ', r"$)$ \emph{over} "],
+    'duality-pairing': [r"$<$", r' \emph{,} ', r"$>$  \emph{over} "],
+
+    'divided': r' \emph{divided by} ',
+    'multiply': r' \emph{multiply} '
 }
 
 _global_operator_sym_repr_setting = {  # coded operators
+    'plus': r"+",
+    'minus': r"-",
     'wedge': r"{\wedge}",
     'Hodge': r'{\star}',
     'd': r'\mathrm{d}',

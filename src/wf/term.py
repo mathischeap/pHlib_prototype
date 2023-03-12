@@ -23,40 +23,62 @@ from src.form.operators import codifferential, d, trace, Hodge, time_derivative
 from src.form.operators import _parse_related_time_derivative
 from src.config import _global_operator_lin_repr_setting
 from src.config import _wf_term_default_simple_patterns as _simple_patterns
-# from src.form.parameters import constant_scalar
+from src.form.parameters import constant_scalar
+_cs1 = constant_scalar(1)
 
 
 class _WeakFormulationTerm(Frozen):
     """Factor multiplies the term, <f1|f2> or (f1, f2).
     """
 
-    def __init__(self, mesh, f1, f2, factor=None):
+    def __init__(self, f1, f2, factor=None):
         """"""
-        self._mesh = mesh
+        self._mesh = f1.mesh
         self._f1 = f1
         self._f2 = f2
         self._factor = factor
 
         if factor is None:
-            self._factor = None
+            self._factor = _cs1
         elif isinstance(factor, (int, float)):
-            self._factor_sym_repr = str(factor)
-            self._factor_lin_repr = rf"({str(factor)})"
+            self._factor = constant_scalar(factor)
+        elif factor.__class__.__name__ == "ConstantScalar0Form":
+            self._factor = factor
+        else:
+            raise NotImplementedError(f'f{factor}')
 
         self._simple_patterns = _simpler_pattern_examiner(f1, f2)
         for sp in self._simple_patterns:
             assert sp in _simple_patterns.values(), f"found unknown simple pattern: {sp}."
-        self._elementary_forms = set()
-        self._elementary_forms.update(f1._elementary_forms)
-        self._elementary_forms.update(f2._elementary_forms)
-        self._sym_repr = None
-        self._lin_repr = None
+        self._efs = set()
+        self._efs.update(f1.elementary_forms)
+        self._efs.update(f2.elementary_forms)
+        self.___sym_repr___ = None
+        self.___lin_repr___ = None
         self._freeze()
+
+    @property
+    def _sym_repr(self):
+        if self._factor == _cs1:
+            return self.___sym_repr___
+        else:
+            return self._factor._sym_repr + self.___sym_repr___
+
+    @property
+    def _lin_repr(self):
+        if self._factor == _cs1:
+            return self.___lin_repr___
+        else:
+            return self._factor._sym_repr + _global_operator_lin_repr_setting['multiply'] + self.___sym_repr___
 
     @property
     def mesh(self):
         """The mesh."""
         return self._mesh
+
+    @property
+    def elementary_forms(self):
+        return self._efs
 
     @staticmethod
     def _is_able_to_be_a_weak_term():
@@ -75,16 +97,50 @@ class _WeakFormulationTerm(Frozen):
         plt.axis('off')
         plt.show()
 
-    # def replace(self, f, by, which='all'):
-    #     """replace form `f` in this term by `by`,
-    #     if there are more than one `f` found, apply the replacement to `which`.
-    #     If there are 'f' in this term, which should be int or a list of int which indicating
-    #     `f` according the sequence of `f._lin_repr` in `self._lin_repr`.
-    #     """
-    #     raise NotImplementedError()
+    def replace(self, f, by, which='all'):
+        """replace form `f` in this term by `by`,
+        if there are more than one `f` found, apply the replacement to `which`.
+        If there are 'f' in this term, which should be int or a list of int which indicating
+        `f` according the sequence of `f._lin_repr` in `self._lin_repr`.
+        """
+        if f == 'f1':
+            assert by.__class__.__name__ == 'Form' and by.space == f.space, f"Spaces do not match."
+            assert self._f1.space == by.space, f"spaces do not match."
+            return self.__class__(by, self._f2, factor=self._factor)
+        elif f == 'f2':
+            assert by.__class__.__name__ == 'Form' and by.space == f.space, f"Spaces do not match."
+            assert self._f2.space == by.space, f"spaces do not match."
+            return self.__class__(self._f1, by, factor=self._factor)
 
-    def split(self, f, into, signs, which=None):
-        """Split `which` `f` `into`."""
+        elif f.__class__.__name__ == 'Form':
+            assert f.space == by.space, f"spaces do not match."
+            if which == 'all':
+                places = {
+                    'f1': 'all',
+                    'f2': 'all',
+                }
+            else:
+                raise NotImplementedError()
+
+            f1 = self._f1
+            f2 = self._f2
+            factor = self._factor
+
+            for place in places:
+                if place == 'f1':
+                    f1 = self._f1.replace(f, by, which=places['f1'])
+                elif place == 'f2':
+                    f2 = self._f2.replace(f, by, which=places['f2'])
+                else:
+                    raise NotImplementedError
+
+            return self.__class__(f1, f2, factor=factor)
+
+        else:
+            raise NotImplementedError()
+
+    def reform(self, f, into, signs, which=None):
+        """Split `which` `f` `into` of `signs`."""
         if f in ('f1', 'f2'):
             assert which is None, f"When specify f1 or f2, no need to set `which`."
             term_class = self.__class__
@@ -100,7 +156,7 @@ class _WeakFormulationTerm(Frozen):
                 # noinspection PyArgumentList
                 term = term_class(ifi, f2)
                 new_terms.append(term)
-            return new_terms, signs
+            return signs, new_terms
 
         else:
             raise NotImplementedError()
@@ -153,7 +209,7 @@ class DualityPairingTerm(_WeakFormulationTerm):
         else:
             raise Exception(f'cannot do duality pairing between {f1} in {s1} and {f2} in {s2}.')
 
-        super().__init__(f1.mesh, f1, f2, factor=factor)
+        super().__init__(f1, f2, factor=factor)
 
         sr1 = f1._sym_repr
         sr2 = f2._sym_repr
@@ -170,12 +226,11 @@ class DualityPairingTerm(_WeakFormulationTerm):
             pass
         else:
             lr2 = rf'[{lr2}]'
-
+        olr0, olr1, olr2 = _global_operator_lin_repr_setting['duality-pairing']
         sym_repr = rf'\left<\left.{sr1}\right|{sr2}\right>_' + r"{" + self._mesh.manifold._sym_repr + "}"
-        lin_repr = r"\emph{duality-pairing between} " + lr1 + r' \emph{and} ' + lr2
-        lin_repr += r" \emph{over} " + self.mesh.manifold._lin_repr
-        self._sym_repr = sym_repr
-        self._lin_repr = lin_repr
+        lin_repr = olr0 + lr1 + olr1 + lr2 + olr2 + self.mesh.manifold._lin_repr
+        self.___sym_repr___ = sym_repr
+        self.___lin_repr___ = lin_repr
 
     def __repr__(self):
         """"""
@@ -241,7 +296,7 @@ class L2InnerProductTerm(_WeakFormulationTerm):
         else:
             raise NotImplementedError()
 
-        super().__init__(f1.mesh, f1, f2, factor=factor)
+        super().__init__(f1, f2, factor=factor)
 
         sr1 = f1._sym_repr
         sr2 = f2._sym_repr
@@ -259,12 +314,12 @@ class L2InnerProductTerm(_WeakFormulationTerm):
         else:
             lr2 = rf'[{lr2}]'
 
+        olr0, olr1, olr2 = _global_operator_lin_repr_setting['L2-inner-product']
         sym_repr = rf'\left({sr1},{sr2}\right)_' + r"{" + self._mesh.manifold._sym_repr + "}"
-        lin_repr = r"\emph{L2-inner-product between} " + lr1 + r' \emph{and} ' + lr2
-        lin_repr += r" \emph{over} " + self.mesh.manifold._lin_repr
+        lin_repr = olr0 + lr1 + olr1 + lr2 + olr2 + self.mesh.manifold._lin_repr
 
-        self._sym_repr = sym_repr
-        self._lin_repr = lin_repr
+        self.___sym_repr___ = sym_repr
+        self.___lin_repr___ = lin_repr
 
     def __repr__(self):
         """"""

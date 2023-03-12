@@ -36,7 +36,6 @@ class SpaceBase(Frozen):
         return Form(
             self, sym_repr, lin_repr,
             True,  # is_root
-            None,  # elementary_forms
             orientation
         )
 

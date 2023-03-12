@@ -127,16 +127,16 @@ class PartialDifferentialEquations(Frozen):
         self._ind_dict = ind_dict
         self._indexing = indexing
 
-        elementary_forms = list()
+        efs = list()
         for i in self._term_dict:
             for terms in self._term_dict[i]:
                 for term in terms:
                     if term == 0:
                         pass
                     else:
-                        elementary_forms.extend(term._elementary_forms)
+                        efs.extend(term.elementary_forms)
 
-        self._elementary_forms = set(elementary_forms)
+        self._efs = set(efs)
 
     def _parse_terms_and_signs(self, terms_and_signs_dict):
         """We get an equation from terms and signs."""
@@ -167,15 +167,15 @@ class PartialDifferentialEquations(Frozen):
         self._ind_dict = _ind_dict
         self._indexing = _indexing
 
-        elementary_forms = list()
+        efs = list()
         for i in self._term_dict:
             for terms in self._term_dict[i]:
                 for term in terms:
                     if term == 0:
                         pass
                     else:
-                        elementary_forms.extend(term._elementary_forms)
-        self._elementary_forms = set(elementary_forms)
+                        efs.extend(term.elementary_forms)
+        self._efs = set(efs)
 
     def print_representations(self, indexing=True):
         """Print representations"""
@@ -262,7 +262,7 @@ class PartialDifferentialEquations(Frozen):
 
         if self._unknowns is None:
             ef_text = list()
-            for ef in self._elementary_forms:
+            for ef in self._efs:
                 ef_text.append(ef._sym_repr)
             ef_text = r'$' + r', '.join(ef_text) + r'$'
         else:
@@ -270,7 +270,7 @@ class PartialDifferentialEquations(Frozen):
             ef_text_others = list()
             for ef in self._unknowns:
                 ef_text_unknowns.append(ef._sym_repr)
-            for ef in self._elementary_forms:
+            for ef in self._efs:
                 if ef in self._unknowns:
                     pass
                 else:
@@ -317,7 +317,7 @@ class PartialDifferentialEquations(Frozen):
     @property
     def elementary_forms(self):
         """Return a set of root forms that this equation involves."""
-        return self._elementary_forms
+        return self._efs
 
     @property
     def unknowns(self):
@@ -340,7 +340,7 @@ class PartialDifferentialEquations(Frozen):
         for i, unknown in enumerate(unknowns):
             assert unknown.__class__ is Form and unknown.is_root(), \
                 f"{i}th variable is not a root form."
-            assert unknown in self._elementary_forms, f"{i}th variable is not an elementary form."
+            assert unknown in self._efs, f"{i}th variable is not an elementary form."
 
         self._unknowns = unknowns
 
