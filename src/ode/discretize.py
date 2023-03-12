@@ -10,6 +10,9 @@ if './' not in sys.path:
 
 from src.tools.frozen import Frozen
 from src.config import _wf_term_default_simple_patterns as simple_patterns
+from src.form.tools import _find_form
+from src.form.operators import time_derivative
+from src.pde import PartialDifferentialEquations
 import warnings
 
 
@@ -26,7 +29,8 @@ class OrdinaryDifferentialEquationDiscretize(Frozen):
         self._ats = None
         self._at_instants = dict()
         self._at_intervals = dict()
-        self._equation = dict()
+        self._eq_terms = dict()
+        self._unknown = None
         self._freeze()
 
     @property
@@ -69,27 +73,64 @@ class OrdinaryDifferentialEquationDiscretize(Frozen):
             self._at_intervals[key] = ati
             return ati
 
-    def _differentiate(self, index, ks, ke, degree=1):
+    def differentiate(self, index, ks, ke, degree=1):
         """Differentiate a term at time interval [ati0, ati1] using a Gauss integrator of degree 1."""
+        if isinstance(index, int):
+            index = str(index)
+        else:
+            pass
         term = self._ode[index]
+        pattern = term[2]
+        ptm = term[1]
         dt = self._get_abstract_time_interval(ks, ke)
         if degree == 1:
-            pattern = term[2]
             if pattern == simple_patterns['(pt,)']:
-                print('cool')
-
+                bf1 = _find_form(ptm._f1._lin_repr, upon=time_derivative)
+                bf1_ks = bf1.evaluate_at(dt.start)
+                bf1_ke = bf1.evaluate_at(dt.end)
+                bf2 = ptm._f2
+                bf1_ks_divided_by_dt = bf1_ks / dt
+                bf1_ke_divided_by_dt = bf1_ke / dt
+                diff_term1 = ('+', ptm.__class__(bf1_ke_divided_by_dt, bf2))
+                diff_term2 = ('-', ptm.__class__(bf1_ks_divided_by_dt, bf2))
+                self._eq_terms[index] = (diff_term1, diff_term2)
+                self._unknown = bf1_ke
             else:
                 raise NotImplementedError()
 
         else:
             raise NotImplementedError()
 
+    # def
+
     def __call__(self):
         """return the resulting weak formulation (of one single equation of course.)"""
+        terms = ([], [])
+        signs = ([], [])
+        new_term_sign = self._eq_terms
+        for index in self._ode:
+            every_thing_about_this_term = self._ode[index]
+            l_o_r = self._ode._parse_index(index)[0]
+            if index in new_term_sign:
+                original_sign = every_thing_about_this_term[0]
+                for sign_term in new_term_sign[index]:
+                    sign, term = sign_term
+                    sign = self._parse_sign(original_sign, sign)
+                    terms[l_o_r].append(term)
+                    signs[l_o_r].append(sign)
+            else:
+                terms[l_o_r].append(every_thing_about_this_term[1])
+                signs[l_o_r].append(every_thing_about_this_term[0])
+        signs_dict = {0: signs}
+        terms_dict = {0: terms}
+        equation = PartialDifferentialEquations(terms_and_signs_dict=(terms_dict, signs_dict))
+        equation.unknowns = self._unknown
+        return equation
 
-        # print(self._ode._pterm)
-        # print(self._ode._signs)
-        return self._equation   # you'd better check it before using it. -.-
+    @staticmethod
+    def _parse_sign(sign1, sign2):
+        """-- = +, ++ = +, +- = -, -+ = - sign."""
+        return '+' if sign1 == sign2 else '-'
 
 
 if __name__ == '__main__':
@@ -148,7 +189,9 @@ if __name__ == '__main__':
 
     td.time_sequence = ts1
     td.define_abstract_time_instants('k-1', 'k-0.5', 'k')
-    td._differentiate(0, 'k-1', 'k')
+    td.differentiate(0, 'k-1', 'k')
 
-    wf = ode_i.discretize()
-    print(wf)
+    eq = ode_i.discretize()
+    print(eq)
+    eq.print_representations()
+    # ph.list_forms(globals())

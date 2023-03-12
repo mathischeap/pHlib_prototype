@@ -185,6 +185,18 @@ class OrdinaryDifferentialEquation(Frozen):
         for index in self._indexing:
             yield index
 
+    def _parse_index(self, index):
+        """"""
+        k = int(index)
+        left_terms = self._signs[0]
+        number_left_terms = len(left_terms)
+        if k < number_left_terms:
+            l_o_r = 0  # left
+            ith_term = k
+        else:
+            l_o_r = 1
+            ith_term = k - number_left_terms
+        return l_o_r, ith_term
     @property
     def elementary_forms(self):
         """The elementary forms."""

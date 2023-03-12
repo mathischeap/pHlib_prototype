@@ -44,7 +44,7 @@ class WeakFormulation(Frozen):
             assert weak_formulations is None
             self._parse_expression(expression)
 
-        elif weak_formulations is not None:
+        elif weak_formulations is not None:  # merge multiple weak formulations
             assert term_sign_dict is None
             assert test_forms is None
             assert expression is None

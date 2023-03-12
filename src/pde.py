@@ -31,14 +31,14 @@ def pde(*args, **kwargs):
 class PartialDifferentialEquations(Frozen):
     """PDE"""
 
-    def __init__(self, expression=None, interpreter=None, terms_and_signs=None):
-        if terms_and_signs is None:  # provided terms and signs
+    def __init__(self, expression=None, interpreter=None, terms_and_signs_dict=None):
+        if terms_and_signs_dict is None:  # provided terms and signs
             expression = self._check_expression(expression)
             interpreter = self._filter_interpreter(interpreter)
             self._parse_expression(expression, interpreter)
         else:
             assert expression is None and interpreter is None
-            self._parse_terms_and_signs(terms_and_signs)
+            self._parse_terms_and_signs(terms_and_signs_dict)
         self._unknowns = None
         self._freeze()
 
@@ -128,7 +128,6 @@ class PartialDifferentialEquations(Frozen):
         self._indexing = indexing
 
         elementary_forms = list()
-        mesh = None
         for i in self._term_dict:
             for terms in self._term_dict[i]:
                 for term in terms:
@@ -136,35 +135,49 @@ class PartialDifferentialEquations(Frozen):
                         pass
                     else:
                         elementary_forms.extend(term._elementary_forms)
-                        if mesh is None:
-                            mesh = term.mesh
-                        else:
-                            assert mesh == term.mesh, f"mesh dis-match."
 
         self._elementary_forms = set(elementary_forms)
-        self._mesh = mesh
 
-    def _parse_terms_and_signs(self, terms_and_signs):
+    def _parse_terms_and_signs(self, terms_and_signs_dict):
         """We get an equation from terms and signs."""
         self._indi_dict = None  # in this case, we will not have indi_dict; it is only used for print representations
-        terms, signs = terms_and_signs
-        assert len(terms) == len(signs) == 2 and len(terms[1]) == len(signs[1]) and len(signs[0]) == len(terms[0]), \
-            f"Pls put terms and signs in ([], []) and ([], []) of same length."
+        terms_dict, signs_dict = terms_and_signs_dict
+        _ind_dict = dict()
+        _indexing = dict()
+        for i in terms_dict:
+            terms = terms_dict[i]
+            signs = signs_dict[i]
+            _ind_dict[i] = ([], [])
+            assert len(terms) == len(signs) == 2 and \
+                len(terms[1]) == len(signs[1]) and len(signs[0]) == len(terms[0]), \
+                f"Pls put terms and signs of {i}th equation in ([], []) and ([], []) of same length."
+            k = 0
+            for j, lr_terms in enumerate(terms):
+                lr_signs = signs[j]
+                for m, term in enumerate(lr_terms):
+                    sign = lr_signs[m]
+                    index = str(i) + '-' + str(k)
+                    _ind_dict[i][j].append(index)
+                    _indexing[index] = ('', sign, term)  # the first entry is the indicator, it is ''.
+                    k += 1
         # ------ need to implement attributes below:
-        self._sign_dict = None
-        self._term_dict = None
-        self._ind_dict = None
-        self._indexing = None
-        self._elementary_forms = None
-        self._mesh = None
-        raise NotImplementedError()  # TODO
 
-    @property
-    def mesh(self):
-        """The mesh"""
-        return self._mesh
+        self._sign_dict = signs_dict
+        self._term_dict = terms_dict
+        self._ind_dict = _ind_dict
+        self._indexing = _indexing
 
-    def print_representations(self, indexing=False):
+        elementary_forms = list()
+        for i in self._term_dict:
+            for terms in self._term_dict[i]:
+                for term in terms:
+                    if term == 0:
+                        pass
+                    else:
+                        elementary_forms.extend(term._elementary_forms)
+        self._elementary_forms = set(elementary_forms)
+
+    def print_representations(self, indexing=True):
         """Print representations"""
         number_equations = len(self._term_dict)
         indicator = ''
@@ -204,11 +217,11 @@ class PartialDifferentialEquations(Frozen):
 
         symbolic = ''
         for i in self._term_dict:
-            for t, terms in enumerate(self._term_dict[i]):
-                if len(terms) == 0:
+            for t, forms in enumerate(self._term_dict[i]):
+                if len(forms) == 0:
                     symbolic += '0'
                 else:
-                    for j, form in enumerate(terms):
+                    for j, form in enumerate(forms):
                         sign = self._sign_dict[i][t][j]
                         form_sym_repr = form._sym_repr
                         if indexing:
@@ -230,16 +243,22 @@ class PartialDifferentialEquations(Frozen):
 
                 if t == 0:
                     symbolic += ' &= '
+
             if i < number_equations - 1:
                 symbolic += r' \\ '
             else:
                 pass
 
         if indicator != '':
-            indicator = r"$\left\lbrace\begin{aligned}" + indicator + r"\end{aligned}\right.$"
+            if len(self) == 1:
+                indicator = r"$\begin{aligned}" + indicator + r"\end{aligned}$"
+            else:
+                indicator = r"$\left\lbrace\begin{aligned}" + indicator + r"\end{aligned}\right.$"
+
+        if len(self) > 1:
+            symbolic = r"$\left\lbrace\begin{aligned}" + symbolic + r"\end{aligned}\right.$"
         else:
-            pass
-        symbolic = r"$\left\lbrace\begin{aligned}" + symbolic + r"\end{aligned}\right.$"
+            symbolic = r"$\begin{aligned}" + symbolic + r"\end{aligned}$"
 
         if self._unknowns is None:
             ef_text = list()
@@ -256,18 +275,16 @@ class PartialDifferentialEquations(Frozen):
                     pass
                 else:
                     ef_text_others.append(ef._sym_repr)
+
             ef_text_unknowns = r'unknowns: $' + r', '.join(ef_text_unknowns) + r'$'
             ef_text_others = r'others: $' + r', '.join(ef_text_others) + r'$'
             ef_text = ef_text_unknowns + '\n' + ef_text_others
 
-        if indexing:
-            length = max([len(i) for i in symbolic.split(r'\\')]) / 20
-            height = 2 * len(self._term_dict) * 1.5
-        else:
-            length = max([len(i) for i in symbolic.split(r'\\')]) / 15
-            height = 2 * len(self._term_dict) * 0.75
+        length = max([16, max([len(i) for i in symbolic.split(r'\\')]) / 30])
+        height = max([12, 2 * len(self._term_dict) + 3])
         fig, ax = plt.subplots(figsize=(length, height))
         fig.patch.set_visible(False)
+
         ax.axis('off')
         if indicator == '':
             table = ax.table(cellText=[[symbolic, ], [ef_text, ]],
@@ -277,11 +294,9 @@ class PartialDifferentialEquations(Frozen):
             table = ax.table(cellText=[[indicator, ], [symbolic, ], [ef_text, ]],
                              rowLabels=['expression', 'symbolic', 'elementary forms'], rowColours='gcy',
                              colLoc='left', loc='center', cellLoc='left')
-        if indexing:
-            table.scale(1, 5 * len(self._term_dict))
-        else:
-            table.scale(1, 2.25 * len(self._term_dict))
-        table.set_fontsize(20)
+
+        table.scale(0.9, 1.5 * height)
+        table.set_fontsize(25)
         fig.tight_layout()
         plt.show()
 

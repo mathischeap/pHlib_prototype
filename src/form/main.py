@@ -176,10 +176,7 @@ class Form(Frozen):
 
         elif other.__class__.__name__ == 'AbstractTimeInterval':
             ati = other
-            ati_sr = ati._sym_repr
-            ati_lr = ati._pure_lin_repr
-            cs = constant_scalar(ati_sr, ati_lr)
-            return self / cs
+            return self / ati._as_scalar()
 
         elif other.__class__.__name__ == 'ConstantScalar0Form':
             lr = self._lin_repr

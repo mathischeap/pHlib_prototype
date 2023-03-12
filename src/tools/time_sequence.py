@@ -17,6 +17,7 @@ from src.config import _abstract_time_sequence_default_sym_repr
 from src.config import _abstract_time_interval_default_sym_repr
 from src.config import _abstract_time_sequence_default_lin_repr
 from src.config import _check_sym_repr
+from src.form.parameters import constant_scalar
 
 _global_abstract_time_sequence = dict()
 _global_abstract_time_interval = list()
@@ -368,6 +369,7 @@ class AbstractTimeInterval(Frozen):
         sym_repr = _check_sym_repr(sym_repr)
         _global_abstract_time_interval.append(sym_repr)
         self._sym_repr = sym_repr
+        self._s = None
         self._freeze()
 
     @property
@@ -393,6 +395,13 @@ class AbstractTimeInterval(Frozen):
         super_repr = super().__repr__().split('object')[1]
         return f"<AbstractTimeInterval from t['{self.start.k}]' to t['{self.end.k}'], {self._sym_repr}," + \
             super_repr[:-1] + f' of {self.time_sequence}>'
+
+    def _as_scalar(self):
+        if self._s is None:
+            ati_sr = self._sym_repr
+            ati_lr = self._pure_lin_repr
+            self._s = constant_scalar(ati_sr, ati_lr)
+        return self._s
 
 
 _implemented_specific_time_sequences = {

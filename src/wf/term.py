@@ -23,6 +23,7 @@ from src.form.operators import codifferential, d, trace, Hodge, time_derivative
 from src.form.operators import _parse_related_time_derivative
 from src.config import _global_operator_lin_repr_setting
 from src.config import _wf_term_default_simple_patterns as _simple_patterns
+# from src.form.parameters import constant_scalar
 
 
 class _WeakFormulationTerm(Frozen):
@@ -37,8 +38,7 @@ class _WeakFormulationTerm(Frozen):
         self._factor = factor
 
         if factor is None:
-            self._factor_sym_repr = None
-            self._factor_lin_repr = None
+            self._factor = None
         elif isinstance(factor, (int, float)):
             self._factor_sym_repr = str(factor)
             self._factor_lin_repr = rf"({str(factor)})"
