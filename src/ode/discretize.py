@@ -106,6 +106,7 @@ class OrdinaryDifferentialEquationDiscretize(Frozen):
             index = str(index)
         else:
             pass
+        old_sign = self._ode[index][0]
         term = self._ode[index][1]
 
         if isinstance(time_instants, str):
@@ -132,9 +133,10 @@ class OrdinaryDifferentialEquationDiscretize(Frozen):
                 pass
             f_ = sum_f / num
 
-        new_term = term.replace(f, f_)
+        new_sign, new_term = term.replace(f, f_)
+        sign = self._parse_sign(old_sign, new_sign)
 
-        self._eq_terms[index] = [('+', new_term), ]
+        self._eq_terms[index] = [(sign, new_term), ]
 
     def __call__(self):
         """return the resulting weak formulation (of one single equation of course.)"""

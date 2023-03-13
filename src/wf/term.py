@@ -97,7 +97,7 @@ class _WeakFormulationTerm(Frozen):
         plt.axis('off')
         plt.show()
 
-    def replace(self, f, by, which='all'):
+    def replace(self, f, by, which='all', change_sign=False):
         """replace form `f` in this term by `by`,
         if there are more than one `f` found, apply the replacement to `which`.
         If there are 'f' in this term, which should be int or a list of int which indicating
@@ -107,6 +107,7 @@ class _WeakFormulationTerm(Frozen):
             assert by.__class__.__name__ == 'Form' and by.space == f.space, f"Spaces do not match."
             assert self._f1.space == by.space, f"spaces do not match."
             return self.__class__(by, self._f2, factor=self._factor)
+
         elif f == 'f2':
             assert by.__class__.__name__ == 'Form' and by.space == f.space, f"Spaces do not match."
             assert self._f2.space == by.space, f"spaces do not match."
@@ -133,8 +134,11 @@ class _WeakFormulationTerm(Frozen):
                     f2 = self._f2.replace(f, by, which=places['f2'])
                 else:
                     raise NotImplementedError
-
-            return self.__class__(f1, f2, factor=factor)
+            if change_sign:
+                sign = '-'
+            else:
+                sign = '+'
+            return sign, self.__class__(f1, f2, factor=factor)
 
         else:
             raise NotImplementedError()
@@ -145,8 +149,14 @@ class _WeakFormulationTerm(Frozen):
             assert which is None, f"When specify f1 or f2, no need to set `which`."
             term_class = self.__class__
             f2 = self._f2
+            if into.__class__.__name__ ==  'Form':
+                into = [into, ]
+                assert signs in ('+', '-'), f"when give one form, sign must be in '+' or  '-'."
+                signs = [signs, ]
+            else:
+                pass
             assert isinstance(into, (list, tuple)), f"put split objects into a list or tuple."
-            assert len(into) > 1, f"number of split objects must be larger than 1."
+            assert len(into) >= 1, f"number of split objects must be equal to or larger than 1."
             assert len(into) == len(signs), f"objects and signs length dis-match."
             new_terms = list()
             for i, ifi in enumerate(into):
@@ -162,13 +172,14 @@ class _WeakFormulationTerm(Frozen):
             raise NotImplementedError()
 
 
-def duality_pairing(f1, f2):
+def duality_pairing(f1, f2, factor=None):
     """
 
     Parameters
     ----------
     f1
     f2
+    factor
 
     Returns
     -------
@@ -181,7 +192,7 @@ def duality_pairing(f1, f2):
             f"cannot do duality pairing between {f1} in {s1} and {f2} in {s2}."
     else:
         raise Exception(f'cannot do duality pairing between {f1} in {s1} and {f2} in {s2}.')
-    return DualityPairingTerm(f1, f2)
+    return DualityPairingTerm(f1, f2, factor=factor)
 
 
 class DualityPairingTerm(_WeakFormulationTerm):
@@ -238,13 +249,14 @@ class DualityPairingTerm(_WeakFormulationTerm):
         return '<Duality Pairing ' + self._sym_repr + f'{super_repr}'
 
 
-def inner(f1, f2, method='L2'):
+def inner(f1, f2, factor=None, method='L2'):
     """
 
     Parameters
     ----------
     f1
     f2
+    factor
     method
 
     Returns
@@ -267,7 +279,7 @@ def inner(f1, f2, method='L2'):
         raise Exception(f'cannot do inner product between {f1} in {s1} and {f2} in {s2}.')
 
     if method == 'L2':
-        return L2InnerProductTerm(f1, f2)
+        return L2InnerProductTerm(f1, f2, factor=factor)
     else:
         raise NotImplementedError()
 
