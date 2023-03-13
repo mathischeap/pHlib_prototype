@@ -18,6 +18,7 @@ plt.rcParams.update({
 })
 matplotlib.use('TkAgg')
 from copy import deepcopy
+from src.wf.td import TemporalDiscretization
 
 
 class WeakFormulation(Frozen):
@@ -56,6 +57,7 @@ class WeakFormulation(Frozen):
         self._consistence_checker()
         self._unknowns = None
         self._derive = None
+        self._td = None
         self._freeze()
 
     def _parse_term_sign_dict(self, term_sign_dict, test_forms):
@@ -63,7 +65,9 @@ class WeakFormulation(Frozen):
         term_dict, sign_dict = term_sign_dict
         ind_dict = dict()
         indexing = dict()
-        for i in term_dict:   # ith equation
+        num_eq = len(term_dict)
+        for i in range(num_eq):   # ith equation
+            assert i in term_dict and i in sign_dict, f"numbering of equations must be 0, 1, 2, ..."
             ind_dict[i] = ([], [])
             k = 0
             for j, terms in enumerate(term_dict[i]):
@@ -268,12 +272,23 @@ class WeakFormulation(Frozen):
         fig.tight_layout()
         plt.show()
 
+    def print(self, **kwargs):
+        """A wrapper of print_representations"""
+        return self.print_representations(**kwargs)
+
     @property
     def derive(self):
         """The derivations that to be applied to this current weak formulation."""
         if self._derive is None:
             self._derive = _Derive(self)
         return self._derive
+
+    @property
+    def td(self):
+        """temporal discretization."""
+        if self._td is None:
+            self._td = TemporalDiscretization(self)
+        return self._td
 
 
 class _Derive(Frozen):
@@ -525,23 +540,12 @@ if __name__ == '__main__':
     ]
     pde = ph.pde(exp, globals())
     pde.unknowns = [u, w, P]
-    pde.print_representations(indexing=True)
+    # pde.print_representations(indexing=True)
 
     wf = pde.test_with([O2, O1, O3], sym_repr=[r'v^2', r'w^1', r'q^3'])
-    # print(wf)
-    wf.print_representations(indexing=True)
 
     wf = wf.derive.integration_by_parts('0-2')
     wf = wf.derive.integration_by_parts('1-1')
-    wf.print_representations()
-
-    # # wf = wf.derive.rearrange(
-    # #     [
-    # #         '0, 1, 2 = 4, 3',
-    # #         '1, 0 = 2',
-    # #         None,
-    # #     ]
-    # # )
 
     wf = wf.derive.rearrange(
         {
@@ -551,20 +555,14 @@ if __name__ == '__main__':
         }
     )
 
-    # for index in pde:
-    #     term = pde[index][2]
-    #     term.print_representations()
+    # wf.print()
 
-    wf.print_representations(indexing=True)
-    # # print(wf.elementary_forms)
+    # i = 0
+    # terms = wf._term_dict[i]
+    # signs = wf._sign_dict[i]
     #
-    # ph.list_forms(globals())
-    # # for i in range(len(wf)):  # go through all weak equations
-    #
-    i = 0
-    terms = wf._term_dict[i]
-    signs = wf._sign_dict[i]
-
-    ode_i = ph.ode(terms_and_signs=[terms, signs])
-    ode_i.print_representations()
+    # ode_i = ph.ode(terms_and_signs=[terms, signs])
+    # ode_i.print_representations()
     # ph.list_forms()
+
+    td = wf.td

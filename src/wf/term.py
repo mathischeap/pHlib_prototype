@@ -97,6 +97,10 @@ class _WeakFormulationTerm(Frozen):
         plt.axis('off')
         plt.show()
 
+    def print(self):
+        """A wrapper of print_representations"""
+        return self.print_representations()
+
     def replace(self, f, by, which='all', change_sign=False):
         """replace form `f` in this term by `by`,
         if there are more than one `f` found, apply the replacement to `which`.
@@ -149,7 +153,7 @@ class _WeakFormulationTerm(Frozen):
             assert which is None, f"When specify f1 or f2, no need to set `which`."
             term_class = self.__class__
             f2 = self._f2
-            if into.__class__.__name__ ==  'Form':
+            if into.__class__.__name__ == 'Form':
                 into = [into, ]
                 assert signs in ('+', '-'), f"when give one form, sign must be in '+' or  '-'."
                 signs = [signs, ]

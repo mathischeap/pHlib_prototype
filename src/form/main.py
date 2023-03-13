@@ -139,6 +139,10 @@ class Form(Frozen):
         plt.axis('off')
         plt.show()
 
+    def print(self):
+        """A wrapper of print_representations"""
+        return self.print_representations()
+
     def __repr__(self):
         """"""
         super_repr = super().__repr__().split('object')[-1]
@@ -337,5 +341,5 @@ class Form(Frozen):
             )
 
     def reform(self, into):
-        """reform self into `forms` of `signs`."""
+        """reform self into `forms`."""
         raise NotImplementedError()

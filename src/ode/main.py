@@ -258,6 +258,10 @@ class OrdinaryDifferentialEquation(Frozen):
         fig.tight_layout()
         plt.show()
 
+    def print(self, **kwargs):
+        """A wrapper of print_representations"""
+        return self.print_representations(**kwargs)
+
     @property
     def discretize(self):
         """To discretize this ode."""

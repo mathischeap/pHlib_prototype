@@ -144,7 +144,9 @@ class PartialDifferentialEquations(Frozen):
         terms_dict, signs_dict = terms_and_signs_dict
         _ind_dict = dict()
         _indexing = dict()
-        for i in terms_dict:
+        num_eq = len(terms_dict)
+        for i in range(num_eq):
+            assert i in terms_dict and i in signs_dict, f"numbering of equations must be 0, 1, 2, ..."
             terms = terms_dict[i]
             signs = signs_dict[i]
             _ind_dict[i] = ([], [])
@@ -161,7 +163,6 @@ class PartialDifferentialEquations(Frozen):
                     _indexing[index] = ('', sign, term)  # the first entry is the indicator, it is ''.
                     k += 1
         # ------ need to implement attributes below:
-
         self._sign_dict = signs_dict
         self._term_dict = terms_dict
         self._ind_dict = _ind_dict
@@ -299,6 +300,10 @@ class PartialDifferentialEquations(Frozen):
         table.set_fontsize(25)
         fig.tight_layout()
         plt.show()
+
+    def print(self, **kwargs):
+        """A wrapper of print_representations"""
+        return self.print_representations(**kwargs)
 
     def __len__(self):
         """How many equations we have?"""
