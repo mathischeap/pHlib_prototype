@@ -23,7 +23,7 @@ matplotlib.use('TkAgg')
 
 from src.wf.term import inner
 from src.wf.main import WeakFormulation
-from typing import Dict
+from src.bc import BoundaryCondition
 
 
 def pde(*args, **kwargs):
@@ -43,16 +43,8 @@ class PartialDifferentialEquations(Frozen):
             assert expression is None and interpreter is None
             self._parse_terms_and_signs(terms_and_signs_dict)
         self._unknowns = None
-        mesh = None
-        for i in self._term_dict:
-            for terms in self._term_dict[i]:
-                for t in terms:
-                    if mesh is None:
-                        mesh = t.mesh
-                    else:
-                        assert mesh == t.mesh, f"term meshes do not match."
-        self._mesh = mesh
-        self._bc = PDEsBoundaryCondition(self)
+        self._meshes, self._mesh = WeakFormulation._parse_meshes(self._term_dict)
+        self._bc = None
         self._freeze()
 
     @staticmethod
@@ -278,7 +270,7 @@ class PartialDifferentialEquations(Frozen):
             ef_text = list()
             for ef in self._efs:
                 ef_text.append(ef._sym_repr)
-            ef_text = r'$' + r', '.join(ef_text) + r'$'
+            ef_text = r'for $' + r', '.join(ef_text) + r'$,'
         else:
             ef_text_unknowns = list()
             ef_text_others = list()
@@ -290,22 +282,27 @@ class PartialDifferentialEquations(Frozen):
                 else:
                     ef_text_others.append(ef._sym_repr)
 
-            ef_text_unknowns = r'unknowns: $' + r', '.join(ef_text_unknowns) + r'$'
             if len(ef_text_others) == 0:
-                ef_text = ef_text_unknowns
+                ef_text = r'seek unknowns: $' + r', '.join(ef_text_unknowns) + r'$, such that'
             else:
-                ef_text_others = r'others: $' + r', '.join(ef_text_others) + r'$'
-                ef_text = ef_text_unknowns + '\n' + ef_text_others
+                ef_text_others = r'For: $' + r', '.join(ef_text_others) + r'$, '
+                ef_text_unknowns = r'seek unknowns: $' + r', '.join(ef_text_unknowns) + r'$, such that'
+                ef_text = ef_text_others + ef_text_unknowns
+        ef_text = rf'In ${self._mesh.manifold._sym_repr}\in\mathbb' + '{R}^{' + str(self._mesh.ndim) + '}$, ' + ef_text
 
-        if len(self.bc._valid_bcs) == 0:
-            pass
+        if self._bc is None or len(self._bc._valid_bcs) == 0:
+            bc_text = ''
         else:
-            raise NotImplementedError('We shall also print the BCs.')
+            bc_text = self.bc._bc_text()
 
         plt.figure(figsize=figsize)
         plt.axis([0, 1, 0, 1])
         plt.axis('off')
-        text = indicator + '\n' + symbolic + '\n' + ef_text
+        if indicator == '':
+            text = ef_text + '\n' + symbolic + bc_text
+        else:
+            text = indicator + '\n\n' + ef_text + '\n' + symbolic + bc_text
+
         plt.text(0.05, 0.5, text, ha='left', va='center', size=15)
         plt.tight_layout()
         plt.show()
@@ -417,47 +414,15 @@ class PartialDifferentialEquations(Frozen):
 
         wf = WeakFormulation(term_sign_dict=(term_dict, self._sign_dict), test_forms=tfs)
         wf.unknowns = self.unknowns
+        wf._bc = self._bc   # send the BC to the weak formulation.
         return wf
 
     @property
     def bc(self):
         """The boundary condition of pde class."""
+        if self._bc is None:
+            self._bc = BoundaryCondition(self._mesh)
         return self._bc
-
-
-class PDEsBoundaryCondition(Frozen):
-    """"""
-    def __init__(self, pde):
-        """"""
-        self._pde = pde
-        self._boundary = pde._mesh.manifold.boundary()
-        self._valid_bcs: Dict[str] = dict()
-        self._freeze()
-
-    def partition(self, *sym_reprs, config_name=None):
-        """Define these boundary sections."""
-        self._boundary.partition(*sym_reprs, config_name=config_name)
-
-    def define_bc(self, bcs_dict):
-        """"""
-        assert isinstance(bcs_dict, dict), f"pls put boundary conditions in a dict whose keys are the boundary " \
-                                           f"sections, and values are the B.C.s on the corresponding sections."
-        for key in bcs_dict:
-            assert key in self._boundary._sub_manifolds, f"boundary section: {key} is not defined yet."
-
-            bcs = bcs_dict[key]
-
-            if bcs.__class__.__name__ != 'Form':
-                bcs = [bcs, ]
-            else:
-                pass
-            for i, bc in enumerate(bcs):
-                # assert bc.__class__.__name__ == 'Form', f"{i}th BC: {bc} on Boundary Section {key} is not valid."
-                if key not in self._valid_bcs:
-                    self._valid_bcs[key] = list()
-                else:
-                    pass
-                self._valid_bcs[key].append(bc)
 
 
 if __name__ == '__main__':
@@ -510,16 +475,5 @@ if __name__ == '__main__':
     # }
 
     pde = ph.pde(exp, locals())
-    pde.unknowns = [u, w, P]
-    pde.pr()
-
-    bc = pde.bc
-    bc.partition(r'\Gamma_\alpha', r'\Gamma_\beta')
-    bc.define_bc(
-        {
-            r'\Gamma_\alpha': 1,
-            r'\Gamma_\beta': 2
-        }
-    )
-
+    # pde.unknowns = [u, w, P]
     pde.pr()

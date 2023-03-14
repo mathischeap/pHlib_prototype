@@ -258,7 +258,7 @@ class OrdinaryDifferentialEquation(Frozen):
         fig.tight_layout()
         plt.show()
 
-    def print(self, **kwargs):
+    def pr(self, **kwargs):
         """A wrapper of print_representations"""
         return self.print_representations(**kwargs)
 
@@ -347,7 +347,7 @@ if __name__ == '__main__':
     # ut.print_representations()
 
     signs, new_terms = term0.reform('f1', [u_km1_dt, u_k_dt], ['-', '+'])
-    new_terms[0].print_representations()
+    new_terms[0].pr()
     # new_terms[1].print_representations()
 
     # ph.list_forms(globals())

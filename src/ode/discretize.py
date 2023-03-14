@@ -219,4 +219,4 @@ if __name__ == '__main__':
     td.average(3, P, 'k-1/2')
 
     eq = ode.discretize()
-    eq.print_representations()
+    eq.pr()

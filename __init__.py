@@ -21,7 +21,7 @@ __all__ = [
     'mesh',
     'space',
     'inner', 'wedge', 'Hodge',
-    'd', 'exterior_derivative',
+    'd', 'exterior_derivative', 'trace',
     'codifferential',
     'time_derivative',
     'pde',
@@ -44,7 +44,7 @@ from src.mesh import mesh
 
 import src.spaces.main as space
 
-from src.operators import inner, wedge, Hodge
+from src.operators import inner, wedge, Hodge, trace
 from src.operators import d, exterior_derivative
 from src.operators import codifferential
 from src.operators import time_derivative

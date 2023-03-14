@@ -19,6 +19,7 @@ plt.rcParams.update({
 matplotlib.use('TkAgg')
 from copy import deepcopy
 from src.wf.td import TemporalDiscretization
+from src.bc import BoundaryCondition
 
 
 class WeakFormulation(Frozen):
@@ -54,11 +55,50 @@ class WeakFormulation(Frozen):
         else:
             raise Exception()
 
+        self._meshes, self._mesh = self._parse_meshes(self._term_dict)
         self._consistence_checker()
         self._unknowns = None
         self._derive = None
         self._td = None
+        self._bc = None
         self._freeze()
+
+    @classmethod
+    def _parse_meshes(cls, term_dict):
+        meshes = list()
+        for i in term_dict:
+            for terms in term_dict[i]:
+                for t in terms:
+                    mesh = t.mesh
+                    if mesh not in meshes:
+                        meshes.append(mesh)
+                    else:
+                        pass
+        num_meshes = len(meshes)
+        assert num_meshes > 0, f"we need at least one mesh."
+        if num_meshes == 1:
+            mesh = meshes[0]
+        else:
+            mesh_dim_dict = dict()
+            for m in meshes:
+                ndim = m.ndim
+                if ndim not in mesh_dim_dict:
+                    mesh_dim_dict[ndim] = list()
+                else:
+                    pass
+                mesh_dim_dict[ndim].append(m)
+            if len(mesh_dim_dict) == 2:
+                larger_ndim = max(mesh_dim_dict.keys())
+                lower_ndim = min(mesh_dim_dict.keys())
+                if lower_ndim == larger_ndim - 1:
+                    assert len(mesh_dim_dict[larger_ndim]) == 1, f"must be"
+                    mesh = mesh_dim_dict[larger_ndim][0]
+                else:
+                    raise NotImplementedError()
+            else:
+                raise NotImplementedError()
+
+        return meshes, mesh
 
     def _parse_term_sign_dict(self, term_sign_dict, test_forms):
         """"""
@@ -188,8 +228,8 @@ class WeakFormulation(Frozen):
 
     def print_representations(self, indexing=True):
         """Print the representations"""
-        seek_text = r'\noindent '
-        given_text = r'Given'
+        seek_text = rf'In ${self._mesh.manifold._sym_repr}\in\mathbb' + '{R}^{' + str(self._mesh.ndim) + '}$, '
+        given_text = r'given'
         for ef in self._efs:
             if ef not in self.unknowns and ef not in self._test_forms:
                 given_text += rf' ${ef._sym_repr} \in {ef.space._sym_repr}$,'
@@ -206,7 +246,7 @@ class WeakFormulation(Frozen):
         seek_text += ','.join(form_sr_list)
         seek_text += r'\right) \in '
         seek_text += r'\times '.join(space_sr_list)
-        seek_text += r'$, such that\\'
+        seek_text += '$, such that\n'
         symbolic = ''
         number_equations = len(self._term_dict)
         for i in self._term_dict:
@@ -250,6 +290,11 @@ class WeakFormulation(Frozen):
                 symbolic += '.'
 
         symbolic = r"$\left\lbrace\begin{aligned}" + symbolic + r"\end{aligned}\right.$"
+        if self._bc is None or len(self.bc) == 0:
+            bc_text = ''
+        else:
+            bc_text = self.bc._bc_text()
+
         if indexing:
             figsize = (12, 2 * len(self._term_dict))
         else:
@@ -257,7 +302,7 @@ class WeakFormulation(Frozen):
         plt.figure(figsize=figsize)
         plt.axis([0, 1, 0, 1])
         plt.axis('off')
-        plt.text(0.05, 0.5, seek_text + symbolic, ha='left', va='center', size=15)
+        plt.text(0.05, 0.5, seek_text + symbolic + bc_text, ha='left', va='center', size=15)
         plt.tight_layout()
         plt.show()
 
@@ -271,6 +316,13 @@ class WeakFormulation(Frozen):
         if self._derive is None:
             self._derive = _Derive(self)
         return self._derive
+
+    @property
+    def bc(self):
+        """The boundary condition of pde class."""
+        if self._bc is None:
+            self._bc = BoundaryCondition(self._mesh)
+        return self._bc
 
     @property
     def td(self):
@@ -320,7 +372,8 @@ class _Derive(Frozen):
         new_term_dict, new_sign_dict = self._parse_new_weak_formulation_dict(new_term_dict, new_sign_dict)
 
         new_wf = WeakFormulation(term_sign_dict=[new_term_dict, new_sign_dict], test_forms=self._wf._test_forms)
-        new_wf.unknowns = self._wf.unknowns
+        new_wf.unknowns = self._wf.unknowns  # pass the unknowns
+        new_wf._bc = self._wf._bc   # pass the bc
 
         return new_wf
 
@@ -467,13 +520,14 @@ class _Derive(Frozen):
 
         for _i in self._wf._term_dict:
             if _i not in rearrangement or rearrangement[_i] is None or rearrangement[_i] == '':
-                term_dict[_i] = deepcopy(self._wf._term_dict[_i])
-                sign_dict[_i] = deepcopy(self._wf._sign_dict[_i])
+                term_dict[_i] = self._wf._term_dict[_i]
+                sign_dict[_i] = self._wf._sign_dict[_i]
             else:
                 pass
 
         new_wf = WeakFormulation(term_sign_dict=[term_dict, sign_dict], test_forms=self._wf._test_forms)
-        new_wf.unknowns = self._wf.unknowns
+        new_wf.unknowns = self._wf.unknowns   # pass the unknowns
+        new_wf._bc = self._wf._bc   # pass the bc
         return new_wf
 
     @staticmethod

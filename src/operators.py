@@ -8,7 +8,8 @@ __all__ = [
     'Hodge',
     'd', 'exterior_derivative', 'codifferential',
     'inner',
-    'time_derivative'
+    'time_derivative',
+    'trace',
 ]
 
 from src.form.operators import wedge
@@ -23,3 +24,5 @@ from src.form.operators import codifferential
 from src.wf.term import inner
 
 from src.form.operators import time_derivative
+
+from src.form.operators import trace
