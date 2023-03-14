@@ -59,17 +59,11 @@ def wedge(f1, f2):
     lin_repr = lr_term1 + lr_operator + lr_term2
     sym_repr = sr_term1 + sr_operator + sr_term2
 
-    if f1.orientation == f2.orientation:
-        orientation = f1.orientation
-    else:
-        orientation = 'None'
-
     f = f1.__class__(
         wedge_space,  # space
         sym_repr,  # symbolic representation
         lin_repr,
-        False,
-        orientation,
+        False
     )
 
     return f
@@ -95,18 +89,11 @@ def Hodge(f):
     else:
         sr = sr_operator + r"\left(" + sr + r"\right)"
 
-    if f.orientation == 'inner':
-        orientation = 'outer'
-    elif f.orientation == 'outer':
-        orientation = 'inner'
-    else:
-        orientation = 'None'
     f = f.__class__(
         hs,  # space
         sr,  # symbolic representation
         lr,
         False,
-        orientation,
     )
 
     return f
@@ -137,14 +124,13 @@ def d(f):
         sr,  # symbolic representation
         lr,
         False,
-        f.orientation,
     )
 
     return f
 
 
 def codifferential(f):
-    """Metric Hodge of a form."""
+    """codifferential of a form."""
     ds = space_codifferential(f.space)
 
     lr = f._lin_repr
@@ -168,13 +154,12 @@ def codifferential(f):
         sr,  # symbolic representation
         lr,
         False,
-        f.orientation,
     )
 
     return f
 
 
-def time_derivative(f):
+def time_derivative(f, degree=1):
     """The time derivative operator."""
     if f.__class__.__name__ != 'Form':
         raise NotImplementedError(f"time_derivative on {f} is not implemented or even not possible at all.")
@@ -184,28 +169,31 @@ def time_derivative(f):
     lr = f._lin_repr
     sr = f._sym_repr
 
-    op_lin_repr = _global_operator_lin_repr_setting['time_derivative']
-    sr_operator = _global_operator_sym_repr_setting['time_derivative']
+    if degree == 1:
+        op_lin_repr = _global_operator_lin_repr_setting['time_derivative']
+        sr_operator = _global_operator_sym_repr_setting['time_derivative']
 
-    if f.is_root():
-        lr = op_lin_repr + lr
+        if f.is_root():
+            lr = op_lin_repr + lr
+        else:
+            lr = op_lin_repr + "[" + lr + ']'
+
+        if f.is_root():
+            sr = sr_operator + sr
+        else:
+            sr = sr_operator + r"\left(" + sr + r"\right)"
+
+        tdf = f.__class__(
+            f.space,
+            sr,
+            lr,
+            False,
+        )
+
+        return tdf
+
     else:
-        lr = op_lin_repr + "[" + lr + ']'
-
-    if f.is_root():
-        sr = sr_operator + sr
-    else:
-        sr = sr_operator + r"\left(" + sr + r"\right)"
-
-    tdf = f.__class__(
-        f.space,
-        sr,
-        lr,
-        False,
-        f.orientation,
-    )
-
-    return tdf
+        raise NotImplementedError()
 
 
 from src.spaces.operators import trace as space_trace
@@ -236,7 +224,6 @@ def trace(f):
         sr,  # symbolic representation
         lr,
         False,
-        f.orientation,
     )
 
     return f

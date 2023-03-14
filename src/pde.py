@@ -11,6 +11,7 @@ if './' not in sys.path:
 
 from src.tools.frozen import Frozen
 from src.form.main import Form
+
 import matplotlib.pyplot as plt
 import matplotlib
 plt.rcParams.update({
@@ -19,8 +20,10 @@ plt.rcParams.update({
     "text.latex.preamble": r"\usepackage{amsmath, amssymb}",
 })
 matplotlib.use('TkAgg')
+
 from src.wf.term import inner
 from src.wf.main import WeakFormulation
+from typing import Dict
 
 
 def pde(*args, **kwargs):
@@ -29,7 +32,7 @@ def pde(*args, **kwargs):
 
 
 class PartialDifferentialEquations(Frozen):
-    """PDE"""
+    """partial differential equations."""
 
     def __init__(self, expression=None, interpreter=None, terms_and_signs_dict=None):
         if terms_and_signs_dict is None:  # provided terms and signs
@@ -40,6 +43,16 @@ class PartialDifferentialEquations(Frozen):
             assert expression is None and interpreter is None
             self._parse_terms_and_signs(terms_and_signs_dict)
         self._unknowns = None
+        mesh = None
+        for i in self._term_dict:
+            for terms in self._term_dict[i]:
+                for t in terms:
+                    if mesh is None:
+                        mesh = t.mesh
+                    else:
+                        assert mesh == t.mesh, f"term meshes do not match."
+        self._mesh = mesh
+        self._bc = PDEsBoundaryCondition(self)
         self._freeze()
 
     @staticmethod
@@ -178,7 +191,7 @@ class PartialDifferentialEquations(Frozen):
                         efs.extend(term.elementary_forms)
         self._efs = set(efs)
 
-    def print_representations(self, indexing=True):
+    def print_representations(self, indexing=True, figsize=(8, 6)):
         """Print representations"""
         number_equations = len(self._term_dict)
         indicator = ''
@@ -278,30 +291,26 @@ class PartialDifferentialEquations(Frozen):
                     ef_text_others.append(ef._sym_repr)
 
             ef_text_unknowns = r'unknowns: $' + r', '.join(ef_text_unknowns) + r'$'
-            ef_text_others = r'others: $' + r', '.join(ef_text_others) + r'$'
-            ef_text = ef_text_unknowns + '\n' + ef_text_others
+            if len(ef_text_others) == 0:
+                ef_text = ef_text_unknowns
+            else:
+                ef_text_others = r'others: $' + r', '.join(ef_text_others) + r'$'
+                ef_text = ef_text_unknowns + '\n' + ef_text_others
 
-        length = max([16, max([len(i) for i in symbolic.split(r'\\')]) / 30])
-        height = max([12, 2 * len(self._term_dict) + 3])
-        fig, ax = plt.subplots(figsize=(length, height))
-        fig.patch.set_visible(False)
-
-        ax.axis('off')
-        if indicator == '':
-            table = ax.table(cellText=[[symbolic, ], [ef_text, ]],
-                             rowLabels=['symbolic', 'elementary forms'], rowColours='cy',
-                             colLoc='left', loc='center', cellLoc='left')
+        if len(self.bc._valid_bcs) == 0:
+            pass
         else:
-            table = ax.table(cellText=[[indicator, ], [symbolic, ], [ef_text, ]],
-                             rowLabels=['expression', 'symbolic', 'elementary forms'], rowColours='gcy',
-                             colLoc='left', loc='center', cellLoc='left')
+            raise NotImplementedError('We shall also print the BCs.')
 
-        table.scale(0.9, 1.5 * height)
-        table.set_fontsize(25)
-        fig.tight_layout()
+        plt.figure(figsize=figsize)
+        plt.axis([0, 1, 0, 1])
+        plt.axis('off')
+        text = indicator + '\n' + symbolic + '\n' + ef_text
+        plt.text(0.05, 0.5, text, ha='left', va='center', size=15)
+        plt.tight_layout()
         plt.show()
 
-    def print(self, **kwargs):
+    def pr(self, **kwargs):
         """A wrapper of print_representations"""
         return self.print_representations(**kwargs)
 
@@ -355,6 +364,8 @@ class PartialDifferentialEquations(Frozen):
             test_spaces = [test_spaces, ]
         else:
             pass
+
+        # parse test spaces from forms if forms provided.
         _test_spaces = list()
         for i, obj in enumerate(test_spaces):
             if obj.__class__.__name__ == 'Form':
@@ -367,6 +378,7 @@ class PartialDifferentialEquations(Frozen):
 
         assert self.unknowns is not None, f"Set unknowns before testing the pde."
 
+        test_spaces = _test_spaces
         tfs = list()
         for i, ts in enumerate(test_spaces):
             unknown = None  # in case not found an unknown, will raise Error.
@@ -407,9 +419,49 @@ class PartialDifferentialEquations(Frozen):
         wf.unknowns = self.unknowns
         return wf
 
+    @property
+    def bc(self):
+        """The boundary condition of pde class."""
+        return self._bc
+
+
+class PDEsBoundaryCondition(Frozen):
+    """"""
+    def __init__(self, pde):
+        """"""
+        self._pde = pde
+        self._boundary = pde._mesh.manifold.boundary()
+        self._valid_bcs: Dict[str] = dict()
+        self._freeze()
+
+    def partition(self, *sym_reprs, config_name=None):
+        """Define these boundary sections."""
+        self._boundary.partition(*sym_reprs, config_name=config_name)
+
+    def define_bc(self, bcs_dict):
+        """"""
+        assert isinstance(bcs_dict, dict), f"pls put boundary conditions in a dict whose keys are the boundary " \
+                                           f"sections, and values are the B.C.s on the corresponding sections."
+        for key in bcs_dict:
+            assert key in self._boundary._sub_manifolds, f"boundary section: {key} is not defined yet."
+
+            bcs = bcs_dict[key]
+
+            if bcs.__class__.__name__ != 'Form':
+                bcs = [bcs, ]
+            else:
+                pass
+            for i, bc in enumerate(bcs):
+                # assert bc.__class__.__name__ == 'Form', f"{i}th BC: {bc} on Boundary Section {key} is not valid."
+                if key not in self._valid_bcs:
+                    self._valid_bcs[key] = list()
+                else:
+                    pass
+                self._valid_bcs[key].append(bc)
+
 
 if __name__ == '__main__':
-    # python src/PDEs.py
+    # python src/pde.py
     import __init__ as ph
     # import phlib as ph
     ph.config.set_embedding_space_dim(3)
@@ -417,10 +469,10 @@ if __name__ == '__main__':
     mesh = ph.mesh(manifold)
 
     ph.space.set_mesh(mesh)
-    O0 = ph.space.new('Omega', 0, p=3)
-    O1 = ph.space.new('Omega', 1, p=3)
-    O2 = ph.space.new('Omega', 2, p=3)
-    O3 = ph.space.new('Omega', 3, p=3)
+    O0 = ph.space.new('Omega', 0)
+    O1 = ph.space.new('Omega', 1)
+    O2 = ph.space.new('Omega', 2)
+    O3 = ph.space.new('Omega', 3)
 
     w = O1.make_form(r'\omega^1', "vorticity1")
     u = O2.make_form(r'u^2', r"velocity2")
@@ -446,7 +498,7 @@ if __name__ == '__main__':
         'w = dsu',
         'du = 0',
     ]
-    #
+
     # interpreter = {
     #     'du_dt': du_dt,
     #     'wXu': wXu,
@@ -457,15 +509,17 @@ if __name__ == '__main__':
     #     'du': du,
     # }
 
-    pde = ph.pde(exp, globals())
+    pde = ph.pde(exp, locals())
     pde.unknowns = [u, w, P]
-    # pde.print_representations(indexing=True)
-    rwf = pde.test_with([O2, O1, O3])
-    # rwf.print_representations(indexing=True)
-    # # ph.list_forms(globals())
-    # # print(mesh.boundary().boundary())
-    # for i in rwf:
-    #     if rwf[i][1] == 0:
-    #         pass
-    #     else:
-    #         print(rwf[i][1]._simple_patterns)
+    pde.pr()
+
+    bc = pde.bc
+    bc.partition(r'\Gamma_\alpha', r'\Gamma_\beta')
+    bc.define_bc(
+        {
+            r'\Gamma_\alpha': 1,
+            r'\Gamma_\beta': 2
+        }
+    )
+
+    pde.pr()

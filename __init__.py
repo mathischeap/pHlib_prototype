@@ -36,7 +36,7 @@ from src.form.tools import _list_forms as list_forms
 from src.spaces.main import _list_spaces as list_spaces
 from src.mesh import _list_meshes as list_meshes
 
-import src.samples as samples
+import tests.samples.main as samples
 
 from src.manifold import manifold
 
@@ -52,5 +52,5 @@ from src.operators import time_derivative
 from src.pde import pde
 from src.ode.main import ode
 
-from src.tools.time_sequence import AbstractTimeSequence as time_sequence
+from src.tools.time_sequence import abstract_time_sequence as time_sequence
 from src.form.parameters import constant_scalar

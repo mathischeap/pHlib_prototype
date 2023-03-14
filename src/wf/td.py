@@ -13,7 +13,7 @@ from src.tools.time_sequence import AbstractTimeSequence
 
 
 class TemporalDiscretization(Frozen):
-    """"""
+    """TemporalDiscretization"""
 
     def __init__(self, wf):
         """"""
@@ -44,13 +44,12 @@ class TemporalDiscretization(Frozen):
 
         self._valid_ode = valid_ode
 
-
     def __getitem__(self, item):
         """Return the ode."""
         return self._valid_ode[item]
 
     def __call__(self, *args, **kwargs):
-        """"""
+        """Return a new weak formulation by combining all equations."""
         return self._wf.__class__
 
     @property
@@ -71,59 +70,21 @@ class TemporalDiscretization(Frozen):
         assert ts.__class__.__name__ == 'AbstractTimeSequence', f"I need an abstract time sequence object."
         self._ats = ts
 
+
+
+
 if __name__ == '__main__':
     # python src/wf/td.py
 
     import __init__ as ph
-    # import phlib as ph
-    # ph.config.set_embedding_space_dim(3)
-    manifold = ph.manifold(3)
-    mesh = ph.mesh(manifold)
 
-    ph.space.set_mesh(mesh)
-    O0 = ph.space.new('Omega', 0)
-    O1 = ph.space.new('Omega', 1)
-    O2 = ph.space.new('Omega', 2)
-    O3 = ph.space.new('Omega', 3)
+    samples = ph.samples
 
-    # ph.list_spaces()
-    # ph.list_meshes()
+    oph = samples.pde_canonical_pH(3, 3)[0]
 
-    w = O1.make_form(r'\omega^1', "vorticity1")
-    u = O2.make_form(r'u^2', "velocity2")
-    f = O2.make_form(r'f^2', "body-force")
-    P = O3.make_form(r'P^3', "total-pressure3")
+    # oph.print()
 
-    wXu = w.wedge(ph.Hodge(u))
-    dsP = ph.codifferential(P)
-    dsu = ph.codifferential(u)
-    du = ph.d(u)
-    du_dt = ph.time_derivative(u)
-
-    # ph.list_forms(globals())
-
-    exp = [
-        'du_dt - dsP = f',
-        'w = dsu',
-        'du = 0',
-    ]
-    pde = ph.pde(exp, globals())
-    pde.unknowns = [u, w, P]
-    # pde.print_representations(indexing=True)
-
-    wf = pde.test_with([O2, O1, O3], sym_repr=[r'v^2', r'w^1', r'q^3'])
-
-    wf = wf.derive.integration_by_parts('0-1')
+    wf = oph.test_with(oph.unknowns, sym_repr=[r'v^3', r'u^2'])
     wf = wf.derive.integration_by_parts('1-1')
 
-    wf = wf.derive.rearrange(
-        {
-            0: '0, 1 = 3, 2',
-            1: '1, 0 = 2',
-            2: ' = 0',
-        }
-    )
     wf.print()
-
-    td = wf.td
-    td.set_time_sequence()

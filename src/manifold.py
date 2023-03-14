@@ -15,7 +15,7 @@ from src.config import _check_sym_repr
 from src.config import _parse_lin_repr
 from src.config import _manifold_default_lin_repr
 
-_global_manifolds = dict()
+_global_manifolds = dict()  # all manifolds are cached, and all sym_repr and lin_repr are different.
 
 
 def manifold(
@@ -76,7 +76,7 @@ class Manifold(Frozen):
 
         self._sym_repr = sym_repr
         self._lin_repr = lin_repr
-        self._pure_pure_lin_repr = pure_lin_repr
+        self._pure_lin_repr = pure_lin_repr
         _global_manifolds[sym_repr] = self
 
         assert isinstance(is_periodic, bool), f"is_periodic must be bool type."
@@ -85,6 +85,12 @@ class Manifold(Frozen):
         self._udg_repr = udg_repr  # if it has an udg_repr representation.
         self._boundary = None
         self._inclusion = None  # not None for boundary manifold. Will be set when initialize a boundary manifold.
+        self._sub_manifolds = {  # the sub-manifolds of the same dimensions. Using sym_repr as cache key.
+            self._sym_repr: self
+        }
+        self._partitions = {
+            '0': (self, )
+        }
         self._freeze()
 
     @property
@@ -106,7 +112,8 @@ class Manifold(Frozen):
         super_repr = super().__repr__().split('object')[-1]
         return f'<Manifold {self._sym_repr}' + super_repr  # this must be unique.
 
-    def boundary(self):
+    # it is regarded as an operator, do not @property.
+    def boundary(self, sym_repr=None):
         """Give a manifold of dimensions (n-1)"""
         if self._boundary is None:
             if self.ndim == 0:
@@ -114,10 +121,12 @@ class Manifold(Frozen):
             elif self.is_periodic():
                 return NullManifold(self.ndim-1)
             else:
+                if sym_repr is None:
+                    sym_repr = r'\partial' + self._sym_repr
                 self._boundary = Manifold(
                     self.ndim-1,
-                    sym_repr=r'\partial' + self._sym_repr,
-                    lin_repr=f'boundary-of-{self._pure_pure_lin_repr}',
+                    sym_repr=sym_repr,
+                    lin_repr=f'boundary-of-{self._pure_lin_repr}',
                     is_periodic=True,
                 )
                 self._boundary._inclusion = self
@@ -134,6 +143,55 @@ class Manifold(Frozen):
     def interface(self, other, sym_repr=None):
         """return the cap of boundaries of two manifolds."""
         raise NotImplementedError()
+
+    def partition(self, *submanifolds_sym_repr, config_name=None):
+        """M = M1 U M2 U M3 U .... and Mi cap Mj = empty."""
+        for sym_repr in submanifolds_sym_repr:
+            assert isinstance(sym_repr, str), f"please put sym_repr of partitions in str."
+        num_of_partitions = len(submanifolds_sym_repr)
+        assert num_of_partitions >= 2 and num_of_partitions % 2 == 0, f"I need a integer >= 2."
+        partitions = tuple()
+
+        for i in range(num_of_partitions):
+            sym_repr = submanifolds_sym_repr[i]
+            if sym_repr in self._sub_manifolds:
+                pass
+            else:
+                j = len(self._sub_manifolds)
+                while 1:
+                    lin_repr = self._pure_lin_repr + f'-sub{str(j)}'
+                    occupied = False
+                    for _sub_sym_repr in self._sub_manifolds:
+                        if lin_repr == self._sub_manifolds[_sub_sym_repr]:
+                            occupied = True
+                        else:
+                            pass
+                    if occupied:
+                        j += 1
+                    else:
+                        break
+
+                self._sub_manifolds[sym_repr] = Manifold(
+                    self.ndim,
+                    sym_repr=sym_repr,
+                    lin_repr=lin_repr,
+                )
+            partitions += (self._sub_manifolds[sym_repr],)
+
+        if config_name is None:
+            i = len(self._partitions)
+            while 1:
+                if str(i) not in self._partitions:
+                    break
+                else:
+                    i += 1
+            config_name = str(i)
+        else:
+            pass
+
+        self._partitions[config_name] = partitions
+
+        return config_name, partitions
 
 
 class NullManifold(Frozen):

@@ -15,7 +15,7 @@ from src.config import _check_sym_repr
 from src.config import _parse_lin_repr
 from src.config import _mesh_default_lin_repr
 
-_global_meshes = dict()  # we monitor all meshes to avoid that we use the same representation for different meshes.
+_global_meshes = dict()    # all meshes are cached, and all sym_repr and lin_repr are different.
 
 
 def mesh(manifold):

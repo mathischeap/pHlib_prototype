@@ -23,6 +23,10 @@ _global_abstract_time_sequence = dict()
 _global_abstract_time_interval = list()
 
 
+def abstract_time_sequence():
+    """A wrapper of AbstractTimeSequence"""
+    return AbstractTimeSequence()
+
 class AbstractTimeSequence(Frozen):
     """"""
 

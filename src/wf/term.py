@@ -97,7 +97,7 @@ class _WeakFormulationTerm(Frozen):
         plt.axis('off')
         plt.show()
 
-    def print(self):
+    def pr(self):
         """A wrapper of print_representations"""
         return self.print_representations()
 
@@ -357,7 +357,7 @@ class L2InnerProductTerm(_WeakFormulationTerm):
 
             term_boundary = duality_pairing(trace_form_1, trace_form_2)
 
-            return (term_manifold, term_boundary), ('+', '+')
+            return (term_manifold, term_boundary), ('+', '-')
 
         else:
             raise Exception(f"Cannot apply integration by parts to this term.")

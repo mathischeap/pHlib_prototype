@@ -250,29 +250,18 @@ class WeakFormulation(Frozen):
                 symbolic += '.'
 
         symbolic = r"$\left\lbrace\begin{aligned}" + symbolic + r"\end{aligned}\right.$"
-
         if indexing:
-            figsize = (14, 2 * len(self._term_dict))
+            figsize = (12, 2 * len(self._term_dict))
         else:
-            figsize = (14, len(self._term_dict))
-
-        fig, ax = plt.subplots(figsize=figsize)
-        fig.patch.set_visible(False)
-        ax.axis('off')
-        table = ax.table(cellText=[[seek_text + symbolic, ], ],
-                         rowLabels=['symbolic', ], rowColours='gcy',
-                         colLoc='left', loc='center', cellLoc='left')
-
-        if indexing:
-            table.scale(1, 5 * len(self._term_dict))
-        else:
-            table.scale(1, 3 * len(self._term_dict))
-
-        table.set_fontsize(20)
-        fig.tight_layout()
+            figsize = (12, 1.5 * len(self._term_dict))
+        plt.figure(figsize=figsize)
+        plt.axis([0, 1, 0, 1])
+        plt.axis('off')
+        plt.text(0.05, 0.5, seek_text + symbolic, ha='left', va='center', size=15)
+        plt.tight_layout()
         plt.show()
 
-    def print(self, **kwargs):
+    def pr(self, **kwargs):
         """A wrapper of print_representations"""
         return self.print_representations(**kwargs)
 
@@ -412,12 +401,15 @@ class _Derive(Frozen):
                 left_terms, right_terms = ri.replace(' ', '').split('=')
                 _left_terms = left_terms.replace(',', '')
                 _right_terms = right_terms.replace(',', '')
+
                 _ = _left_terms + _right_terms
                 assert _.isnumeric(), \
                     f"rearrangement for {i}th equation: {ri} is illegal, using only comma to separate " \
                     f"positive indices."
+
                 left_terms = left_terms.split(',')
                 right_terms = right_terms.split(',')
+
                 _ = list()
                 if left_terms != ['', ]:
                     _.extend(left_terms)
@@ -540,7 +532,7 @@ if __name__ == '__main__':
     ]
     pde = ph.pde(exp, globals())
     pde.unknowns = [u, w, P]
-    # pde.print_representations(indexing=True)
+    # pde.pr(indexing=True)
 
     wf = pde.test_with([O2, O1, O3], sym_repr=[r'v^2', r'w^1', r'q^3'])
 

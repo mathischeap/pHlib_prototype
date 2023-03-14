@@ -21,11 +21,12 @@ matplotlib.use('TkAgg')
 
 from src.config import _global_lin_repr_setting
 from src.config import _parse_lin_repr
-from src.form.operators import wedge
+from src.form.operators import wedge, time_derivative, d, codifferential
 from src.config import _check_sym_repr
 from src.form.parameters import constant_scalar
 from src.config import _global_operator_lin_repr_setting
 from src.config import _global_operator_sym_repr_setting
+
 
 _global_forms = dict()
 _global_root_forms_lin_dict = dict()
@@ -41,7 +42,6 @@ class Form(Frozen):
             self, space,
             sym_repr, lin_repr,
             is_root,
-            orientation,
     ):
         if is_root is None:  # we will parse is_root from lin_repr
             assert isinstance(lin_repr, str) and len(lin_repr) > 0, f"lin_repr={lin_repr} illegal."
@@ -67,17 +67,7 @@ class Form(Frozen):
         self._lin_repr = lin_repr
         self._is_root = is_root
         self._efs = None   # elementary elements
-        assert orientation in ('inner', 'outer', 'i', 'o', None, 'None'), \
-            f"orientation={orientation} is wrong, must be one of ('inner', 'outer', 'i', 'o', None)."
-        if orientation == 'i':
-            orientation = 'inner'
-        elif orientation == 'o':
-            orientation = 'outer'
-        elif orientation is None:
-            orientation = 'None'
-        else:
-            pass
-        self._orientation = orientation
+        self._orientation = space.orientation
         if _global_form_variables['update_cache']:  # cache it
             _global_forms[id(self)] = self
             if self._is_root:
@@ -139,7 +129,7 @@ class Form(Frozen):
         plt.axis('off')
         plt.show()
 
-    def print(self):
+    def pr(self):
         """A wrapper of print_representations"""
         return self.print_representations()
 
@@ -182,6 +172,18 @@ class Form(Frozen):
         """Return a form representing `self` wedge `other`."""
         return wedge(self, other)
 
+    def time_derivative(self, degree=1):
+        """"""
+        return time_derivative(self, degree=degree)
+
+    def exterior_derivative(self):
+        """exterior derivative"""
+        return d(self)
+
+    def codifferential(self):
+        """codifferential"""
+        return codifferential(self)
+
     def __neg__(self):
         """- self"""
         raise NotImplementedError()
@@ -208,7 +210,6 @@ class Form(Frozen):
                 sym_repr,          # symbolic representation
                 lin_repr,          # linguistic representation
                 False,       # must not be a root-form anymore.
-                self.orientation,
             )
             return f
 
@@ -237,7 +238,6 @@ class Form(Frozen):
                 sym_repr,          # symbolic representation
                 lin_repr,          # linguistic representation
                 False,       # must not be a root-form anymore.
-                self.orientation,
             )
             return f
 
@@ -277,7 +277,6 @@ class Form(Frozen):
                 sr,          # symbolic representation
                 lr,          # linguistic representation
                 False,       # not a root-form anymore.
-                self.orientation,
             )
             return f
 
@@ -301,7 +300,6 @@ class Form(Frozen):
                     self._space,
                     sym_repr, lin_repr,
                     self._is_root,
-                    self._orientation,
                 )
                 ftk._pAti_form['base_form'] = self
                 ftk._pAti_form['ats'] = ati.time_sequence
@@ -337,7 +335,6 @@ class Form(Frozen):
                 sym_repr,
                 lin_repr,
                 None,
-                self.orientation
             )
 
     def reform(self, into):

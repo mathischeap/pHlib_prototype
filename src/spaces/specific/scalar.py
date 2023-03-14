@@ -21,8 +21,8 @@ class ScalarValuedFormSpace(SpaceBase):
 
     """
 
-    def __init__(self, mesh, k):
-        super().__init__(mesh)
+    def __init__(self, mesh, k, orientation='outer'):
+        super().__init__(mesh, orientation)
         assert isinstance(k, int) and 0 <= k <= mesh.ndim, f" k={k} illegal on {mesh}."
         self._k = k
         self._sym_repr = r"\Omega^{(" + str(self.k) + r')}' + rf"({mesh._sym_repr})"
@@ -36,4 +36,4 @@ class ScalarValuedFormSpace(SpaceBase):
     def __repr__(self):
         """By construction, it will be unique."""
         super_repr = super().__repr__().split('object')[-1]
-        return f'<Space {self._sym_repr}' + super_repr
+        return f'<Space {self._sym_repr} {self.orientation} oriented' + super_repr

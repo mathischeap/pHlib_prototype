@@ -28,7 +28,7 @@ _global_lin_repr_setting = {
     'form': [r'\textsf{', r'}'],
     'scalar_parameter': [r'\textsc{', r'}'],
     'abstract_time_sequence': [r'\textit{', r'}'],
-    'abstract_time_interval': [r'\textsc{', r'}'],
+    'abstract_time_interval': [r'\texttt{', r'}'],   # do not use `textsc` as scalar.
     'abstract_time_instant': [r'\textsl{', r'}'],
 }
 
@@ -76,6 +76,7 @@ _global_operator_lin_repr_setting = {  # coded operators
     'multiply': r' \emph{multiply} '
 }
 
+
 _global_operator_sym_repr_setting = {  # coded operators
     'plus': r"+",
     'minus': r"-",
@@ -86,6 +87,7 @@ _global_operator_sym_repr_setting = {  # coded operators
     'time_derivative': r'\partial_{t}',
     'trace': r'\mathrm{tr}',
 }
+
 
 _wf_term_default_simple_patterns = {   # use only str to represent a pattern.
     # indicator     # simple pattern
