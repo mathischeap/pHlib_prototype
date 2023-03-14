@@ -37,15 +37,10 @@ class OrdinaryDifferentialEquationDiscretize(Frozen):
         """The time sequence this discretization is working on."""
         return self._ats
 
-    @time_sequence.setter
-    def time_sequence(self, ts):
-        """Set the time sequence of this discretization."""
-        assert ts.__class__.__name__ == 'AbstractTimeSequence', f"I need an abstract time sequence object."
-        self._ats = ts
-
     def set_time_sequence(self, ts):
         """The method of setting time sequence."""
-        self.time_sequence = ts
+        assert ts.__class__.__name__ == 'AbstractTimeSequence', f"I need an abstract time sequence object."
+        self._ats = ts
 
     def define_abstract_time_instants(self, *atis):
         """For example, atis = ('k-1', 'k-0.5', 'k')."""
@@ -216,7 +211,7 @@ if __name__ == '__main__':
 
     ts1 = ph.time_sequence()
     td = ode.discretize
-    td.time_sequence = ts1
+    td.set_time_sequence(ts1)
     td.define_abstract_time_instants('k-1', 'k-0.5', 'k')
     td.differentiate(0, 'k-1', 'k')
     td.average(2, f, ['k-1', 'k'])
@@ -225,5 +220,3 @@ if __name__ == '__main__':
 
     eq = ode.discretize()
     eq.print_representations()
-
-
