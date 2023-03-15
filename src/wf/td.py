@@ -10,6 +10,7 @@ if './' not in sys.path:
     sys.path.append('./')
 from src.tools.frozen import Frozen
 from src.tools.time_sequence import AbstractTimeSequence
+from typing import Dict
 
 
 class TemporalDiscretization(Frozen):
@@ -46,11 +47,30 @@ class TemporalDiscretization(Frozen):
 
     def __getitem__(self, item):
         """Return the ode."""
-        return self._valid_ode[item]
+        return self._valid_ode[item].discretize
+
+    def __iter__(self):
+        """iter over valid ode numbers."""
+        for valid_ode_number in self._valid_ode:
+            yield valid_ode_number
 
     def __call__(self, *args, **kwargs):
         """Return a new weak formulation by combining all equations."""
-        return self._wf.__class__
+        wfs: Dict = dict()
+        for i in self:
+            wfs[i] = self[i]()
+        for i in self._wf._term_dict:
+            if i not in wfs:
+                wfs[i] = {
+                    '_term_dict': self._wf._term_dict[i],
+                    '_sign_dict': self._wf._sign_dict[i]
+                }
+            else:
+                pass
+        wf = self._wf.__class__(test_forms=self._wf._test_forms, merge=wfs)
+        wf._bc = self._wf._bc
+        # we get the new weak formulation by combining each pde.
+        return wf
 
     @property
     def time_sequence(self):
@@ -61,7 +81,7 @@ class TemporalDiscretization(Frozen):
         """The method of setting time sequence.
 
         Note that each wf only use one time sequence. If your time sequence is complex, you should carefully design
-        it.
+        it instead of trying to make multi time sequences.
         """
         if ts is None:  # make a new one
             ts = AbstractTimeSequence()
@@ -69,8 +89,49 @@ class TemporalDiscretization(Frozen):
             pass
         assert ts.__class__.__name__ == 'AbstractTimeSequence', f"I need an abstract time sequence object."
         self._ats = ts
+        for i in self._valid_ode:
+            self._valid_ode[i].discretize.set_time_sequence(self._ats)
 
+    def define_abstract_time_instants(self, *atis):
+        """Define abstract time instants for all valid odes."""
+        for i_ode in self:
+            self[i_ode].define_abstract_time_instants(*atis)
 
+    def differentiate(self, index, *args):
+        """
+
+        Parameters
+        ----------
+        index :
+            The index of the weak formulation. So we parse it to locate the ode and the local index.
+        args
+
+        Returns
+        -------
+
+        """
+        assert index in self._wf, f"index={index} is illegal, print representations to check the indices."
+        i, j = index.split('-')
+        ode_d = self[int(i)]
+        ode_d.differentiate(j, *args)
+
+    def average(self, index, *args):
+        """
+
+        Parameters
+        ----------
+        index :
+            The index of the weak formulation. So we parse it to locate the ode and the local index.
+        args
+
+        Returns
+        -------
+
+        """
+        assert index in self._wf, f"index={index} is illegal, print representations to check the indices."
+        i, j = index.split('-')
+        ode_d = self[int(i)]
+        ode_d.average(j, *args)
 
 
 if __name__ == '__main__':
@@ -80,12 +141,27 @@ if __name__ == '__main__':
 
     samples = ph.samples
 
-    oph = samples.pde_canonical_pH(3, 3)[0]
+    oph = samples.pde_canonical_pH(n=3, p=3)[0]
+    a3, b2 = oph.unknowns
 
-    oph.pr()
-
-
-    # wf = oph.test_with(oph.unknowns, sym_repr=[r'v^3', r'u^2'])
-    # wf = wf.derive.integration_by_parts('1-1')
-    #
+    wf = oph.test_with(oph.unknowns, sym_repr=[r'v^3', r'u^2'])
+    wf = wf.derive.integration_by_parts('1-1')
     # wf.pr()
+
+    td = wf.td
+    td.set_time_sequence()  # initialize a time sequence
+
+    td.define_abstract_time_instants('k-1', 'k-1/2', 'k')
+    td.differentiate('0-0', 'k-1', 'k')
+    td.average('0-1', b2, 'k-1', 'k')
+    td.differentiate('1-0', 'k-1', 'k')
+    td.average('1-1', a3, 'k-1', 'k')
+    td.average('1-2', a3, 'k-1/2')
+
+    # td.average(2, f, ['k-1', 'k'])
+    # td.average(1, P, 'k-1/2')
+    # td.average(3, P, 'k-1/2')
+
+    wf = td()
+    wf.unknowns = [a3 @ td.time_sequence['k'], b2 @ td.time_sequence['k']]
+    wf.pr()

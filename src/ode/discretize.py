@@ -29,7 +29,6 @@ class OrdinaryDifferentialEquationDiscretize(Frozen):
         self._at_instants = dict()
         self._at_intervals = dict()
         self._eq_terms = dict()
-        self._unknown = None
         self._freeze()
 
     @property
@@ -87,14 +86,13 @@ class OrdinaryDifferentialEquationDiscretize(Frozen):
                 term1 = (bf1_ke - bf1_ks) / dt
                 diff_term = ('+', ptm.__class__(term1, bf2))
                 self._eq_terms[index] = [diff_term, ]
-                self._unknown = bf1_ke
             else:
                 raise NotImplementedError()
 
         else:
             raise NotImplementedError()
 
-    def average(self, index, f, time_instants):
+    def average(self, index, f, *time_instants):
         """Use average at time instants `time_instants` for form `f` in term indexed `index`
         """
         if isinstance(index, int):
@@ -104,15 +102,9 @@ class OrdinaryDifferentialEquationDiscretize(Frozen):
         old_sign = self._ode[index][0]
         term = self._ode[index][1]
 
-        if isinstance(time_instants, str):
-            time_instants = [time_instants, ]
-        else:
-            pass
-
-        self.define_abstract_time_instants(*time_instants)
-
         f_ = list()
         for ti in time_instants:
+            assert ti in self._at_instants, f"abstract time instant {ti} is not defined."
             f_.append(f @ self._at_instants[ti])
 
         num = len(f_)
@@ -130,7 +122,6 @@ class OrdinaryDifferentialEquationDiscretize(Frozen):
 
         new_sign, new_term = term.replace(f, f_)
         sign = self._parse_sign(old_sign, new_sign)
-
         self._eq_terms[index] = [(sign, new_term), ]
 
     def __call__(self):
@@ -154,7 +145,6 @@ class OrdinaryDifferentialEquationDiscretize(Frozen):
         signs_dict = {0: signs}
         terms_dict = {0: terms}
         equation = PartialDifferentialEquations(terms_and_signs_dict=(terms_dict, signs_dict))
-        equation.unknowns = self._unknown
         return equation
 
     @staticmethod
@@ -214,7 +204,7 @@ if __name__ == '__main__':
     td.set_time_sequence(ts1)
     td.define_abstract_time_instants('k-1', 'k-0.5', 'k')
     td.differentiate(0, 'k-1', 'k')
-    td.average(2, f, ['k-1', 'k'])
+    td.average(2, f, 'k-1', 'k')
     td.average(1, P, 'k-1/2')
     td.average(3, P, 'k-1/2')
 

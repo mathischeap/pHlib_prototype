@@ -25,7 +25,7 @@ from src.bc import BoundaryCondition
 class WeakFormulation(Frozen):
     """Weak Formulation."""
 
-    def __init__(self, term_sign_dict=None, test_forms=None, expression=None, weak_formulations=None):
+    def __init__(self, term_sign_dict=None, test_forms=None, expression=None, merge=None):
         """
 
         Parameters
@@ -37,20 +37,20 @@ class WeakFormulation(Frozen):
         if term_sign_dict is not None:
             assert test_forms is not None
             assert expression is None
-            assert weak_formulations is None
+            assert merge is None
             self._parse_term_sign_dict(term_sign_dict, test_forms)
 
         elif expression is not None:
             assert term_sign_dict is None
             assert test_forms is None
-            assert weak_formulations is None
+            assert merge is None
             self._parse_expression(expression)
 
-        elif weak_formulations is not None:  # merge multiple weak formulations
+        elif merge is not None:  # merge multiple weak formulations
             assert term_sign_dict is None
-            assert test_forms is None
+            assert test_forms is not None
             assert expression is None
-            raise NotImplementedError(f"merge weak formulations not coded.")
+            self._initialize_through_merging(merge, test_forms)
 
         else:
             raise Exception()
@@ -131,6 +131,38 @@ class WeakFormulation(Frozen):
     def _parse_expression(self, expression):
         """"""
         raise NotImplementedError()
+
+    def _initialize_through_merging(self, merge, test_forms):
+        """"""
+        term_dict = dict()
+        sign_dict = dict()
+        no = 0
+        for i in merge:
+            eqi = merge[i]
+            if eqi.__class__.__name__ == 'PartialDifferentialEquations':
+                tdi, sdi = eqi._term_dict, eqi._sign_dict
+                for j in tdi:
+                    term_dict[no] = tdi[j]
+                    sign_dict[no] = sdi[j]
+                    no += 1
+
+            elif isinstance(eqi, dict):
+                tdi, sdi = eqi['_term_dict'], eqi['_sign_dict']
+                term_dict[no] = tdi
+                sign_dict[no] = sdi
+                no += 1
+
+            else:
+                raise NotImplementedError()
+
+        for i in term_dict:
+            for j, terms in enumerate(term_dict[i]):
+                for k, term in enumerate(terms):
+                    assert term._is_able_to_be_a_weak_term, f"term[{i}][{j}][{k}] = {term} " \
+                                                            f"is not suitable for a weak formulation."
+                    sign = sign_dict[i][j][k]
+                    assert sign in ('+', '-'), f"sign[{i}][{j}][{k}] = {sign} illegal."
+        self._parse_term_sign_dict([term_dict, sign_dict], test_forms)
 
     def _consistence_checker(self):
         """We do consistence check here and parse properties like mesh and so on."""
@@ -228,25 +260,40 @@ class WeakFormulation(Frozen):
 
     def print_representations(self, indexing=True):
         """Print the representations"""
-        seek_text = rf'In ${self._mesh.manifold._sym_repr}\in\mathbb' + '{R}^{' + str(self._mesh.ndim) + '}$, '
-        given_text = r'given'
-        for ef in self._efs:
-            if ef not in self.unknowns and ef not in self._test_forms:
-                given_text += rf' ${ef._sym_repr} \in {ef.space._sym_repr}$,'
-        if given_text == r'Given':
-            seek_text += r'Seek $\left('
+        seek_text = self._mesh.manifold._manifold_text()
+        if self.unknowns is None:
+            seek_text += r'for $\left('
+            form_sr_list = list()
+            space_sr_list = list()
+            for ef in self._efs:
+                if ef not in self._test_forms:
+                    form_sr_list.append(rf' {ef._sym_repr}')
+                    space_sr_list.append(rf"{ef.space._sym_repr}")
+                else:
+                    pass
+            seek_text += ','.join(form_sr_list)
+            seek_text += r'\right) \in '
+            seek_text += r'\times '.join(space_sr_list)
+            seek_text += '$, \n'
         else:
-            seek_text += given_text
-            seek_text += r' seek $\left('
-        form_sr_list = list()
-        space_sr_list = list()
-        for un in self.unknowns:
-            form_sr_list.append(rf' {un._sym_repr}')
-            space_sr_list.append(rf"{un.space._sym_repr}")
-        seek_text += ','.join(form_sr_list)
-        seek_text += r'\right) \in '
-        seek_text += r'\times '.join(space_sr_list)
-        seek_text += '$, such that\n'
+            given_text = r'for'
+            for ef in self._efs:
+                if ef not in self.unknowns and ef not in self._test_forms:
+                    given_text += rf' ${ef._sym_repr} \in {ef.space._sym_repr}$, '
+            if given_text == r'for':
+                seek_text += r'seek $\left('
+            else:
+                seek_text += given_text + '\n'
+                seek_text += r'seek $\left('
+            form_sr_list = list()
+            space_sr_list = list()
+            for un in self.unknowns:
+                form_sr_list.append(rf' {un._sym_repr}')
+                space_sr_list.append(rf"{un.space._sym_repr}")
+            seek_text += ','.join(form_sr_list)
+            seek_text += r'\right) \in '
+            seek_text += r'\times '.join(space_sr_list)
+            seek_text += '$, such that\n'
         symbolic = ''
         number_equations = len(self._term_dict)
         for i in self._term_dict:
@@ -296,9 +343,10 @@ class WeakFormulation(Frozen):
             bc_text = self.bc._bc_text()
 
         if indexing:
-            figsize = (12, 2 * len(self._term_dict))
+            figsize = (12, 3 * len(self._term_dict))
         else:
-            figsize = (12, 1.5 * len(self._term_dict))
+            figsize = (12, 2 * len(self._term_dict))
+
         plt.figure(figsize=figsize)
         plt.axis([0, 1, 0, 1])
         plt.axis('off')
@@ -601,7 +649,7 @@ if __name__ == '__main__':
         }
     )
 
-    # wf.print()
+    wf.pr()
 
     # i = 0
     # terms = wf._term_dict[i]

@@ -285,10 +285,11 @@ class PartialDifferentialEquations(Frozen):
             if len(ef_text_others) == 0:
                 ef_text = r'seek unknowns: $' + r', '.join(ef_text_unknowns) + r'$, such that'
             else:
-                ef_text_others = r'For: $' + r', '.join(ef_text_others) + r'$, '
-                ef_text_unknowns = r'seek unknowns: $' + r', '.join(ef_text_unknowns) + r'$, such that'
+                ef_text_others = r'for $' + r', '.join(ef_text_others) + r'$, '
+                ef_text_unknowns = r'seek $' + r', '.join(ef_text_unknowns) + r'$, such that'
                 ef_text = ef_text_others + ef_text_unknowns
-        ef_text = rf'In ${self._mesh.manifold._sym_repr}\in\mathbb' + '{R}^{' + str(self._mesh.ndim) + '}$, ' + ef_text
+
+        ef_text = self._mesh.manifold._manifold_text() + ef_text
 
         if self._bc is None or len(self._bc._valid_bcs) == 0:
             bc_text = ''
@@ -351,7 +352,7 @@ class PartialDifferentialEquations(Frozen):
         for i, unknown in enumerate(unknowns):
             assert unknown.__class__ is Form and unknown.is_root(), \
                 f"{i}th variable is not a root form."
-            assert unknown in self._efs, f"{i}th variable is not an elementary form."
+            assert unknown in self._efs, f"{i}th variable = {unknown} is not an elementary form ({self._efs})."
 
         self._unknowns = unknowns
 
@@ -475,5 +476,5 @@ if __name__ == '__main__':
     # }
 
     pde = ph.pde(exp, locals())
-    # pde.unknowns = [u, w, P]
+    pde.unknowns = [u, w, P]
     pde.pr()

@@ -119,17 +119,6 @@ if __name__ == '__main__':
 
     oph.bc.partition(r"\Gamma_\alpha", r"\Gamma_\beta")
 
-    alpha, beta = oph.unknowns
-
-    oph.bc.define_bc(
-        {
-            r"\Gamma_\alpha": ph.trace(ph.Hodge(alpha)),
-            r"\Gamma_\beta": ph.trace(beta),
-        }
-    )
-
-    oph.pr()
-
     wf = oph.test_with(oph.unknowns, sym_repr=[r'v^3', r'u^2'])
     wf.pr()
     wf = wf.derive.integration_by_parts('1-1')

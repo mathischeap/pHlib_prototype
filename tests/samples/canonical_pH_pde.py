@@ -13,9 +13,10 @@ from src.manifold import manifold
 from src.mesh import mesh
 from src.pde import pde
 import src.spaces.main as space
+from src.form.operators import trace, Hodge
 
 
-def pde_canonical_pH(n, p):
+def pde_canonical_pH(n=3, p=3):
     """Generate pde representations of the canonical port-Hamiltonian systems."""
     set_embedding_space_dim(n)
     q = n + 1 - p
@@ -24,11 +25,11 @@ def pde_canonical_pH(n, p):
     m = mesh(m)
 
     space.set_mesh(m)
-    O_p = space.new('Omega', p, orientation='outer')
-    O_pm1 = space.new('Omega', p-1, orientation='outer')
+    omega_p = space.new('Omega', p, orientation='outer')
+    omega_pm1 = space.new('Omega', p-1, orientation='outer')
 
-    ap = O_p.make_form(r'\widehat{\alpha}^' + rf'{p}', 'a-p')
-    bpm1 = O_pm1.make_form(r'\widehat{\beta}^{' + rf'{p-1}' + '}', 'b-pm1')
+    ap = omega_p.make_form(r'\widehat{\alpha}^' + rf'{p}', 'a-p')
+    bpm1 = omega_pm1.make_form(r'\widehat{\beta}^{' + rf'{p-1}' + '}', 'b-pm1')
 
     sign1 = '+' if (-1) ** p == 1 else '-'
     sign2 = '+' if (-1) ** (p+1) == 1 else '-'
@@ -47,6 +48,15 @@ def pde_canonical_pH(n, p):
     outer_pde._indi_dict = None  # clear this local expression
     outer_pde.unknowns = [ap, bpm1]
 
+    outer_pde.bc.partition(r"\Gamma_\alpha", r"\Gamma_\beta")
+    alpha, beta = outer_pde.unknowns
+    outer_pde.bc.define_bc(
+        {
+            r"\Gamma_\alpha": trace(Hodge(alpha)),
+            r"\Gamma_\beta": trace(beta),
+        }
+    )
+
     inner_pde = None   # not implemented yet
     return outer_pde, inner_pde
 
@@ -54,4 +64,4 @@ def pde_canonical_pH(n, p):
 if __name__ == '__main__':
     # python tests/samples/canonical_pH_pde.py
 
-    pde_canonical_pH(3, 3)
+    pde_canonical_pH()

@@ -78,6 +78,7 @@ def new(abbrs, *args, mesh=None, **kwargs):
         isinstance(abbrs, (list, tuple)), f"pls put space abbreviations into a list or tuple."
 
     mesh_sr = _config['current_mesh']
+
     if mesh is None:
         mesh = _mesh_set[mesh_sr]
     else:

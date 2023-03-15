@@ -193,6 +193,10 @@ class Manifold(Frozen):
 
         return config_name, partitions
 
+    def _manifold_text(self):
+        """generate text for printing representations."""
+        return rf'In ${self._sym_repr}\subset\mathbb' + '{R}^{' + str(self.ndim) + '}$, '
+
 
 class NullManifold(Frozen):
     """"""
