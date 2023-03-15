@@ -115,11 +115,6 @@ if __name__ == '__main__':
 
     oph = samples.pde_canonical_pH(3, 3)[0]
 
-    oph.pr()
-
-    oph.bc.partition(r"\Gamma_\alpha", r"\Gamma_\beta")
-
     wf = oph.test_with(oph.unknowns, sym_repr=[r'v^3', r'u^2'])
-    wf.pr()
     wf = wf.derive.integration_by_parts('1-1')
     wf.pr()

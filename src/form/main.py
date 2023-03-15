@@ -254,7 +254,8 @@ class Form(Frozen):
 
     def __truediv__(self, other):
         """self / other"""
-        operator_lin = _global_operator_lin_repr_setting['divided']
+        operator_lin = _global_operator_lin_repr_setting['division']
+        operator_sym = _global_operator_sym_repr_setting['division']
         if isinstance(other, (int, tuple)):
             cs = constant_scalar(other)
             return self / cs
@@ -271,7 +272,7 @@ class Form(Frozen):
                 lr = lr + operator_lin + cs._lin_repr
             else:
                 lr = '[' + lr + ']' + operator_lin + cs._lin_repr
-            sr = r"\dfrac{" + sr + r"}{" + cs._sym_repr + "}"
+            sr = operator_sym[0] + sr + operator_sym[1] + cs._sym_repr + operator_sym[2]
             f = Form(
                 self.space,  # space
                 sr,          # symbolic representation
@@ -337,6 +338,6 @@ class Form(Frozen):
                 None,
             )
 
-    def reform(self, into):
-        """reform self into `forms`."""
+    def split(self, into):
+        """reform self into a few forms."""
         raise NotImplementedError()

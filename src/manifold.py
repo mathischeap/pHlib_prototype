@@ -189,9 +189,17 @@ class Manifold(Frozen):
         else:
             pass
 
-        self._partitions[config_name] = partitions
-
-        return config_name, partitions
+        partitions_set = set(partitions)
+        existing = False
+        for existing_config in self._partitions:
+            existing_partitions = set(self._partitions[existing_config])
+            if partitions_set == existing_partitions:
+                existing = True
+                break
+        if existing:
+            pass
+        else:
+            self._partitions[config_name] = partitions
 
     def _manifold_text(self):
         """generate text for printing representations."""

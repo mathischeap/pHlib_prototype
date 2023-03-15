@@ -24,6 +24,7 @@ from src.form.operators import _parse_related_time_derivative
 from src.config import _global_operator_lin_repr_setting
 from src.config import _wf_term_default_simple_patterns as _simple_patterns
 from src.form.parameters import constant_scalar
+from src.config import _global_operator_sym_repr_setting
 _cs1 = constant_scalar(1)
 
 
@@ -62,14 +63,25 @@ class _WeakFormulationTerm(Frozen):
         if self._factor == _cs1:
             return self.___sym_repr___
         else:
-            return self._factor._sym_repr + self.___sym_repr___
+            if self._factor.is_root():
+                return self._factor._sym_repr + self.___sym_repr___
+            else:
+                frac = _global_operator_sym_repr_setting['division'][0]
+                if self._factor._sym_repr[:len(frac)] == frac:
+                    return self._factor._sym_repr + self.___sym_repr___
+                else:
+                    return r'\left(' + self._factor._sym_repr + r'\right)' + self.___sym_repr___
 
     @property
     def _lin_repr(self):
         if self._factor == _cs1:
             return self.___lin_repr___
         else:
-            return self._factor._sym_repr + _global_operator_lin_repr_setting['multiply'] + self.___sym_repr___
+            if self._factor.is_root():
+                return self._factor._lin_repr + _global_operator_lin_repr_setting['multiply'] + self.___lin_repr___
+            else:
+                return '[' + self._factor._lin_repr + ']' + \
+                    _global_operator_lin_repr_setting['multiply'] + self.___lin_repr___
 
     @property
     def mesh(self):
@@ -142,12 +154,12 @@ class _WeakFormulationTerm(Frozen):
                 sign = '-'
             else:
                 sign = '+'
-            return sign, self.__class__(f1, f2, factor=factor)
+            return self.__class__(f1, f2, factor=factor), sign
 
         else:
             raise NotImplementedError()
 
-    def reform(self, f, into, signs, factors=None, which=None):
+    def split(self, f, into, signs, factors=None, which=None):
         """Split `which` `f` `into` of `signs`."""
         if f in ('f1', 'f2'):
             assert which is None, f"When specify f1 or f2, no need to set `which`."
@@ -178,7 +190,7 @@ class _WeakFormulationTerm(Frozen):
                 assert ifi.mesh == f2.mesh, f"mesh of {i}th object = {ifi.mesh} does not fit."
                 term = term_class(ifi, f2, factor=factors[i])
                 new_terms.append(term)
-            return signs, new_terms
+            return new_terms, signs
 
         else:
             raise NotImplementedError()

@@ -72,7 +72,7 @@ _global_operator_lin_repr_setting = {  # coded operators
     'L2-inner-product': [r"$($", r'\emph{,} ', r"$)$ \emph{over} "],
     'duality-pairing': [r"$<$", r' \emph{,} ', r"$>$  \emph{over} "],
 
-    'divided': r' \emph{divided by} ',
+    'division': r' \emph{divided by} ',
     'multiply': r' \emph{multiply} '
 }
 
@@ -86,6 +86,7 @@ _global_operator_sym_repr_setting = {  # coded operators
     'codifferential': r'\mathrm{d}^{\ast}',
     'time_derivative': r'\partial_{t}',
     'trace': r'\mathrm{tr}',
+    'division': [r'\dfrac{', r'}{', r"}"],
 }
 
 

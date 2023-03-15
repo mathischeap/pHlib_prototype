@@ -146,7 +146,7 @@ if __name__ == '__main__':
 
     wf = oph.test_with(oph.unknowns, sym_repr=[r'v^3', r'u^2'])
     wf = wf.derive.integration_by_parts('1-1')
-    wf.pr(indexing=True)
+    # wf.pr(indexing=True)
 
     td = wf.td
     td.set_time_sequence()  # initialize a time sequence
@@ -158,7 +158,14 @@ if __name__ == '__main__':
     td.differentiate('1-0', 'k-1', 'k')
     td.average('1-1', a3, 'k-1', 'k')
     td.average('1-2', a3, 'k-1/2')
+    dt = td.time_sequence.make_time_interval('k-1', 'k')
 
     wf = td()
     wf.unknowns = [a3 @ td.time_sequence['k'], b2 @ td.time_sequence['k']]
+    wf = wf.derive.split('0-0', 'f1',
+                         [a3 @ td.time_sequence['k'], a3 @ td.time_sequence['k-1']],
+                         ['+', '-'],
+                         factors=[1/dt, 1/dt])
+
     wf.pr(indexing=True)
+

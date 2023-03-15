@@ -120,7 +120,7 @@ class OrdinaryDifferentialEquationDiscretize(Frozen):
                 pass
             f_ = sum_f / num
 
-        new_sign, new_term = term.replace(f, f_)
+        new_term, new_sign = term.replace(f, f_)
         sign = self._parse_sign(old_sign, new_sign)
         self._eq_terms[index] = [(sign, new_term), ]
 

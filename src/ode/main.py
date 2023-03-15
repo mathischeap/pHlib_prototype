@@ -301,7 +301,7 @@ if __name__ == '__main__':
     pde = ph.pde(exp, globals())
     pde.unknowns = [u, w, P]
 
-    pde.print_representations()
+    # pde.print_representations()
 
     wf = pde.test_with([O2, O1, O3], sym_repr=[r'v^2', r'w^1', r'q^3'])
     wf = wf.derive.integration_by_parts('0-2')
@@ -346,7 +346,10 @@ if __name__ == '__main__':
 
     # ut.print_representations()
 
-    signs, new_terms = term0.reform('f1', [u_km1, u_k], ['-', '+'], factors=[1/dt, 1/dt])
+    signs, new_terms = term0.split('f1', [u_km1, u_k], ['-', '+'], factors=[1/dt, 1/dt])
+
+    print(new_terms[0])
+
     new_terms[0].pr()
     # new_terms[1].print_representations()
 

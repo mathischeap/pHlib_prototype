@@ -409,7 +409,10 @@ class AbstractTimeInterval(Frozen):
 
     def __rtruediv__(self, other):
         """other / self"""
-        print(other, self)
+        if isinstance(other, (int, float)):
+            return constant_scalar(other) / self._as_scalar()
+        else:
+            return other / self._as_scalar()
 
 
 _implemented_specific_time_sequences = {

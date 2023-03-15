@@ -12,6 +12,7 @@ from src.tools.frozen import Frozen
 from src.config import _parse_lin_repr
 from src.config import _check_sym_repr
 from src.config import _global_operator_lin_repr_setting
+from src.config import _global_operator_sym_repr_setting
 
 _global_root_constant_scalars = dict()   # only cache root scalar parameters
 
@@ -155,6 +156,27 @@ class ConstantScalar0Form(Frozen):
                 return ConstantScalar0Form(sym_repr, lin_repr, False, False)
         else:
             raise NotImplementedError()
+
+
+    def __truediv__(self, other):
+        """self / other"""
+
+        if isinstance(other, (int, float)):
+            return self / constant_scalar(other)
+        elif other.__class__.__name__ == self.__class__.__name__:
+            if self.is_real() and other.is_real():
+                raise NotImplementedError()
+            else:
+                op_lin_repr = _global_operator_lin_repr_setting['division']
+                op_sym_repr = _global_operator_sym_repr_setting['division']
+                sym_repr = op_sym_repr[0] + self._sym_repr + op_sym_repr[1] + other._sym_repr + op_sym_repr[2]
+                lin_repr = self._lin_repr + op_lin_repr + other._lin_repr
+                return ConstantScalar0Form(sym_repr, lin_repr, False, False)
+
+        else:
+            raise Exception()
+
+
 
 
 if __name__ == '__main__':
