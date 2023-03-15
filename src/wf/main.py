@@ -345,7 +345,7 @@ class WeakFormulation(Frozen):
         if indexing:
             figsize = (12, 3 * len(self._term_dict))
         else:
-            figsize = (12, 2 * len(self._term_dict))
+            figsize = (12, 3 * len(self._term_dict))
 
         plt.figure(figsize=figsize)
         plt.axis([0, 1, 0, 1])

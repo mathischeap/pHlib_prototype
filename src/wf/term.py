@@ -147,7 +147,7 @@ class _WeakFormulationTerm(Frozen):
         else:
             raise NotImplementedError()
 
-    def reform(self, f, into, signs, which=None):
+    def reform(self, f, into, signs, factors=None, which=None):
         """Split `which` `f` `into` of `signs`."""
         if f in ('f1', 'f2'):
             assert which is None, f"When specify f1 or f2, no need to set `which`."
@@ -162,13 +162,21 @@ class _WeakFormulationTerm(Frozen):
             assert isinstance(into, (list, tuple)), f"put split objects into a list or tuple."
             assert len(into) >= 1, f"number of split objects must be equal to or larger than 1."
             assert len(into) == len(signs), f"objects and signs length dis-match."
+            if factors is None:
+                factors = [1 for _ in range(len(into))]
+            else:
+                if not isinstance(factors, (list, tuple)):
+                    factors = [factors, ]
+                else:
+                    pass
+            assert len(signs) == len(factors), f"signs and factors length dis-match."
+
             new_terms = list()
             for i, ifi in enumerate(into):
                 assert signs[i] in ('+', '-'), f"{i}th sign = {signs[i]} is wrong."
                 assert ifi.__class__.__name__ == 'Form', f"{i}th object = {ifi} is not a form."
                 assert ifi.mesh == f2.mesh, f"mesh of {i}th object = {ifi.mesh} does not fit."
-                # noinspection PyArgumentList
-                term = term_class(ifi, f2)
+                term = term_class(ifi, f2, factor=factors[i])
                 new_terms.append(term)
             return signs, new_terms
 

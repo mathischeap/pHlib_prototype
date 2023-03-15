@@ -346,7 +346,7 @@ if __name__ == '__main__':
 
     # ut.print_representations()
 
-    signs, new_terms = term0.reform('f1', [u_km1_dt, u_k_dt], ['-', '+'])
+    signs, new_terms = term0.reform('f1', [u_km1, u_k], ['-', '+'], factors=[1/dt, 1/dt])
     new_terms[0].pr()
     # new_terms[1].print_representations()
 

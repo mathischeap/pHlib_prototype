@@ -407,6 +407,10 @@ class AbstractTimeInterval(Frozen):
             self._s = constant_scalar(ati_sr, ati_lr)
         return self._s
 
+    def __rtruediv__(self, other):
+        """other / self"""
+        print(other, self)
+
 
 _implemented_specific_time_sequences = {
     'constant': ConstantTimeSequence,
