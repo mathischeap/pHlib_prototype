@@ -22,9 +22,8 @@ def pde_canonical_pH(n=3, p=3):
     q = n + 1 - p
 
     m = manifold(n)
-    m = mesh(m)
+    mesh(m)
 
-    space.set_mesh(m)
     omega_p = space.new('Omega', p, orientation='outer')
     omega_pm1 = space.new('Omega', p-1, orientation='outer')
 

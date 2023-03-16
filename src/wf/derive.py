@@ -223,6 +223,7 @@ class _Derive(Frozen):
         return self.replace(index, terms, signs)
 
     def split(self, index, *args, **kwargs):
+        """Split a term into multiple terms."""
         term = self._wf[index][1]
         terms, signs = term.split(*args, **kwargs)
         return self.replace(index, terms, signs)

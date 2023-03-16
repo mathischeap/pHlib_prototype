@@ -82,6 +82,7 @@ class Form(Frozen):
             'ati': None
         }
         self._abstract_forms = dict()   # the abstract forms based on this form.
+        self._degree = None
         self._freeze()
 
     @staticmethod
@@ -148,6 +149,12 @@ class Form(Frozen):
                     efs.append(_global_root_forms_lin_dict[root_lin_repr])
             self._efs = set(efs)
         return self._efs
+
+    def limited(self, degree):
+        """Limit this form to a particular finite dimensional space of degree `degree`."""
+        assert self._degree is None, f"This form already has a degree ({self._degree}), " \
+                                     f"change it may lead to unpredictable issue."
+        self._degree = self.space.finite.specify_form(self, degree)
 
     @property
     def orientation(self):

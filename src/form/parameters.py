@@ -24,7 +24,10 @@ def constant_scalar(*args):
     if num_args == 1:
         arg = args[0]
         if isinstance(arg, (int, float)):
-            sym_repr, lin_repr = str(arg), str(arg)
+            if arg == 0.5:
+                sym_repr, lin_repr = r"\dfrac{1}{2}", str(arg)
+            else:
+                sym_repr, lin_repr = str(arg), str(arg)
             is_real = True
         else:
             raise NotImplementedError()
@@ -157,7 +160,6 @@ class ConstantScalar0Form(Frozen):
         else:
             raise NotImplementedError()
 
-
     def __truediv__(self, other):
         """self / other"""
 
@@ -175,8 +177,6 @@ class ConstantScalar0Form(Frozen):
 
         else:
             raise Exception()
-
-
 
 
 if __name__ == '__main__':

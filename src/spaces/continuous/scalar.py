@@ -25,7 +25,7 @@ class ScalarValuedFormSpace(SpaceBase):
         super().__init__(mesh, orientation)
         assert isinstance(k, int) and 0 <= k <= mesh.ndim, f" k={k} illegal on {mesh}."
         self._k = k
-        self._sym_repr = r"\Omega^{(" + str(self.k) + r')}' + rf"({mesh._sym_repr})"
+        self._sym_repr = r"\Omega^{(" + str(self.k) + r')}' + rf"({self.manifold._sym_repr})"
         self._freeze()
 
     @property

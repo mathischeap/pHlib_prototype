@@ -17,8 +17,8 @@ _space_set = dict()
 
 # whenever new space is implemented, add it below.
 _implemented_spaces = {
-    # abbr : (class                                               , description                 , parameters),
-    'Omega': ('src.spaces.specific.scalar : ScalarValuedFormSpace', 'scalar valued k-form space', ['k', ]),
+    # abbr : (class                                                 , description                 , parameters),
+    'Omega': ('src.spaces.continuous.scalar : ScalarValuedFormSpace', 'scalar valued k-form space', ['k', ]),
 }
 
 

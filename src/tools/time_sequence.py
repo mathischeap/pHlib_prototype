@@ -27,6 +27,7 @@ def abstract_time_sequence():
     """A wrapper of AbstractTimeSequence"""
     return AbstractTimeSequence()
 
+
 class AbstractTimeSequence(Frozen):
     """"""
 

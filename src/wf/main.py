@@ -74,10 +74,13 @@ class WeakFormulation(Frozen):
                         meshes.append(mesh)
                     else:
                         pass
+
         num_meshes = len(meshes)
         assert num_meshes > 0, f"we need at least one mesh."
+
         if num_meshes == 1:
-            mesh = meshes[0]
+            mesh = meshes[0]  # config #1: one mesh found, then we are probably dealing with periodic manifold.
+            return meshes, mesh  # RETURN config #1
         else:
             mesh_dim_dict = dict()
             for m in meshes:
@@ -87,18 +90,23 @@ class WeakFormulation(Frozen):
                 else:
                     pass
                 mesh_dim_dict[ndim].append(m)
+
+            # below we analyze more than one mesh ---------------
             if len(mesh_dim_dict) == 2:
                 larger_ndim = max(mesh_dim_dict.keys())
                 lower_ndim = min(mesh_dim_dict.keys())
-                if lower_ndim == larger_ndim - 1:
-                    assert len(mesh_dim_dict[larger_ndim]) == 1, f"must be"
-                    mesh = mesh_dim_dict[larger_ndim][0]
+                if lower_ndim == larger_ndim - 1 and \
+                        len(mesh_dim_dict[larger_ndim]) == 1 and \
+                        len(mesh_dim_dict[lower_ndim]) == 1:
+                    mesh = mesh_dim_dict[larger_ndim][0]   # config #2: found one mesh, and its boundary mesh.
+                    # This is the most common case.
+                    boundary_mesh = mesh_dim_dict[lower_ndim][0]
+                    assert mesh.manifold.boundary() == boundary_mesh.manifold, f"must be the case. Safety check."
+                    return meshes, mesh  # RETURN config #2
                 else:
                     raise NotImplementedError()
             else:
                 raise NotImplementedError()
-
-        return meshes, mesh
 
     def _parse_term_sign_dict(self, term_sign_dict, test_forms):
         """"""
@@ -369,7 +377,7 @@ class WeakFormulation(Frozen):
     def bc(self):
         """The boundary condition of pde class."""
         if self._bc is None:
-            self._bc = BoundaryCondition(self._mesh)
+            self._bc = BoundaryCondition(self._mesh.manifold)
         return self._bc
 
     @property

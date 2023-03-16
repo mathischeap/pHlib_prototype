@@ -79,12 +79,12 @@ class OrdinaryDifferentialEquationDiscretize(Frozen):
         dt = self._get_abstract_time_interval(ks, ke)
         if degree == 1:
             if pattern == simple_patterns['(pt,)']:
-                bf1 = _find_form(ptm._f1._lin_repr, upon=time_derivative)
-                bf1_ks = bf1 @ dt.start
-                bf1_ke = bf1 @ dt.end
-                bf2 = ptm._f2
-                term1 = (bf1_ke - bf1_ks) / dt
-                diff_term = ('+', ptm.__class__(term1, bf2))
+                bf0 = _find_form(ptm._f0._lin_repr, upon=time_derivative)
+                bf0_ks = bf0 @ dt.start
+                bf0_ke = bf0 @ dt.end
+                bf1 = ptm._f1
+                term0 = (bf0_ke - bf0_ks) / dt
+                diff_term = ('+', ptm.__class__(term0, bf1))
                 self._eq_terms[index] = [diff_term, ]
             else:
                 raise NotImplementedError()
@@ -202,7 +202,7 @@ if __name__ == '__main__':
     ts1 = ph.time_sequence()
     td = ode.discretize
     td.set_time_sequence(ts1)
-    td.define_abstract_time_instants('k-1', 'k-0.5', 'k')
+    td.define_abstract_time_instants('k-1', 'k-1/2', 'k')
     td.differentiate(0, 'k-1', 'k')
     td.average(2, f, 'k-1', 'k')
     td.average(1, P, 'k-1/2')

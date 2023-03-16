@@ -8,8 +8,7 @@
 from src.tools.frozen import Frozen
 from src.config import get_embedding_space_dim
 from src.form.main import Form
-
-_global_spaces = dict()
+from src.spaces.finite import SpaceFiniteSetting
 
 
 class SpaceBase(Frozen):
@@ -29,12 +28,16 @@ class SpaceBase(Frozen):
         else:
             pass
         self._orientation = orientation
-        _global_spaces[id(self)] = self
+        self._finite = None  # the finite setting
 
     @property
     def mesh(self):
         """"""
         return self._mesh
+
+    @property
+    def manifold(self):
+        return self.mesh.manifold
 
     @property
     def orientation(self):
@@ -61,3 +64,9 @@ class SpaceBase(Frozen):
     def _is_space():
         """A private tag."""
         return True
+
+    @property
+    def finite(self):
+        if self._finite is None:
+            self._finite = SpaceFiniteSetting(self)
+        return self._finite

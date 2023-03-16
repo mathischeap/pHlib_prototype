@@ -16,6 +16,8 @@ from src.spaces.operators import codifferential as space_codifferential
 from src.config import _global_operator_lin_repr_setting
 from src.config import _global_operator_sym_repr_setting
 
+from src.config import _non_root_lin_sep
+
 _time_derivative_related_operators = {
     'time_derivative': _global_operator_lin_repr_setting['time_derivative'],
 }
@@ -49,12 +51,12 @@ def wedge(f1, f2):
     if f1.is_root():
         pass
     else:
-        lr_term1 = '[' + lr_term1 + ']'
+        lr_term1 = _non_root_lin_sep[0] + lr_term1 + _non_root_lin_sep[1]
         sr_term1 = r'\left(' + sr_term1 + r'\right)'
     if f2.is_root():
         pass
     else:
-        lr_term2 = '[' + lr_term2 + ']'
+        lr_term2 = _non_root_lin_sep[0] + lr_term2 + _non_root_lin_sep[1]
         sr_term2 = r'\left(' + sr_term2 + r'\right)'
     lin_repr = lr_term1 + lr_operator + lr_term2
     sym_repr = sr_term1 + sr_operator + sr_term2
@@ -82,7 +84,7 @@ def Hodge(f):
     if f.is_root():
         lr = op_lin_repr + lr
     else:
-        lr = op_lin_repr + "[" + lr + ']'
+        lr = op_lin_repr + _non_root_lin_sep[0] + lr + _non_root_lin_sep[1]
 
     if f.is_root():
         sr = sr_operator + sr
@@ -112,7 +114,7 @@ def d(f):
     if f.is_root():
         lr = op_lin_repr + lr
     else:
-        lr = op_lin_repr + "[" + lr + ']'
+        lr = op_lin_repr + _non_root_lin_sep[0] + lr + _non_root_lin_sep[1]
 
     if f.is_root():
         sr = sr_operator + sr
@@ -142,7 +144,7 @@ def codifferential(f):
     if f.is_root():
         lr = op_lin_repr + lr
     else:
-        lr = op_lin_repr + "[" + lr + ']'
+        lr = op_lin_repr + _non_root_lin_sep[0] + lr + _non_root_lin_sep[1]
 
     if f.is_root():
         sr = sr_operator + sr
@@ -176,7 +178,7 @@ def time_derivative(f, degree=1):
         if f.is_root():
             lr = op_lin_repr + lr
         else:
-            lr = op_lin_repr + "[" + lr + ']'
+            lr = op_lin_repr + _non_root_lin_sep[0] + lr + _non_root_lin_sep[1]
 
         if f.is_root():
             sr = sr_operator + sr
@@ -212,7 +214,7 @@ def trace(f):
     if f.is_root():
         lr = op_lin_repr + lr
     else:
-        lr = op_lin_repr + "[" + lr + ']'
+        lr = op_lin_repr + _non_root_lin_sep[0] + lr + _non_root_lin_sep[1]
 
     if f.is_root():
         sr = sr_operator + sr

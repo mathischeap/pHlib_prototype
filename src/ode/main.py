@@ -138,9 +138,9 @@ class OrdinaryDifferentialEquation(Frozen):
                     pattern = self._pattern[i][j]
                     assert pattern is not None, f"trivial check."
                     if pattern == '(partial_t root-sf, sf)':
-                        f1 = term._f1
-                        f1_lin_repr = f1._lin_repr
-                        rf_lin_repr = r'\textsf{' + f1_lin_repr.split(r'\textsf{')[1]
+                        f0 = term._f0
+                        f0_lin_repr = f0._lin_repr
+                        rf_lin_repr = r'\textsf{' + f0_lin_repr.split(r'\textsf{')[1]
                         rf = _find_form(rf_lin_repr)
                         _about.append(rf)
                     else:
@@ -202,7 +202,7 @@ class OrdinaryDifferentialEquation(Frozen):
         """The elementary forms."""
         return self._efs
 
-    def print_representations(self, indexing=True):
+    def print_representations(self, indexing=True, figsize=(12, 4)):
         """print_representations"""
         sym = r'\noindent Time derivative of: '
         sym += rf'${self._about._sym_repr}$, '
@@ -243,19 +243,11 @@ class OrdinaryDifferentialEquation(Frozen):
                 sym += '='
 
         sym += '$'
-        figsize = (14, 8)
-        fig, ax = plt.subplots(figsize=figsize)
-        fig.patch.set_visible(False)
-        ax.axis('off')
-        table = ax.table(
-            cellText=[[sym, ], ],
-            rowLabels=['symbolic', ], rowColours='gcy',
-            colLoc='left', loc='center', cellLoc='left',
-        )
-
-        table.scale(1, 8)
-        table.set_fontsize(20)
-        fig.tight_layout()
+        plt.figure(figsize=figsize)
+        plt.axis([0, 1, 0, 1])
+        plt.axis('off')
+        plt.text(0.05, 0.5, sym, ha='left', va='center', size=15)
+        plt.tight_layout()
         plt.show()
 
     def pr(self, **kwargs):
@@ -346,7 +338,7 @@ if __name__ == '__main__':
 
     # ut.print_representations()
 
-    signs, new_terms = term0.split('f1', [u_km1, u_k], ['-', '+'], factors=[1/dt, 1/dt])
+    new_terms, signs = term0.split('f0', [u_km1, u_k], ['-', '+'], factors=[1/dt, 1/dt])
 
     print(new_terms[0])
 

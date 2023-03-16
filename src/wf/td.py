@@ -35,11 +35,11 @@ class TemporalDiscretization(Frozen):
             signs = wf._sign_dict[i]
 
             try:
-
                 v_ode = ode(terms_and_signs=[terms, signs])
 
             except OrdinaryDifferentialEquationError:
                 pass
+
             else:
                 valid_ode[i] = v_ode
 
@@ -162,10 +162,28 @@ if __name__ == '__main__':
 
     wf = td()
     wf.unknowns = [a3 @ td.time_sequence['k'], b2 @ td.time_sequence['k']]
-    wf = wf.derive.split('0-0', 'f1',
+    wf = wf.derive.split('0-0', 'f0',
                          [a3 @ td.time_sequence['k'], a3 @ td.time_sequence['k-1']],
                          ['+', '-'],
                          factors=[1/dt, 1/dt])
-
-    wf.pr(indexing=True)
-
+    wf = wf.derive.split('0-2', 'f0',
+                         [ph.d(b2 @ td.time_sequence['k-1']), ph.d(b2 @ td.time_sequence['k'])],
+                         ['+', '+'],
+                         factors=[1/2, 1/2])
+    wf = wf.derive.split('1-0', 'f0',
+                         [b2 @ td.time_sequence['k'], b2 @ td.time_sequence['k-1']],
+                         ['+', '-'],
+                         factors=[1/dt, 1/dt])
+    wf = wf.derive.split('1-2', 'f0',
+                         [a3 @ td.time_sequence['k-1'], a3 @ td.time_sequence['k']],
+                         ['+', '+'],
+                         factors=[1/2, 1/2])
+    wf = wf.derive.rearrange(
+        {
+            0: '0, 3 = 1, 2',
+            1: '3, 0 = 2, 1, 4',
+        }
+    )
+    # wf.pr(indexing=False)
+    a3.limited(3)
+    print(a3._degree)

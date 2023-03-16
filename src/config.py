@@ -77,6 +77,9 @@ _global_operator_lin_repr_setting = {  # coded operators
 }
 
 
+_non_root_lin_sep = [r'\{', r'\}']
+
+
 _global_operator_sym_repr_setting = {  # coded operators
     'plus': r"+",
     'minus': r"-",

@@ -14,6 +14,7 @@ from src.config import _mesh_default_sym_repr
 from src.config import _check_sym_repr
 from src.config import _parse_lin_repr
 from src.config import _mesh_default_lin_repr
+from src.spaces.main import set_mesh
 
 _global_meshes = dict()    # all meshes are cached, and all sym_repr and lin_repr are different.
 
@@ -26,10 +27,9 @@ def mesh(manifold):
 def _list_meshes():
     """"""
     print('\n Existing meshes:')
-    print('{:>15} | {}'.format('symbolic', 'abstract'))
+    print('{:>25} - {}'.format('---------------- symbolic', '<manifold> -------------------------'))
     for rp in _global_meshes:
-        abstract = _global_meshes[rp].is_abstract()
-        print('{:>15} | {}'.format(rp, abstract))
+        print('{:>25} | {}'.format(rp, _global_meshes[rp].manifold))
 
 
 class Mesh(Frozen):   # Mesh -
@@ -80,6 +80,8 @@ class Mesh(Frozen):   # Mesh -
         self._lin_repr = lin_repr
         self._pure_pure_lin_repr = pure_lin_repr
         _global_meshes[sym_repr] = self
+        if len(_global_meshes) == 1:  # we just initialize the first mesh
+            set_mesh(self)  # we set it as the default mesh
 
         self._boundary = None
         self._interface = None

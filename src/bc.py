@@ -16,9 +16,9 @@ from typing import Dict
 
 class BoundaryCondition(Frozen):
     """"""
-    def __init__(self, mesh):
+    def __init__(self, manifold):
         """"""
-        self._boundary = mesh.manifold.boundary()
+        self._boundary = manifold.boundary()
         self._valid_bcs: Dict[str] = dict()
         self._freeze()
 
