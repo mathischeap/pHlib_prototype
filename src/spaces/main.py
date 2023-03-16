@@ -53,6 +53,34 @@ def _list_spaces():
             print('{:>15}: {}'.format(i, space._sym_repr))
 
 
+def finite(degree, mesh=None, spaces=None):
+    """
+
+    """
+    if mesh is None:
+        mesh_sr = _config['current_mesh']
+        mesh = _mesh_set[mesh_sr]
+    else:
+        assert mesh.__class__.__name__ == 'Mesh', f"Mesh = {mesh} is not a Mesh object."
+        mesh_sr = mesh._sym_repr
+
+    all_current_spaces = _space_set[mesh_sr]
+
+    if spaces is None:
+        spaces = all_current_spaces.values()
+    else:
+        if not isinstance(spaces, (list, tuple)):
+            spaces = [spaces, ]
+        else:
+            pass
+
+    for sp in spaces:
+        assert sp._sym_repr in all_current_spaces, f"space: {sp} is not a space in current mesh {mesh}."
+
+    for space in spaces:
+        space.finite.specify_all(degree)
+
+
 def new(abbrs, *args, mesh=None, **kwargs):
     """generate a space (named `abbr`) with args `kwargs` use current mesh.
 

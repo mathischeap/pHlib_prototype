@@ -387,6 +387,16 @@ class WeakFormulation(Frozen):
             self._td = TemporalDiscretization(self)
         return self._td
 
+    def limited(self, unknown_degrees, test_degrees=None):
+        """Limit the degree of the finite dimensional spaces."""
+        if test_degrees is None:
+            test_degrees = unknown_degrees
+        else:
+            pass
+        for i, unk in enumerate(self._unknowns):
+            unk.limited(unknown_degrees[i])
+            self._test_forms[i].limited(test_degrees[i])
+
 
 if __name__ == '__main__':
     # python src/wf/main.py

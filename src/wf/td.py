@@ -184,6 +184,7 @@ if __name__ == '__main__':
             1: '3, 0 = 2, 1, 4',
         }
     )
-    # wf.pr(indexing=False)
-    a3.limited(3)
-    print(a3._degree)
+
+    ph.space.finite(3, spaces=wf._test_spaces[0])
+
+    print(a3._degree, b2._degree)

@@ -150,11 +150,12 @@ class Form(Frozen):
             self._efs = set(efs)
         return self._efs
 
-    def limited(self, degree):
+    def _limited(self, degree):
         """Limit this form to a particular finite dimensional space of degree `degree`."""
         assert self._degree is None, f"This form already has a degree ({self._degree}), " \
                                      f"change it may lead to unpredictable issue."
-        self._degree = self.space.finite.specify_form(self, degree)
+        assert isinstance(degree, (int, float, list, tuple)), f"Can only use int, float, list or tuple for the degree."
+        self.space.finite.specify_form(self, degree)
 
     @property
     def orientation(self):

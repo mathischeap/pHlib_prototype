@@ -11,7 +11,6 @@ if './' not in sys.path:
 from src.tools.frozen import Frozen
 
 
-
 class SpaceFiniteSetting(Frozen):
     """"""
 
@@ -45,32 +44,41 @@ class SpaceFiniteSetting(Frozen):
         assert degree in self._degrees_form_dict, f"I have no finite dimensional space of degree {degree}."
         return self._degrees_form_dict[degree]
 
+
+
     def new(self, degree):
-        """define a new finite dimensional space of `degree`."""
-        # do not change below assertion. It is important.
+        """define a new finite dimensional space of `degree`.
+
+        We must define new degree through this method.
+        """
+        assert isinstance(degree, (int, float, list, tuple)), f"Can only use int, float, list or tuple for the degree."
+        if isinstance(degree, list):
+            degree = tuple(degree)
+        else:
+            pass
+        if isinstance(degree, tuple):
+            for i, d in enumerate(degree):
+                assert isinstance(d, (int, float)), f"degree[{i}] = {d} is not valid, must be a int or integer."
+
         if degree in self:
             pass
         else:
             self._degrees_form_dict[degree] = list()
 
+        return degree
+
     def specify_form(self, f, degree):
         """specify a form `f` to be an element of a particular finite dimensional space of degree `degree`."""
         assert f not in self._all_finite_forms, f"form {f} is already in."
-        if degree in self:
-            pass
-        else:
-            self.new(degree)
-
-        the_degree = None
-        find_it = False
-        for the_degree in self:
-            if the_degree == degree:
-                find_it = True
-                break
-        assert find_it, f"we must have found it."
-        self[the_degree].append(f)
+        degree = self.new(degree)  # must do this! We will parse the `degree` here!
+        self[degree].append(f)
         self._all_finite_forms.add(f)
-        return the_degree
+        f._degree = degree
+
+    def specify_all(self, degree):
+        """Specify all forms of this space to be in the particular finite dimensional space of degree `degree`."""
+        for f in self._space._instances:
+            f._limited(degree)
 
 
 if __name__ == '__main__':
@@ -86,7 +94,3 @@ if __name__ == '__main__':
     finite.new(3)
     finite.new(4)
     finite.new([1,2,3])
-    finite.new('4')
-
-    for s in finite:
-        print(s, finite[s])
