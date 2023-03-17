@@ -185,6 +185,6 @@ if __name__ == '__main__':
         }
     )
 
-    ph.space.finite(3, spaces=wf._test_spaces[0])
+    ph.space.finite(3)
 
     wf.pr()
