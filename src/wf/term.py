@@ -178,12 +178,6 @@ class _WeakFormulationTerm(Frozen):
             assert which is None, f"When specify f0 or f1, no need to set `which`."
             term_class = self.__class__
             f1 = self._f1
-            if into.__class__.__name__ == 'Form':
-                into = [into, ]
-                assert signs in ('+', '-'), f"when give one form, sign must be in '+' or  '-'."
-                signs = [signs, ]
-            else:
-                pass
             assert isinstance(into, (list, tuple)), f"put split objects into a list or tuple."
             assert len(into) >= 1, f"number of split objects must be equal to or larger than 1."
             assert len(into) == len(signs), f"objects and signs length dis-match."

@@ -44,8 +44,6 @@ class SpaceFiniteSetting(Frozen):
         assert degree in self._degrees_form_dict, f"I have no finite dimensional space of degree {degree}."
         return self._degrees_form_dict[degree]
 
-
-
     def new(self, degree):
         """define a new finite dimensional space of `degree`.
 
@@ -78,7 +76,7 @@ class SpaceFiniteSetting(Frozen):
     def specify_all(self, degree):
         """Specify all forms of this space to be in the particular finite dimensional space of degree `degree`."""
         for f in self._space._instances:
-            f._limited(degree)
+            f._limit_to_finite_space(degree)
 
 
 if __name__ == '__main__':
@@ -93,4 +91,4 @@ if __name__ == '__main__':
     finite = O0.finite
     finite.new(3)
     finite.new(4)
-    finite.new([1,2,3])
+    finite.new([1, 2, 3])

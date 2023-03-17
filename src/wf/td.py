@@ -153,11 +153,11 @@ if __name__ == '__main__':
 
     td.define_abstract_time_instants('k-1', 'k-1/2', 'k')
     td.differentiate('0-0', 'k-1', 'k')
-    td.average('0-1', b2, 'k-1', 'k')
+    td.average('0-1', b2, ['k-1', 'k'])
 
     td.differentiate('1-0', 'k-1', 'k')
-    td.average('1-1', a3, 'k-1', 'k')
-    td.average('1-2', a3, 'k-1/2')
+    td.average('1-1', a3, ['k-1', 'k'])
+    td.average('1-2', a3, ['k-1/2'])
     dt = td.time_sequence.make_time_interval('k-1', 'k')
 
     wf = td()
@@ -187,4 +187,4 @@ if __name__ == '__main__':
 
     ph.space.finite(3, spaces=wf._test_spaces[0])
 
-    print(a3._degree, b2._degree)
+    wf.pr()

@@ -345,7 +345,7 @@ class PartialDifferentialEquations(Frozen):
         if len(self) == 1 and not isinstance(unknowns, (list, tuple)):
             unknowns = [unknowns, ]
         assert isinstance(unknowns, (list, tuple)), \
-            f"please put unknowns in a list or tuple if there are more than 1 equation."
+            f"please put unknowns in a list or tuple if there are more than 1 equations."
         assert len(unknowns) == len(self), \
             f"I have {len(self)} equations but receive {len(unknowns)} unknowns."
 

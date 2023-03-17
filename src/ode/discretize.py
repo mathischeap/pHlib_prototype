@@ -92,7 +92,7 @@ class OrdinaryDifferentialEquationDiscretize(Frozen):
         else:
             raise NotImplementedError()
 
-    def average(self, index, f, *time_instants):
+    def average(self, index, f, time_instants):
         """Use average at time instants `time_instants` for form `f` in term indexed `index`
         """
         if isinstance(index, int):
@@ -103,6 +103,7 @@ class OrdinaryDifferentialEquationDiscretize(Frozen):
         term = self._ode[index][1]
 
         f_ = list()
+        assert isinstance(time_instants, (list, tuple)), f"pls put time_instants in a list or tuple."
         for ti in time_instants:
             assert ti in self._at_instants, f"abstract time instant {ti} is not defined."
             f_.append(f @ self._at_instants[ti])
@@ -204,9 +205,9 @@ if __name__ == '__main__':
     td.set_time_sequence(ts1)
     td.define_abstract_time_instants('k-1', 'k-1/2', 'k')
     td.differentiate(0, 'k-1', 'k')
-    td.average(2, f, 'k-1', 'k')
-    td.average(1, P, 'k-1/2')
-    td.average(3, P, 'k-1/2')
+    td.average(2, f, ['k-1', 'k'])
+    td.average(1, P, ['k-1/2'])
+    td.average(3, P, ['k-1/2'])
 
     eq = ode.discretize()
     eq.pr()

@@ -390,7 +390,7 @@ class AbstractTimeInterval(Frozen):
         return self._t_end
 
     def __call__(self, **kwargs):
-        """dt"""
+        """dt, return a TimeInterval instance."""
         ts = self.start(**kwargs)
         te = self.end(**kwargs)
         return TimeInterval(ts, te)

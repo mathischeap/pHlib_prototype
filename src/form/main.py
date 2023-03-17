@@ -150,7 +150,7 @@ class Form(Frozen):
             self._efs = set(efs)
         return self._efs
 
-    def _limited(self, degree):
+    def _limit_to_finite_space(self, degree):
         """Limit this form to a particular finite dimensional space of degree `degree`."""
         assert self._degree is None, f"This form already has a degree ({self._degree}), " \
                                      f"change it may lead to unpredictable issue."

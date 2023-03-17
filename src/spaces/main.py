@@ -56,6 +56,15 @@ def _list_spaces():
 def finite(degree, mesh=None, spaces=None):
     """
 
+    Parameters
+    ----------
+    degree
+    mesh
+    spaces
+
+    Returns
+    -------
+
     """
     if mesh is None:
         mesh_sr = _config['current_mesh']
