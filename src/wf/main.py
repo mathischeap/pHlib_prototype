@@ -20,6 +20,7 @@ matplotlib.use('TkAgg')
 from src.wf.td import TemporalDiscretization
 from src.bc import BoundaryCondition
 from src.wf.derive import _Derive
+from src.wf.ap import AlgebraicProxy
 
 
 class WeakFormulation(Frozen):
@@ -387,15 +388,12 @@ class WeakFormulation(Frozen):
             self._td = TemporalDiscretization(self)
         return self._td
 
-    def limited(self, unknown_degrees, test_degrees=None):
-        """Limit the degree of the finite dimensional spaces."""
-        if test_degrees is None:
-            test_degrees = unknown_degrees
-        else:
-            pass
-        for i, unk in enumerate(self._unknowns):
-            unk.limited(unknown_degrees[i])
-            self._test_forms[i].limited(test_degrees[i])
+    @property
+    def ap(self):
+        """Do not cache it. Make it in real time"""
+        return AlgebraicProxy(self)
+
+
 
 
 if __name__ == '__main__':
@@ -462,3 +460,4 @@ if __name__ == '__main__':
     # ph.list_forms()
 
     td = wf.td
+    ap = wf.ap

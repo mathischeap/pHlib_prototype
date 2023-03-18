@@ -73,6 +73,11 @@ class TemporalDiscretization(Frozen):
         return wf
 
     @property
+    def ts(self):
+        """shortcut of `time_sequence`."""
+        return self._ats
+
+    @property
     def time_sequence(self):
         """The time sequence this discretization is working on."""
         return self._ats
@@ -88,6 +93,7 @@ class TemporalDiscretization(Frozen):
         else:
             pass
         assert ts.__class__.__name__ == 'AbstractTimeSequence', f"I need an abstract time sequence object."
+        assert self._ats is None, f"time_sequence existing, change it may leads to unexpected issue."
         self._ats = ts
         for i in self._valid_ode:
             self._valid_ode[i].discretize.set_time_sequence(self._ats)
@@ -163,19 +169,19 @@ if __name__ == '__main__':
     wf = td()
     wf.unknowns = [a3 @ td.time_sequence['k'], b2 @ td.time_sequence['k']]
     wf = wf.derive.split('0-0', 'f0',
-                         [a3 @ td.time_sequence['k'], a3 @ td.time_sequence['k-1']],
+                         [a3 @ td.ts['k'], a3 @ td.ts['k-1']],
                          ['+', '-'],
                          factors=[1/dt, 1/dt])
     wf = wf.derive.split('0-2', 'f0',
-                         [ph.d(b2 @ td.time_sequence['k-1']), ph.d(b2 @ td.time_sequence['k'])],
+                         [ph.d(b2 @ td.ts['k-1']), ph.d(b2 @ td.ts['k'])],
                          ['+', '+'],
                          factors=[1/2, 1/2])
     wf = wf.derive.split('1-0', 'f0',
-                         [b2 @ td.time_sequence['k'], b2 @ td.time_sequence['k-1']],
+                         [b2 @ td.ts['k'], b2 @ td.ts['k-1']],
                          ['+', '-'],
                          factors=[1/dt, 1/dt])
     wf = wf.derive.split('1-2', 'f0',
-                         [a3 @ td.time_sequence['k-1'], a3 @ td.time_sequence['k']],
+                         [a3 @ td.ts['k-1'], a3 @ td.ts['k']],
                          ['+', '+'],
                          factors=[1/2, 1/2])
     wf = wf.derive.rearrange(
@@ -187,4 +193,7 @@ if __name__ == '__main__':
 
     ph.space.finite(3)
 
-    wf.pr()
+    ap = wf.ap
+
+    # wf.pr()
+    # print(wf.elementary_forms)
