@@ -28,8 +28,9 @@ class AlgebraicProxy(Frozen):
             for j, terms in enumerate(wf_td[i]):
                 for k, term in enumerate(terms):
                     old_sign = wf_sd[i][j][k]
-                    ap, new_sign = term._ap()
+                    ap, new_sign = term.ap()
                     print(ap, new_sign)
+
     @staticmethod
     def _parse_sign(s0, s1):
         """parse sign"""
@@ -93,4 +94,4 @@ if __name__ == '__main__':
 
     ap = wf.ap
 
-    wf.pr()
+    # wf.pr()

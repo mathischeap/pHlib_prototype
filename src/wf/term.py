@@ -25,7 +25,7 @@ from src.config import _wf_term_default_simple_patterns as _simple_patterns
 from src.form.parameters import constant_scalar
 from src.config import _global_operator_sym_repr_setting
 from src.config import _non_root_lin_sep
-from src.wf.tap import _SimplePatternAPParser, \
+from src.wf.apt import _SimplePatternAPParser, \
     _inner_simpler_pattern_examiner_scalar_valued_forms, \
     _dp_simpler_pattern_examiner_scalar_valued_forms
 _cs1 = constant_scalar(1)
@@ -217,7 +217,7 @@ class _WeakFormulationTerm(Frozen):
         else:
             raise NotImplementedError()
 
-    def _ap(self):
+    def ap(self):
         """Return the algebraic proxy of this term."""
 
         if self._simple_pattern is None:
@@ -226,9 +226,7 @@ class _WeakFormulationTerm(Frozen):
 
         else:
 
-            spp = _SimplePatternAPParser(self)
-
-            ap, sign = spp()
+            ap, sign = _SimplePatternAPParser(self)()
 
         return ap, sign
 

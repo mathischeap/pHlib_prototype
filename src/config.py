@@ -30,6 +30,8 @@ _global_lin_repr_setting = {
     'abstract_time_sequence': [r'\textit{', r'}'],
     'abstract_time_interval': [r'\texttt{', r'}'],   # do not use `textsc` as scalar.
     'abstract_time_instant': [r'\textsl{', r'}'],
+    'col_vec': [r'\textup{', r'}'],
+    '2d_mat': [r'\textbf{', r'}'],
 }
 
 _abstract_time_sequence_default_lin_repr = r'Ts'
@@ -93,10 +95,12 @@ _global_operator_sym_repr_setting = {  # coded operators
 }
 
 
-_wf_term_default_simple_patterns = {   # use only str to represent a pattern.
-    # indicator     # simple pattern
+_wf_term_default_simple_patterns = {   # use only str to represent a simple pattern.
+    # indicator : simple pattern
     '(pt,)': '(partial_t root-sf, sf)',   # (partial_time_derivative of root-sf, sf)
     '(cd,)': '(codifferential sf, sf)',
+
+    # below, we have simple patterns only for root-sf.
     '(rt,rt)': '(root-sf, root-sf)',
     '(d,)': '(d root-sf, root-sf)',
     '(,d)': '(root-sf, d root-sf)',

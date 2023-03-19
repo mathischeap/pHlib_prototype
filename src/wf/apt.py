@@ -10,7 +10,7 @@ from src.form.operators import time_derivative, d
 from src.config import _global_operator_lin_repr_setting
 from src.config import _wf_term_default_simple_patterns as _simple_patterns
 from src.form.tools import _find_form
-from src.config import _non_root_lin_sep
+from src.config import _non_root_lin_sep, _parse_lin_repr
 
 
 def _inner_simpler_pattern_examiner_scalar_valued_forms(factor, f0, f1):
@@ -105,6 +105,7 @@ class _SimplePatternAPParser(Frozen):
         self._freeze()
 
     def __call__(self):
+        """"""
         return TermAlgebraicProxy('a', 'b'), '+'
 
 
@@ -115,4 +116,32 @@ class TermAlgebraicProxy(Frozen):
         """"""
         self._sym_repr = sym_repr
         self._lin_repr = lin_repr
+
+        self._freeze()
+
+    def __repr__(self):
+        """repr"""
+        super_repr = super().__repr__().split('object')[1]
+        return f"<TermAlgebraicProxy {self._sym_repr}" + super_repr
+
+
+_global_col_vec = dict()
+_global_2d_mat = dict()
+
+
+class ColVec(Frozen):
+    """"""
+    def __init__(self, sym_repr, lin_repr):
+        lin_repr, pure_lin_repr = _parse_lin_repr('col_vec', lin_repr)
+        self._lin_repr = lin_repr
+        self._pure_lin_repr = pure_lin_repr
+        self._freeze()
+
+
+class _2dMatrix(Frozen):
+    """"""
+    def __init__(self, sym_repr, lin_repr):
+        lin_repr, pure_lin_repr = _parse_lin_repr('2d_mat', lin_repr)
+        self._lin_repr = lin_repr
+        self._pure_lin_repr = pure_lin_repr
         self._freeze()
