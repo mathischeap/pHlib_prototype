@@ -57,6 +57,7 @@ def _find_form(lin_repr, upon=None):
                 form = _global_forms[form_id]
                 try:
                     operator_of_f = upon(form)
+
                 except:
                     continue
                 else:

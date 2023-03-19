@@ -82,11 +82,11 @@ class OrdinaryDifferentialEquation(Frozen):
                 assert term._is_real_number_valued(), f"{j}th term in left terms is not real number valued."
                 efs.update(term.elementary_forms)
                 valid_pattern, order = None, None
-                for sp in term._simple_patterns:
-                    if sp in self._recognized_pattern():
-                        assert valid_pattern is None, f"find more than 1 valid pattern for term {term}."
-                        valid_pattern = sp
-                        order = self._recognized_pattern()[sp]
+                sp = term._simple_pattern
+                if sp in self._recognized_pattern():
+                    assert valid_pattern is None, f"find more than 1 valid pattern for term {term}."
+                    valid_pattern = sp
+                    order = self._recognized_pattern()[sp]
                 if valid_pattern is None:  # this is not a partial t term.
                     partial_t_orders[i].append(None)
                     partial_t_terms[i].append(None)

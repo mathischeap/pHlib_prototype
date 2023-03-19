@@ -64,13 +64,13 @@ _global_operator_lin_repr_setting = {  # coded operators
     'minus': r" $-$ ",
     'wedge': r" $\wedge$ ",
     'Hodge': r'$\star$ ',
-    'd': r'$\mathrm{d} $ ',
+    'd': r'$\mathrm{d}$ ',
     'codifferential': r'$\mathrm{d}^{\ast}$ ',
     'time_derivative': r'$\partial_{t}$ ',
     'trace': r'\emph{tr} ',
 
     'L2-inner-product': [r"$($", r'\emph{,} ', r"$)$ \emph{over} "],
-    'duality-pairing': [r"$<$", r' \emph{,} ', r"$>$  \emph{over} "],
+    'duality-pairing': [r"$<$", r'\emph{,} ', r"$>$ \emph{over} "],
 
     'division': r' \emph{divided by} ',
     'multiply': r' \emph{multiply} '
@@ -95,6 +95,10 @@ _global_operator_sym_repr_setting = {  # coded operators
 
 _wf_term_default_simple_patterns = {   # use only str to represent a pattern.
     # indicator     # simple pattern
-    '(pt,)': '(partial_t root-sf, sf)',
+    '(pt,)': '(partial_t root-sf, sf)',   # (partial_time_derivative of root-sf, sf)
     '(cd,)': '(codifferential sf, sf)',
+    '(rt,rt)': '(root-sf, root-sf)',
+    '(d,)': '(d root-sf, root-sf)',
+    '(,d)': '(root-sf, d root-sf)',
+    '<tr star, star>': '<tr star root-sf, star root-sf>'
 }

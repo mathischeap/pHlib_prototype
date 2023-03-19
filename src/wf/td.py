@@ -195,5 +195,7 @@ if __name__ == '__main__':
 
     ap = wf.ap
 
+    wf.pr()
+
     # wf.pr()
     # print(wf.elementary_forms)
