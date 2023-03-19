@@ -25,7 +25,7 @@ from src.config import _wf_term_default_simple_patterns as _simple_patterns
 from src.form.parameters import constant_scalar
 from src.config import _global_operator_sym_repr_setting
 from src.config import _non_root_lin_sep
-from src.wf.term_ap import _SimplePatternAPParser, \
+from src.wf.tap import _SimplePatternAPParser, \
     _inner_simpler_pattern_examiner_scalar_valued_forms, \
     _dp_simpler_pattern_examiner_scalar_valued_forms
 _cs1 = constant_scalar(1)
