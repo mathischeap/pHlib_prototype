@@ -19,14 +19,15 @@ matplotlib.use('TkAgg')
 
 from src.tools.frozen import Frozen
 from src.form.tools import _find_form
-from src.form.main import _global_root_forms_lin_dict
-from src.form.operators import codifferential, d, trace, Hodge, time_derivative
-from src.form.operators import _parse_related_time_derivative
+from src.form.operators import codifferential, d, trace, Hodge
 from src.config import _global_operator_lin_repr_setting
 from src.config import _wf_term_default_simple_patterns as _simple_patterns
 from src.form.parameters import constant_scalar
 from src.config import _global_operator_sym_repr_setting
 from src.config import _non_root_lin_sep
+from src.wf.term_ap import _SimplePatternAPParser, \
+    _inner_simpler_pattern_examiner_scalar_valued_forms, \
+    _dp_simpler_pattern_examiner_scalar_valued_forms
 _cs1 = constant_scalar(1)
 
 
@@ -224,9 +225,12 @@ class _WeakFormulationTerm(Frozen):
             raise NotImplementedError(f"To be done.")
 
         else:
-            print(self._simple_pattern)
 
-        return None, '+'
+            spp = _SimplePatternAPParser(self)
+
+            ap, sign = spp()
+
+        return ap, sign
 
 
 def duality_pairing(f0, f1, factor=None):
@@ -298,7 +302,13 @@ class DualityPairingTerm(_WeakFormulationTerm):
 
     def _simpler_pattern_examiner(self, factor, f0, f1):
         """"""
-        return _dp_simpler_pattern_examiner(factor, f0, f1)
+        s0 = f0.space
+        s1 = f1.space
+        if s0.__class__.__name__ == 'ScalarValuedFormSpace' and \
+                s1.__class__.__name__ == 'ScalarValuedFormSpace':
+            return _dp_simpler_pattern_examiner_scalar_valued_forms(factor, f0, f1)
+        else:
+            return tuple()
 
 
 def inner(f0, f1, factor=None, method='L2'):
@@ -382,7 +392,13 @@ class L2InnerProductTerm(_WeakFormulationTerm):
 
     def _simpler_pattern_examiner(self, factor, f0, f1):
         """"""
-        return _inner_simpler_pattern_examiner(factor, f0, f1)
+        s0 = f0.space
+        s1 = f1.space
+        if s0.__class__.__name__ == 'ScalarValuedFormSpace' and \
+                s1.__class__.__name__ == 'ScalarValuedFormSpace':
+            return _inner_simpler_pattern_examiner_scalar_valued_forms(factor, f0, f1)
+        else:
+            return tuple()
 
     def _integration_by_parts(self):
         """"""
@@ -403,101 +419,3 @@ class L2InnerProductTerm(_WeakFormulationTerm):
 
         else:
             raise Exception(f"Cannot apply integration by parts to this term.")
-
-
-def _inner_simpler_pattern_examiner(factor, f0, f1):
-    """"""
-    s0 = f0.space
-    s1 = f1.space
-    if s0.__class__.__name__ == 'ScalarValuedFormSpace' and \
-            s1.__class__.__name__ == 'ScalarValuedFormSpace':
-        return _inner_simpler_pattern_examiner_scalar_valued_forms(factor, f0, f1)
-    else:
-        return tuple()
-
-
-def _inner_simpler_pattern_examiner_scalar_valued_forms(factor, f0, f1):
-    """ """
-    if factor.__class__.__name__ == 'ConstantScalar0Form':
-        # (codifferential sf, sf)
-        lin_codifferential = _global_operator_lin_repr_setting['codifferential']
-        if f0._lin_repr[:len(lin_codifferential)] == lin_codifferential:
-            return _simple_patterns['(cd,)'], None
-
-        # (partial_time_derivative of root-sf, sf)
-        lin_td = _global_operator_lin_repr_setting['time_derivative']
-        if f0._lin_repr[:len(lin_td)] == lin_td:
-            bf0 = _find_form(f0._lin_repr, upon=time_derivative)
-            if bf0.is_root and _parse_related_time_derivative(f1) == list():
-                return _simple_patterns['(pt,)'], None
-
-        # (root-sf, root-sf)
-        if f0.is_root() and f1.is_root():
-            return _simple_patterns['(rt,rt)'], None
-        else:
-            pass
-
-        # (d of root-sf, root-sf)
-        lin_d = _global_operator_lin_repr_setting['d']
-        if f0._lin_repr[:len(lin_d)] == lin_d:
-            bf0 = _find_form(f0._lin_repr, upon=d)
-            if bf0 is None:
-                pass
-            elif bf0.is_root() and f1.is_root():
-                return _simple_patterns['(d,)'], None
-            else:
-                pass
-
-        # (root-sf, d of root-sf)
-        lin_d = _global_operator_lin_repr_setting['d']
-        if f1._lin_repr[:len(lin_d)] == lin_d:
-            bf1 = _find_form(f1._lin_repr, upon=d)
-            if bf1 is None:
-                pass
-            elif f0.is_root() and bf1.is_root():
-                return _simple_patterns['(,d)'], None
-            else:
-                pass
-
-        return None, None
-    else:
-        raise NotImplementedError(f'Not implemented for factor={factor}')
-
-
-def _dp_simpler_pattern_examiner(factor, f0, f1):
-    """simple pattern examiner for duality pairing."""
-    s0 = f0.space
-    s1 = f1.space
-    if s0.__class__.__name__ == 'ScalarValuedFormSpace' and \
-            s1.__class__.__name__ == 'ScalarValuedFormSpace':
-        return _dp_simpler_pattern_examiner_scalar_valued_forms(factor, f0, f1)
-    else:
-        return tuple()
-
-
-def _dp_simpler_pattern_examiner_scalar_valued_forms(factor, f0, f1):
-    """ """
-    if factor.__class__.__name__ == 'ConstantScalar0Form':
-        lin_tr = _global_operator_lin_repr_setting['trace']
-        lin_Hodge = _global_operator_lin_repr_setting['Hodge']
-        lin = lin_tr + _non_root_lin_sep[0] + lin_Hodge
-        if f0._lin_repr[:len(lin)] == lin and \
-                f0._lin_repr[-len(_non_root_lin_sep[1]):] == _non_root_lin_sep[1] and \
-                f1._lin_repr[:len(lin_tr)] == lin_tr:
-
-            bf0_lr = f0._lin_repr[len(lin):-len(_non_root_lin_sep[1])]
-            bf1_lr = f1._lin_repr[len(lin_tr):]
-
-            if bf0_lr in _global_root_forms_lin_dict and bf1_lr in _global_root_forms_lin_dict:
-                bf0 = _global_root_forms_lin_dict[bf0_lr]
-                bf1 = _global_root_forms_lin_dict[bf1_lr]
-
-                return _simple_patterns['<tr star, star>'], None
-            else:
-                pass
-        else:
-            pass
-
-        return None
-    else:
-        raise NotImplementedError(f'Not implemented for factor={factor}')
