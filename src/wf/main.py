@@ -395,7 +395,6 @@ class WeakFormulation(Frozen):
 
 
 
-
 if __name__ == '__main__':
     # python src/wf/main.py
 
@@ -459,5 +458,5 @@ if __name__ == '__main__':
     # ode_i.print_representations()
     # ph.list_forms()
 
-    td = wf.td
-    ap = wf.ap
+    # td = wf.td
+    # ap = wf.ap

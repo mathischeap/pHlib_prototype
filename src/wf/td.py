@@ -148,11 +148,12 @@ if __name__ == '__main__':
     samples = ph.samples
 
     oph = samples.pde_canonical_pH(n=3, p=3)[0]
+    oph.pr()
     a3, b2 = oph.unknowns
 
     wf = oph.test_with(oph.unknowns, sym_repr=[r'v^3', r'u^2'])
     wf = wf.derive.integration_by_parts('1-1')
-    # wf.pr(indexing=True)
+    wf.pr(indexing=True)
 
     td = wf.td
     td.set_time_sequence()  # initialize a time sequence
@@ -167,6 +168,7 @@ if __name__ == '__main__':
     dt = td.time_sequence.make_time_interval('k-1', 'k')
 
     wf = td()
+    wf.pr()
     wf.unknowns = [a3 @ td.time_sequence['k'], b2 @ td.time_sequence['k']]
     wf = wf.derive.split('0-0', 'f0',
                          [a3 @ td.ts['k'], a3 @ td.ts['k-1']],

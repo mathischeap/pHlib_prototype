@@ -198,14 +198,14 @@ if __name__ == '__main__':
     signs = wf._sign_dict[0]
     ode = ph.ode(terms_and_signs=[terms, signs])
 
-    # ode.print_representations()
+    ode.pr()
 
     ts1 = ph.time_sequence()
     td = ode.discretize
     td.set_time_sequence(ts1)
     td.define_abstract_time_instants('k-1', 'k-1/2', 'k')
     td.differentiate(0, 'k-1', 'k')
-    td.average(2, f, ['k-1', 'k'])
+    td.average(2, f, ['k-1','k-1/2', 'k'])
     td.average(1, P, ['k-1/2'])
     td.average(3, P, ['k-1/2'])
 
