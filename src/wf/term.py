@@ -65,7 +65,9 @@ class _WeakFormulationTerm(Frozen):
         if self.___simple_pattern___ is None:
             self.___simple_pattern___, self.___simple_pattern_keys___ = \
                 self._simpler_pattern_examiner(self._factor, self._f0, self._f1)
-            if self.___simple_pattern___ is not None:
+            if self.___simple_pattern___ == '':  # find no simple pattern.
+                assert self.___simple_pattern_keys___ is None, "no simple pattern keys."
+            else:
                 assert self.___simple_pattern___ in _simple_patterns.values(), \
                     f"found unknown simple pattern: {self.___simple_pattern___}."
         return self.___simple_pattern___
@@ -220,7 +222,7 @@ class _WeakFormulationTerm(Frozen):
     def ap(self):
         """Return the algebraic proxy of this term."""
 
-        if self._simple_pattern is None:
+        if self._simple_pattern == '':
 
             raise NotImplementedError(f"To be done.")
 

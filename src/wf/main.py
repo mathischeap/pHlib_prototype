@@ -121,12 +121,7 @@ class WeakFormulation(Frozen):
             k = 0
             for j, terms in enumerate(term_dict[i]):
                 for m in range(len(terms)):
-                    if j == 0:
-                        index = str(i) + '-' + str(k)
-                    elif j == 1:
-                        index = str(i) + '-' + str(k)
-                    else:
-                        raise Exception()
+                    index = str(i) + '-' + str(k)
                     k += 1
                     indexing[index] = (sign_dict[i][j][m], term_dict[i][j][m])
                     ind_dict[i][j].append(index)
@@ -267,7 +262,7 @@ class WeakFormulation(Frozen):
     def test_forms(self):
         return self._test_forms
 
-    def print_representations(self, indexing=True):
+    def pr(self, indexing=True):
         """Print the representations"""
         seek_text = self._mesh.manifold._manifold_text()
         if self.unknowns is None:
@@ -363,10 +358,6 @@ class WeakFormulation(Frozen):
         plt.tight_layout()
         plt.show()
 
-    def pr(self, **kwargs):
-        """A wrapper of print_representations"""
-        return self.print_representations(**kwargs)
-
     @property
     def derive(self):
         """The derivations that to be applied to this current weak formulation."""
@@ -388,11 +379,9 @@ class WeakFormulation(Frozen):
             self._td = TemporalDiscretization(self)
         return self._td
 
-    @property
     def ap(self):
         """Do not cache it. Make it in real time"""
         return AlgebraicProxy(self)
-
 
 
 if __name__ == '__main__':

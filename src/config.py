@@ -31,12 +31,12 @@ _global_lin_repr_setting = {
     'abstract_time_interval': [r'\texttt{', r'}'],   # do not use `textsc` as scalar.
     'abstract_time_instant': [r'\textsl{', r'}'],
     'col_vec': [r'\textup{', r'}'],
-    '2d_mat': [r'\textbf{', r'}'],
+    'matrix': [r'\textbf{', r'}'],
 }
 
-_abstract_time_sequence_default_lin_repr = r'Ts'
-_manifold_default_lin_repr = r'Manifold'
-_mesh_default_lin_repr = r'Mesh'
+_abstract_time_sequence_default_lin_repr = 'Ts'
+_manifold_default_lin_repr = 'Manifold'
+_mesh_default_lin_repr = 'Mesh'
 
 
 def _parse_lin_repr(obj, lin_repr):
@@ -53,12 +53,23 @@ _abstract_time_sequence_default_sym_repr = r'\mathtt{T}^S'
 _abstract_time_interval_default_sym_repr = r'\Delta t'
 
 
-def _check_sym_repr(sym_repr):
+def _check_sym_repr(sym_repr):   # not used for forms as they have their own checker.
     """"""
     assert isinstance(sym_repr, str), f"sym_repr = {sym_repr} illegal, must be a string."
     pure_sym_repr = sym_repr.replace(' ', '')
     assert len(pure_sym_repr) > 0, f"sym_repr={sym_repr} illegal, it cannot be empty."
     return sym_repr
+
+
+_form_evaluate_at_repr_setting = {
+    'sym': [r"\left.", r"\right|^{(", ")}"],
+    'lin': "@",
+}
+
+_root_form_ap_vec_setting = {
+    'sym': [r"\vec{", r"}"],
+    'lin': "~vec"
+}
 
 
 _global_operator_lin_repr_setting = {  # coded operators

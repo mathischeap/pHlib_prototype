@@ -8,7 +8,6 @@
 from src.tools.frozen import Frozen
 from src.config import get_embedding_space_dim
 from src.form.main import Form
-from src.form.main import _global_form_variables
 from src.spaces.finite import SpaceFiniteSetting
 
 
@@ -30,7 +29,6 @@ class SpaceBase(Frozen):
             pass
         self._orientation = orientation
         self._finite = None  # the finite setting
-        self._instances = list()
 
     @property
     def mesh(self):
@@ -57,8 +55,6 @@ class SpaceBase(Frozen):
             self, sym_repr, lin_repr,
             True,  # is_root
         )
-        if _global_form_variables['update_cache']:
-            self._instances.append(f)
 
         return f
 

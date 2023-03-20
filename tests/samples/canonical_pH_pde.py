@@ -28,7 +28,7 @@ def pde_canonical_pH(n=3, p=3):
     omega_pm1 = space.new('Omega', p-1, orientation='outer')
 
     ap = omega_p.make_form(r'\widehat{\alpha}^' + rf'{p}', 'a-p')
-    bpm1 = omega_pm1.make_form(r'\widehat{\beta}^{' + rf'{p-1}' + '}', 'b-pm1')
+    bpm1 = omega_pm1.make_form(r'\widehat{\beta}^' + rf'{p-1}', 'b-pm1')
 
     sign1 = '+' if (-1) ** p == 1 else '-'
     sign2 = '+' if (-1) ** (p+1) == 1 else '-'

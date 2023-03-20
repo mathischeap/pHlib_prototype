@@ -9,6 +9,7 @@ if './' not in sys.path:
     sys.path.append('./')
 
 from src.tools.frozen import Frozen
+from src.form.main import _global_forms
 
 
 class SpaceFiniteSetting(Frozen):
@@ -75,8 +76,10 @@ class SpaceFiniteSetting(Frozen):
 
     def specify_all(self, degree):
         """Specify all forms of this space to be in the particular finite dimensional space of degree `degree`."""
-        for f in self._space._instances:
-            f._limit_to_finite_space(degree)
+        for fid in _global_forms:
+            f = _global_forms[fid]
+            if f.space is self._space and f.is_root() and f._degree is None:
+                self.specify_form(f, degree)
 
 
 if __name__ == '__main__':

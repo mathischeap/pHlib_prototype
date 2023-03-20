@@ -22,6 +22,11 @@ _implemented_spaces = {
 }
 
 
+_default_mass_matrix_reprs = {
+    'Omega': ("\mathsf{M}", "MassMatOmega"),
+}
+
+
 def set_mesh(mesh):
     """"""
     assert mesh.__class__.__name__ == 'Mesh', \

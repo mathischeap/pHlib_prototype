@@ -26,6 +26,7 @@ from src.config import _check_sym_repr
 from src.form.parameters import constant_scalar
 from src.config import _global_operator_lin_repr_setting
 from src.config import _global_operator_sym_repr_setting
+from src.config import _form_evaluate_at_repr_setting
 
 
 _global_forms = dict()
@@ -33,6 +34,8 @@ _global_root_forms_lin_dict = dict()
 _global_form_variables = {
     'update_cache': True
 }
+
+from src.form.ap import _parse_root_form_ap
 
 
 class Form(Frozen):
@@ -83,6 +86,7 @@ class Form(Frozen):
         }
         self._abstract_forms = dict()   # the abstract forms based on this form.
         self._degree = None
+        self._ap = None
         self._freeze()
 
     @staticmethod
@@ -152,10 +156,19 @@ class Form(Frozen):
 
     def _limit_to_finite_space(self, degree):
         """Limit this form to a particular finite dimensional space of degree `degree`."""
-        assert self._degree is None, f"This form already has a degree ({self._degree}), " \
+        assert self._degree is None, f"This form: {self} already has a degree ({self._degree}), " \
                                      f"change it may lead to unpredictable issue."
         assert isinstance(degree, (int, float, list, tuple)), f"Can only use int, float, list or tuple for the degree."
         self.space.finite.specify_form(self, degree)
+
+    def ap(self, sym_repr=None):
+        """Algebraic proxy."""
+        if self._ap is None:
+            if self.is_root():
+                self._ap = _parse_root_form_ap(self, sym_repr)
+            else:
+                self._ap = ''  # pls try to not use this.
+        return self._ap
 
     @property
     def orientation(self):
@@ -299,8 +312,9 @@ class Form(Frozen):
             assert self.is_root(), f"Can only evaluate a root form at an abstract time instant."
             sym_repr = self._sym_repr
             lin_repr = self._pure_lin_repr
-            sym_repr = r"\left." + sym_repr + r"\right|^{(" + ati.k + ')}'
-            lin_repr += "@" + ati._pure_lin_repr
+            s = _form_evaluate_at_repr_setting['sym']
+            sym_repr = s[0] + sym_repr + s[1] + ati.k + s[2]
+            lin_repr += _form_evaluate_at_repr_setting['lin'] + ati._pure_lin_repr
 
             if lin_repr in self._abstract_forms:   # we must cache it, this is very important.
                 pass
@@ -308,7 +322,7 @@ class Form(Frozen):
                 ftk = Form(
                     self._space,
                     sym_repr, lin_repr,
-                    self._is_root,
+                    self.is_root(),  # must be True.
                 )
                 ftk._pAti_form['base_form'] = self
                 ftk._pAti_form['ats'] = ati.time_sequence
