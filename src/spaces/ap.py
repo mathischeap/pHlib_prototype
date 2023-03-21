@@ -8,51 +8,47 @@ import sys
 if './' not in sys.path:
     sys.path.append('./')
 
-from src.tools.frozen import Frozen
-from src.config import _parse_lin_repr
+from src.spaces.main import _default_mass_matrix_reprs
+from src.spaces.main import _default_d_matrix_reprs
+from src.algebra.array import _global_root_arrays, _array
+from src.spaces.operators import d
 
 
-def _parse_matrix_ap_of(wft):
-    """
-
-    Parameters
-    ----------
-    wft
-    Returns
-    -------
-
-    """
-    if wft.__class__.__name__ == 'L2InnerProductTerm':
-        _parse_scalar_valued_form_mass_matrix(wft._f0, wft._f1)
-    else:
-        raise NotImplementedError(f"wft={wft}")
-
-
-_global_matrix = dict()  # we use lin_repr as keys as lin_repr is dependent to f.lin_repr.
-
-
-def _parse_scalar_valued_form_mass_matrix(f0, f1):
+def _parse_l2_inner_product_mass_matrix(s0, s1, d0, d1):
     """"""
-    # print(f0, f1)
+    assert s0 == s1, f"spaces do not match."
 
-# def _parse_root_form_ap_col_vec(sym_repr, lin_repr):
-#     """"""
-#     assert lin_repr not in _global_matrix, f"Cannot be because we cache the ap of root-forms."
-#     cv = ColVec(sym_repr, lin_repr)
-#     _global_matrix[lin_repr] = cv
-#     return cv
-#
-#
-# class ColVec(Frozen):
-#     """column vector."""
-#     def __init__(self, sym_repr, lin_repr):
-#         self._sym_repr = sym_repr
-#         lin_repr, pure_lin_repr = _parse_lin_repr('matrix', lin_repr)
-#         self._lin_repr = lin_repr
-#         self._pure_lin_repr = pure_lin_repr
-#         self._freeze()
-#
-#     def __repr__(self):
-#         """repr"""
-#         super_repr = super().__repr__().split('object')[1]
-#         return f"<ColVec {self._lin_repr}" + super_repr
+    if s0.__class__.__name__ == 'ScalarValuedFormSpace' and s1.__class__.__name__ == 'ScalarValuedFormSpace':
+        sym, lin = _default_mass_matrix_reprs['Omega']
+        assert d0 is not None and d1 is not None, f"space is not finite."
+        sym += rf"^{s0.k}"
+        for lr in _global_root_arrays:
+            existing_m = _global_root_arrays[lr]
+            if existing_m._sym_repr == sym:
+                sym += r"_{" + str((d0, d1)) + "}"
+                break
+            else:
+                continue
+
+        lin += rf"{s0.k}-" + str((d0, d1))
+
+        return _array(sym, lin, (s0._sym_repr + '-' + str(d0), s1._sym_repr + '-' + str(d1)))
+
+    else:
+        raise NotImplementedError()
+
+def _parse_d_matrix(s0, d0):
+    """"""
+    if s0.__class__.__name__ == 'ScalarValuedFormSpace':
+        assert d0 is not None, f"space is not finite."
+        sym, lin = _default_d_matrix_reprs['Omega']
+
+        ds = d(s0)
+
+        sym += r"^{" + str((s0.k+1, s0.k)) + r"}"
+        lin += rf"{s0.k}-" + str((d0))
+
+        return _array(sym, lin, (ds._sym_repr + '-' + str(d0), s0._sym_repr + '-' + str(d0)))
+
+    else:
+        raise NotImplementedError()

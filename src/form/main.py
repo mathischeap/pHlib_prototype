@@ -29,7 +29,7 @@ from src.config import _global_operator_sym_repr_setting
 from src.config import _form_evaluate_at_repr_setting
 
 
-_global_forms = dict()
+_global_forms = dict()   # cache keys are id
 _global_root_forms_lin_dict = dict()
 _global_form_variables = {
     'update_cache': True
@@ -169,6 +169,9 @@ class Form(Frozen):
             else:
                 self._ap = ''  # pls try to not use this.
         return self._ap
+
+    def _ap_shape(self):
+        return self.space._sym_repr + '-' + str(self._degree)
 
     @property
     def orientation(self):

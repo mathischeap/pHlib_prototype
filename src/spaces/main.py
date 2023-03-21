@@ -17,8 +17,8 @@ _space_set = dict()
 
 # whenever new space is implemented, add it below.
 _implemented_spaces = {
-    # abbr : (class                                                 , description                 , parameters),
-    'Omega': ('src.spaces.continuous.scalar : ScalarValuedFormSpace', 'scalar valued k-form space', ['k', ]),
+    # abbr : (class                                                  , description                 , parameters),
+    'Omega': ('src.spaces.continuous.scalar', 'ScalarValuedFormSpace', 'scalar valued k-form space', ['k', ]),
 }
 
 
@@ -26,6 +26,9 @@ _default_mass_matrix_reprs = {
     'Omega': ("\mathsf{M}", "MassMatOmega"),
 }
 
+_default_d_matrix_reprs = {
+    'Omega': ("\mathsf{D}", "dMatOmega"),
+}
 
 def set_mesh(mesh):
     """"""
@@ -46,7 +49,7 @@ def _list_spaces():
     print('\n Implemented spaces:')
     print('{:>15} - {}'.format('abbreviation', 'description'))
     for abbr in _implemented_spaces:
-        description = _implemented_spaces[abbr][1]
+        description = _implemented_spaces[abbr][2]
         print('{:>15} | {}'.format(abbr, description))
 
     print('\n Existing spaces:')
@@ -137,7 +140,7 @@ def new(abbrs, *args, mesh=None, **kwargs):
     for abbr in abbrs:
         assert abbr in _implemented_spaces, \
             f"space abbr.={abbr} not implemented. do `ph.space.list_()` to see all implemented spaces."
-        space_class_path, space_class_name = _implemented_spaces[abbr][0].split(' : ')
+        space_class_path, space_class_name = _implemented_spaces[abbr][0:2]
         space_class = getattr(import_module(space_class_path), space_class_name)
 
         space = space_class(mesh, *args, **kwargs)

@@ -215,6 +215,8 @@ if __name__ == '__main__':
 
     ph.space.finite(3)
 
+    (a3 @ td.ts['k']).ap(r"\vec{\alpha}")
+
     ap = wf.ap()
 
-    ap.pr()
+    # ap.pr()

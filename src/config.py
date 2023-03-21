@@ -30,8 +30,7 @@ _global_lin_repr_setting = {
     'abstract_time_sequence': [r'\textit{', r'}'],
     'abstract_time_interval': [r'\texttt{', r'}'],   # do not use `textsc` as scalar.
     'abstract_time_instant': [r'\textsl{', r'}'],
-    'col_vec': [r'\textup{', r'}'],
-    'matrix': [r'\textbf{', r'}'],
+    'array': [r'\textbf{', r'}'],
 }
 
 _abstract_time_sequence_default_lin_repr = 'Ts'
