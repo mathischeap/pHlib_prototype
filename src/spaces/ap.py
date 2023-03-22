@@ -10,6 +10,7 @@ if './' not in sys.path:
 
 from src.spaces.main import _default_mass_matrix_reprs
 from src.spaces.main import _default_d_matrix_reprs
+from src.spaces.main import _default_wedge_vector_repr
 from src.algebra.array import _global_root_arrays, _array
 from src.spaces.operators import d
 
@@ -30,12 +31,15 @@ def _parse_l2_inner_product_mass_matrix(s0, s1, d0, d1):
             else:
                 continue
 
-        lin += rf"{s0.k}-" + str((d0, d1))
+        lin = lin.replace('{n}', str(s0.n))
+        lin = lin.replace('{k}', str(s0.k))
+        lin = lin.replace('({d0},{d1})', str((d0, d1)))
 
         return _array(sym, lin, (s0._sym_repr + '-' + str(d0), s1._sym_repr + '-' + str(d1)))
 
     else:
         raise NotImplementedError()
+
 
 def _parse_d_matrix(s0, d0):
     """"""
@@ -45,10 +49,36 @@ def _parse_d_matrix(s0, d0):
 
         ds = d(s0)
 
+        lin = lin.replace('{n}', str(s0.n))
+        lin = lin.replace('{k}', str(s0.k))
+        lin = lin.replace('{d}', str(d0))
         sym += r"^{" + str((s0.k+1, s0.k)) + r"}"
-        lin += rf"{s0.k}-" + str((d0))
 
         return _array(sym, lin, (ds._sym_repr + '-' + str(d0), s0._sym_repr + '-' + str(d0)))
 
+    else:
+        raise NotImplementedError()
+
+
+def _parse_wedge_vector(f0, s1, d1):
+    """
+
+    Parameters
+    ----------
+    f0 :
+        It is f0 dependent. So do not use s0.
+    s1
+    d1
+
+    Returns
+    -------
+
+    """
+    s0 = f0.space
+    if s0.__class__.__name__ == 'ScalarValuedFormSpace' and s1.__class__.__name__ == 'ScalarValuedFormSpace':
+        assert d1 is not None, f"space is not finite."
+        sym, lin = _default_wedge_vector_repr['Omega']
+
+        print(sym, lin)
     else:
         raise NotImplementedError()

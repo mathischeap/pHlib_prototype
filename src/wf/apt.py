@@ -13,6 +13,7 @@ from src.form.tools import _find_form
 from src.config import _non_root_lin_sep
 from src.spaces.ap import _parse_l2_inner_product_mass_matrix
 from src.spaces.ap import _parse_d_matrix
+from src.spaces.ap import _parse_wedge_vector
 
 
 def _inner_simpler_pattern_examiner_scalar_valued_forms(factor, f0, f1):
@@ -206,6 +207,14 @@ class _SimplePatternAPParser(Frozen):
 
     def _parse_reprs_tr_star_star(self):
         """"""
+        f0 = self._wft._f0
+        f1 = self._wft._f1
+        s1 = f1.space
+        spk = self._wft.___simple_pattern_keys___
+        bf1 = spk['rsf1']
+        d1 = bf1._degree
+
+        boundary_wedge_vector = _parse_wedge_vector(f0, s1, d1)
 
 
 

@@ -23,11 +23,15 @@ _implemented_spaces = {
 
 
 _default_mass_matrix_reprs = {
-    'Omega': ("\mathsf{M}", "MassMatOmega"),
+    'Omega': ("\mathsf{M}", "MassMatOmega-{n}-{k}-({d0},{d1})"),
 }
 
 _default_d_matrix_reprs = {
-    'Omega': ("\mathsf{D}", "dMatOmega"),
+    'Omega': ("\mathsf{D}", "dMatOmega-{n}-{k}-{d}"),
+}
+
+_default_wedge_vector_repr = {
+    'Omega': (r"\boldsymbol{b}", "dMatOmega"),
 }
 
 def set_mesh(mesh):
@@ -74,9 +78,11 @@ def finite(degree, mesh=None, spaces=None):
     -------
 
     """
-    if mesh is None:
-        mesh_sr = _config['current_mesh']
-        mesh = _mesh_set[mesh_sr]
+    if mesh is None: # do it for all spaces on all meshes.
+        for mesh_sr in _mesh_set:
+            mesh = _mesh_set[mesh_sr]
+            finite(degree, mesh=mesh, spaces=spaces)
+        return
     else:
         assert mesh.__class__.__name__ == 'Mesh', f"Mesh = {mesh} is not a Mesh object."
         mesh_sr = mesh._sym_repr

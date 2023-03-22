@@ -113,7 +113,7 @@ class Form(Frozen):
         else:
             return False, lin_repr
 
-    def print_representations(self):
+    def print_representations(self, figsize=(12, 6)):
         """Print this form with matplotlib and latex."""
         my_id = r'\texttt{' + str(id(self)) + '}'
         if self._pAti_form['base_form'] is None:
@@ -123,7 +123,7 @@ class Form(Frozen):
             pti_text = rf"\\(${base_form._sym_repr}$ at abstract time instant ${ati._sym_repr}$"
         space_text = f'spaces: ${self.space._sym_repr}$'
         space_text += rf"\ \ \ \ on ({self.mesh._lin_repr})"
-        plt.figure(figsize=(3 + len(self._sym_repr)/4, 4))
+        plt.figure(figsize=figsize)
         plt.axis([0, 1, 0, 5])
         plt.text(0, 4.5, f'form id: {my_id}', ha='left', va='center', size=15)
         plt.text(0, 3.5, space_text, ha='left', va='center', size=15)
