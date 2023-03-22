@@ -21,9 +21,9 @@ _implemented_spaces = {
     'Omega': ('src.spaces.continuous.scalar', 'ScalarValuedFormSpace', 'scalar valued k-form space', ['k', ]),
 }
 
-
 _default_mass_matrix_reprs = {
     'Omega': ("\mathsf{M}", "MassMatOmega-{n}-{k}-({d0},{d1})"),
+
 }
 
 _default_d_matrix_reprs = {
@@ -33,6 +33,8 @@ _default_d_matrix_reprs = {
 _default_wedge_vector_repr = {
     'Omega': (r"\boldsymbol{b}", "dMatOmega"),
 }
+
+
 
 def set_mesh(mesh):
     """"""
@@ -78,7 +80,7 @@ def finite(degree, mesh=None, spaces=None):
     -------
 
     """
-    if mesh is None: # do it for all spaces on all meshes.
+    if mesh is None:  # do it for all spaces on all meshes.
         for mesh_sr in _mesh_set:
             mesh = _mesh_set[mesh_sr]
             finite(degree, mesh=mesh, spaces=spaces)
