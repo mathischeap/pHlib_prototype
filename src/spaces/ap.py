@@ -11,8 +11,10 @@ if './' not in sys.path:
 from src.spaces.main import _default_mass_matrix_reprs
 from src.spaces.main import _default_d_matrix_reprs
 from src.spaces.main import _default_wedge_vector_repr
+from src.spaces.main import _default_trace_matrix_repr
+from src.spaces.main import _default_space_degree_repr
 from src.algebra.array import _global_root_arrays, _array
-from src.spaces.operators import d
+from src.spaces.operators import d, trace
 
 
 def _parse_l2_inner_product_mass_matrix(s0, s1, d0, d1):
@@ -33,40 +35,45 @@ def _parse_l2_inner_product_mass_matrix(s0, s1, d0, d1):
 
         lin = lin.replace('{n}', str(s0.n))
         lin = lin.replace('{k}', str(s0.k))
-        lin = lin.replace('({d0},{d1})', str((d0, d1)))
+        lin = lin.replace('{(d0,d1)}', str((d0, d1)))
 
-        return _array(sym, lin, (s0._sym_repr + '-' + str(d0), s1._sym_repr + '-' + str(d1)))
+        return _array(sym, lin, (
+            s0._sym_repr + _default_space_degree_repr + str(d0),
+            s1._sym_repr + _default_space_degree_repr + str(d1)
+        ))
 
     else:
         raise NotImplementedError()
 
 
-def _parse_d_matrix(s0, d0):
+def _parse_d_matrix(f):
     """"""
-    if s0.__class__.__name__ == 'ScalarValuedFormSpace':
-        assert d0 is not None, f"space is not finite."
+    s = f.space
+    degree = f._degree
+    if s.__class__.__name__ == 'ScalarValuedFormSpace':
+        assert degree is not None, f"space is not finite."
         sym, lin = _default_d_matrix_reprs['Omega']
 
-        ds = d(s0)
+        ds = d(s)
 
-        lin = lin.replace('{n}', str(s0.n))
-        lin = lin.replace('{k}', str(s0.k))
-        lin = lin.replace('{d}', str(d0))
-        sym += r"^{" + str((s0.k+1, s0.k)) + r"}"
+        lin = lin.replace('{n}', str(s.n))
+        lin = lin.replace('{k}', str(s.k))
+        lin = lin.replace('{d}', str(degree))
+        sym += r"^{" + str((s.k+1, s.k)) + r"}"
 
-        return _array(sym, lin, (ds._sym_repr + '-' + str(d0), s0._sym_repr + '-' + str(d0)))
+        return _array(sym, lin, (ds._sym_repr + _default_space_degree_repr + str(degree), f._ap_shape()))
 
     else:
         raise NotImplementedError()
 
 
-def _parse_wedge_vector(f0, s1, d1):
+def _parse_wedge_vector(rf0, s1, d1):
     """
 
     Parameters
     ----------
-    f0 :
-        It is f0 dependent. So do not use s0.
+    rf0 :
+        It is root f0 dependent. So do not use s0.
     s1
     d1
 
@@ -74,11 +81,33 @@ def _parse_wedge_vector(f0, s1, d1):
     -------
 
     """
-    s0 = f0.space
-    if s0.__class__.__name__ == 'ScalarValuedFormSpace' and s1.__class__.__name__ == 'ScalarValuedFormSpace':
+    s0 = rf0.space
+    if s0.__class__.__name__ == 'ScalarValuedFormSpace':
         assert d1 is not None, f"space is not finite."
         sym, lin = _default_wedge_vector_repr['Omega']
+        lin = lin.replace('{f0}', rf0._pure_lin_repr)
+        lin = lin.replace('{d}', str(d1))
 
-        print(sym, lin)
+        sym += rf"_{s0.k}"
+
+        return _array(sym, lin, (1, s1._sym_repr + _default_space_degree_repr + str(d1)))
+
+    else:
+        raise NotImplementedError()
+
+
+def _parse_trace_matrix(f):
+    """"""
+    s = f.space
+    degree = f._degree
+    if s.__class__.__name__ == 'ScalarValuedFormSpace':
+        sym, lin = _default_trace_matrix_repr['Omega']
+        lin = lin.replace('{n}', str(s.n))
+        lin = lin.replace('{k}', str(s.k))
+        lin = lin.replace('{d}', str(degree))
+        sym += rf'_{s.k}'
+        trace_space = trace(s)
+        return _array(sym, lin, (trace_space._sym_repr + _default_space_degree_repr + str(degree), f._ap_shape()))
+
     else:
         raise NotImplementedError()

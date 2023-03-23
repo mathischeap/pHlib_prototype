@@ -21,13 +21,9 @@ def _array(sym_repr, pure_lin_repr, shape):
         return _global_root_arrays[pure_lin_repr]
     else:
         lin_repr, pure_lin_repr = _parse_lin_repr('array', pure_lin_repr)
-
         aa = AbstractArray(sym_repr, lin_repr, shape)
-
         aa._pure_lin_repr = pure_lin_repr
-
         _global_root_arrays[pure_lin_repr] = aa
-
         return aa
 
 
@@ -50,10 +46,17 @@ class AbstractArray(Frozen):
     def shape(self):
         return self._shape
 
+    def _shape_text(self):
+        if self.ndim == 2 and self.shape[1] == 1:
+            return r'\mathbb{R}^{\#_{dof}' + self.shape[0] + r"}"
+        else:
+            raise NotImplementedError()
+
+
     def __repr__(self):
         """repr"""
         super_repr = super().__repr__().split('object')[1]
-        return f"<ColVec {self._lin_repr} of shape {self.shape}" + super_repr
+        return f"<AbstractArray {self._lin_repr} of shape {self.shape}" + super_repr
 
     @property
     def ndim(self):
@@ -103,8 +106,3 @@ class AbstractArray(Frozen):
 
         else:
             raise NotImplementedError()
-
-
-if __name__ == '__main__':
-    # python 
-    import __init__ as ph

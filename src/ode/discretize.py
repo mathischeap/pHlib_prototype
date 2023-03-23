@@ -84,7 +84,7 @@ class OrdinaryDifferentialEquationDiscretize(Frozen):
                 bf0_ke = bf0 @ dt.end
                 bf1 = ptm._f1
                 term0 = (bf0_ke - bf0_ks) / dt
-                diff_term = ('+', ptm.__class__(term0, bf1))
+                diff_term = (ptm.__class__(term0, bf1), '+')
                 self._eq_terms[index] = [diff_term, ]
             else:
                 raise NotImplementedError()
@@ -99,7 +99,6 @@ class OrdinaryDifferentialEquationDiscretize(Frozen):
             index = str(index)
         else:
             pass
-        old_sign = self._ode[index][0]
         term = self._ode[index][1]
 
         f_ = list()
@@ -122,8 +121,7 @@ class OrdinaryDifferentialEquationDiscretize(Frozen):
             f_ = sum_f / num
 
         new_term, new_sign = term.replace(f, f_)
-        sign = self._parse_sign(old_sign, new_sign)
-        self._eq_terms[index] = [(sign, new_term), ]
+        self._eq_terms[index] = [(new_term, new_sign), ]
 
     def __call__(self):
         """return the resulting weak formulation (of one single equation of course.)"""
@@ -136,7 +134,7 @@ class OrdinaryDifferentialEquationDiscretize(Frozen):
             if index in new_term_sign:
                 original_sign = every_thing_about_this_term[0]
                 for sign_term in new_term_sign[index]:
-                    sign, term = sign_term
+                    term, sign = sign_term
                     sign = self._parse_sign(original_sign, sign)
                     terms[l_o_r].append(term)
                     signs[l_o_r].append(sign)
@@ -205,7 +203,7 @@ if __name__ == '__main__':
     td.set_time_sequence(ts1)
     td.define_abstract_time_instants('k-1', 'k-1/2', 'k')
     td.differentiate(0, 'k-1', 'k')
-    td.average(2, f, ['k-1','k-1/2', 'k'])
+    td.average(2, f, ['k-1', 'k-1/2', 'k'])
     td.average(1, P, ['k-1/2'])
     td.average(3, P, ['k-1/2'])
 

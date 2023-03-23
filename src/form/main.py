@@ -27,6 +27,7 @@ from src.form.parameters import constant_scalar
 from src.config import _global_operator_lin_repr_setting
 from src.config import _global_operator_sym_repr_setting
 from src.config import _form_evaluate_at_repr_setting
+from src.spaces.main import _default_space_degree_repr
 
 
 _global_forms = dict()   # cache keys are id
@@ -171,7 +172,7 @@ class Form(Frozen):
         return self._ap
 
     def _ap_shape(self):
-        return self.space._sym_repr + '-' + str(self._degree)
+        return self.space._sym_repr + _default_space_degree_repr + str(self._degree)
 
     @property
     def orientation(self):

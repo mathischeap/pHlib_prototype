@@ -21,6 +21,11 @@ def get_embedding_space_dim():
     return _global_variables['embedding_space_dim']
 
 
+_abstract_time_sequence_default_lin_repr = 'Ts'
+_manifold_default_lin_repr = 'Manifold'
+_mesh_default_lin_repr = 'Mesh'
+
+
 _global_lin_repr_setting = {
     # objects
     'manifold': [r'\underline{', '}'],
@@ -32,10 +37,6 @@ _global_lin_repr_setting = {
     'abstract_time_instant': [r'\textsl{', r'}'],
     'array': [r'\textbf{', r'}'],
 }
-
-_abstract_time_sequence_default_lin_repr = 'Ts'
-_manifold_default_lin_repr = 'Manifold'
-_mesh_default_lin_repr = 'Mesh'
 
 
 def _parse_lin_repr(obj, lin_repr):
@@ -71,6 +72,9 @@ _root_form_ap_vec_setting = {
 }
 
 
+_non_root_lin_sep = [r'\{', r'\}']
+
+
 _global_operator_lin_repr_setting = {  # coded operators
     'plus': r" $+$ ",
     'minus': r" $-$ ",
@@ -87,9 +91,6 @@ _global_operator_lin_repr_setting = {  # coded operators
     'division': r' \emph{divided by} ',
     'multiply': r' \emph{multiply} '
 }
-
-
-_non_root_lin_sep = [r'\{', r'\}']
 
 
 _global_operator_sym_repr_setting = {  # coded operators

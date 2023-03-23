@@ -14,6 +14,7 @@ from src.config import _non_root_lin_sep
 from src.spaces.ap import _parse_l2_inner_product_mass_matrix
 from src.spaces.ap import _parse_d_matrix
 from src.spaces.ap import _parse_wedge_vector
+from src.spaces.ap import _parse_trace_matrix
 
 
 def _inner_simpler_pattern_examiner_scalar_valued_forms(factor, f0, f1):
@@ -179,7 +180,7 @@ class _SimplePatternAPParser(Frozen):
         s1 = self._wft._f1.space
         d1 = self._wft._f1._degree
         mass_matrix = _parse_l2_inner_product_mass_matrix(s0, s1, d0, d1)
-        d_matrix = _parse_d_matrix(bf0.space, d0)
+        d_matrix = _parse_d_matrix(bf0)
 
         v0 = bf0.ap().T
         v1 = self._wft._f1.ap()
@@ -197,7 +198,7 @@ class _SimplePatternAPParser(Frozen):
         d1 = bf1._degree
         s1 = self._wft._f1.space
         mass_matrix = _parse_l2_inner_product_mass_matrix(s0, s1, d0, d1)
-        d_matrix = _parse_d_matrix(bf1.space, d1)
+        d_matrix = _parse_d_matrix(bf1)
 
         v0 = self._wft._f0.ap().T
         v1 = bf1.ap()
@@ -207,15 +208,19 @@ class _SimplePatternAPParser(Frozen):
 
     def _parse_reprs_tr_star_star(self):
         """"""
-        f0 = self._wft._f0
-        f1 = self._wft._f1
-        s1 = f1.space
+        s1 = self._wft._f1.space
         spk = self._wft.___simple_pattern_keys___
+        bf0 = spk['rsf0']
         bf1 = spk['rsf1']
         d1 = bf1._degree
+        v1 = bf1.ap()
 
-        boundary_wedge_vector = _parse_wedge_vector(f0, s1, d1)
+        boundary_wedge_vector = _parse_wedge_vector(bf0, s1, d1)
+        trace_matrix = _parse_trace_matrix(bf1)
 
+        term = boundary_wedge_vector @ trace_matrix @ v1
+
+        return TermAlgebraicProxy(term), '+'
 
 
 class TermAlgebraicProxy(Frozen):

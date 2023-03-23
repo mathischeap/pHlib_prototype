@@ -22,18 +22,24 @@ _implemented_spaces = {
 }
 
 _default_mass_matrix_reprs = {
-    'Omega': ("\mathsf{M}", "MassMatOmega-{n}-{k}-({d0},{d1})"),
+    'Omega': (r"\mathsf{M}", "MassMatOmega-n{n}-k{k}-d{(d0,d1)}"),
 
 }
 
 _default_d_matrix_reprs = {
-    'Omega': ("\mathsf{D}", "dMatOmega-{n}-{k}-{d}"),
+    'Omega': (r"\mathsf{D}", "dMatOmega-n{n}-k{k}-d{d}"),
 }
 
 _default_wedge_vector_repr = {
-    'Omega': (r"\boldsymbol{b}", "dMatOmega"),
+    'Omega': (r"\boldsymbol{b}", "WedgeVec:traceHodge[{f0}]-wedge-d{d}"),
 }
 
+
+_default_trace_matrix_repr = {
+    'Omega': (r"\mathsf{N}", "TraceMatOmega-n{n}-k{k}-d{d}"),
+}
+
+_default_space_degree_repr = ':d'
 
 
 def set_mesh(mesh):

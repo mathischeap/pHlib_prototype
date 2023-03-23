@@ -25,6 +25,7 @@ class AlgebraicProxy(Frozen):
 
     def __init__(self, wf):
         self._parse_terms(wf)
+        self._parse_unknowns_test_vectors(wf)
         self._wf = wf
         self._bc = wf._bc
         self._freeze()
@@ -70,42 +71,39 @@ class AlgebraicProxy(Frozen):
         """parse sign"""
         return '+' if s0 == s1 else '-'
 
+    def _parse_unknowns_test_vectors(self, wf):
+        """"""
+        assert wf.unknowns is not None, f"pls first set unknowns of the weak formulation."
+        assert wf.test_forms is not None, f"trivial check."
+        self._unknowns = list()
+        for wfu in wf.unknowns:
+            self._unknowns.append(wfu._ap)
+
+        self._tvs = list()
+        for tf in wf.test_forms:
+            self._tvs.append(tf._ap)
+
+    @property
+    def unknowns(self):
+        return self._unknowns
+
+    @property
+    def test_vectors(self):
+        return self._tvs
+
     def pr(self, indexing=True):
         """Print the representations"""
         seek_text = self._wf._mesh.manifold._manifold_text()
-        # if self.unknowns is None:
-        #     seek_text += r'for $\left('
-        #     form_sr_list = list()
-        #     space_sr_list = list()
-        #     for ef in self._efs:
-        #         if ef not in self._test_forms:
-        #             form_sr_list.append(rf' {ef._sym_repr}')
-        #             space_sr_list.append(rf"{ef.space._sym_repr}")
-        #         else:
-        #             pass
-        #     seek_text += ','.join(form_sr_list)
-        #     seek_text += r'\right) \in '
-        #     seek_text += r'\times '.join(space_sr_list)
-        #     seek_text += '$, \n'
-        # else:
-        #     given_text = r'for'
-        #     for ef in self._efs:
-        #         if ef not in self.unknowns and ef not in self._test_forms:
-        #             given_text += rf' ${ef._sym_repr} \in {ef.space._sym_repr}$, '
-        #     if given_text == r'for':
-        #         seek_text += r'seek $\left('
-        #     else:
-        #         seek_text += given_text + '\n'
-        #         seek_text += r'seek $\left('
-        #     form_sr_list = list()
-        #     space_sr_list = list()
-        #     for un in self.unknowns:
-        #         form_sr_list.append(rf' {un._sym_repr}')
-        #         space_sr_list.append(rf"{un.space._sym_repr}")
-        #     seek_text += ','.join(form_sr_list)
-        #     seek_text += r'\right) \in '
-        #     seek_text += r'\times '.join(space_sr_list)
-        #     seek_text += '$, such that\n'
+        seek_text += r'seek $\left('
+        form_sr_list = list()
+        space_sr_list = list()
+        for un in self.unknowns:
+            form_sr_list.append(rf' {un._sym_repr}')
+            space_sr_list.append(rf"{un._shape_text()}")
+        seek_text += ','.join(form_sr_list)
+        seek_text += r'\right) \in '
+        seek_text += r'\times '.join(space_sr_list)
+        seek_text += '$, such that\n'
         symbolic = ''
         number_equations = len(self._term_dict)
         for i in self._term_dict:
@@ -140,8 +138,7 @@ class AlgebraicProxy(Frozen):
                 if t == 0:
                     symbolic += ' &= '
 
-            # symbolic += r'\quad &&\forall ' + self._test_forms[i]._sym_repr + r'\in ' + \
-            #     self._test_spaces[i]._sym_repr
+            symbolic += r'\quad &&\forall ' + self.test_vectors[i]._sym_repr + r'\in' + self.test_vectors[i]._shape_text()
 
             if i < number_equations - 1:
                 symbolic += r',\\'
@@ -184,11 +181,13 @@ if __name__ == '__main__':
     td.average('0-1', b2, ['k-1', 'k'])
 
     td.differentiate('1-0', 'k-1', 'k')
-    # td.average('1-1', a3, ['k-1', 'k'])
+    td.average('1-1', a3, ['k-1', 'k'])
     td.average('1-2', a3, ['k-1/2'])
     dt = td.time_sequence.make_time_interval('k-1', 'k')
 
     wf = td()
+    # wf.pr()
+
     wf.unknowns = [a3 @ td.time_sequence['k'], b2 @ td.time_sequence['k']]
     wf = wf.derive.split('0-0', 'f0',
                          [a3 @ td.ts['k'], a3 @ td.ts['k-1']],
@@ -209,7 +208,7 @@ if __name__ == '__main__':
     wf = wf.derive.rearrange(
         {
             0: '0, 3 = 1, 2',
-            # 1: '3, 0 = 2, 1, 4',
+            1: '3, 0 = 2, 1, 4',
         }
     )
 
@@ -218,6 +217,10 @@ if __name__ == '__main__':
     #
     # (a3 @ td.ts['k']).ap(r"\vec{\alpha}")
     #
+    wf.pr()
+
     ap = wf.ap()
 
-    # ap.pr()
+    ap.pr()
+    # print(wf.unknowns, wf.test_forms)
+    # print(ap.test_vectors)
