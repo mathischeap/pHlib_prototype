@@ -113,6 +113,32 @@ def _dp_simpler_pattern_examiner_scalar_valued_forms(factor, f0, f1):
 from src.tools.frozen import Frozen
 
 
+class TermAlgebraicProxy(Frozen):
+    """It is basically a wrapper of a (1, 1) abstract array."""
+
+    def __init__(self, term):
+        """"""
+        assert term.shape == (1, 1), f"term shape = {term.shape} wrong."
+        self._sym_repr = term._sym_repr
+        self._lin_repr = term._lin_repr
+        self._term = term
+        self._freeze()
+
+    def __repr__(self):
+        """repr"""
+        super_repr = super().__repr__().split('object')[1]
+        return f"<TermAlgebraicProxy {self._sym_repr}" + super_repr
+
+    def __rmul__(self, other):
+        """other * self"""
+        if isinstance(other, (int, float)) or other.__class__.__name__ == 'ConstantScalar0Form':
+            return self.__class__(other * self._term)
+        else:
+            raise NotImplementedError()
+
+
+
+
 class _SimplePatternAPParser(Frozen):
     """"""
 
@@ -126,7 +152,7 @@ class _SimplePatternAPParser(Frozen):
         sp = self._wft._simple_pattern
         if sp == '':
             raise NotImplementedError(f"We do not have an pattern for term {self._wft}.")
-        else:
+        else:   # factor is `ConstantScalar0Form`
             if sp == _simple_patterns['(pt,)']:
                 return self._parse_reprs_pt()
             elif sp == _simple_patterns['(rt,rt)']:
@@ -155,8 +181,9 @@ class _SimplePatternAPParser(Frozen):
         pv0 = v0._partial_t()
 
         term = pv0 @ mass_matrix @ v1
-        return TermAlgebraicProxy(term), '+'
-
+        term = self._wft._factor * TermAlgebraicProxy(term)
+        sign = '+'
+        return term, sign
 
     def _parse_reprs_rt_rt(self):
         """"""
@@ -169,7 +196,9 @@ class _SimplePatternAPParser(Frozen):
         v0 = f0.ap().T
         v1 = f1.ap()
         term = v0 @ mass_matrix @ v1
-        return TermAlgebraicProxy(term), '+'
+        term = self._wft._factor * TermAlgebraicProxy(term)
+        sign = '+'
+        return term, sign
 
     def _parse_reprs_d_(self):
         """"""
@@ -186,7 +215,9 @@ class _SimplePatternAPParser(Frozen):
         v1 = self._wft._f1.ap()
 
         term = v0 @ d_matrix.T @ mass_matrix @ v1
-        return TermAlgebraicProxy(term), '+'
+        term = self._wft._factor * TermAlgebraicProxy(term)
+        sign = '+'
+        return term, sign
 
     def _parse_reprs__d(self):
         """"""
@@ -203,8 +234,10 @@ class _SimplePatternAPParser(Frozen):
         v0 = self._wft._f0.ap().T
         v1 = bf1.ap()
 
-        term = v0 @ mass_matrix @ d_matrix @ v1
-        return TermAlgebraicProxy(term), '+'
+        term = self._wft._factor * v0 @ mass_matrix @ d_matrix @ v1
+        term = TermAlgebraicProxy(term)
+        sign = '+'
+        return term, sign
 
     def _parse_reprs_tr_star_star(self):
         """"""
@@ -220,20 +253,6 @@ class _SimplePatternAPParser(Frozen):
 
         term = boundary_wedge_vector @ trace_matrix @ v1
 
-        return TermAlgebraicProxy(term), '+'
-
-
-class TermAlgebraicProxy(Frozen):
-    """It is basically a wrapper of a (1, 1) abstract array."""
-
-    def __init__(self, term):
-        """"""
-        assert term.shape == (1, 1), f"term shape = {term.shape} wrong."
-        self._sym_repr = term._sym_repr
-        self._lin_repr = term._lin_repr
-        self._freeze()
-
-    def __repr__(self):
-        """repr"""
-        super_repr = super().__repr__().split('object')[1]
-        return f"<TermAlgebraicProxy {self._sym_repr}" + super_repr
+        term = self._wft._factor * TermAlgebraicProxy(term)
+        sign = '+'
+        return term, sign

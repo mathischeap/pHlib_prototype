@@ -10,18 +10,21 @@ if './' not in sys.path:
 
 from src.tools.frozen import Frozen
 from src.config import _parse_lin_repr
+from src.config import _non_root_lin_sep
+from src.form.parameters import constant_scalar
+_cs1 = constant_scalar(1)
 
 
 _global_root_arrays = dict()  # using pure_lin_repr as cache keys
 
 
-def _array(sym_repr, pure_lin_repr, shape):
+def _array(sym_repr, pure_lin_repr, shape, symmetric=None, transposed=None):
     """"""
     if pure_lin_repr in _global_root_arrays:
         return _global_root_arrays[pure_lin_repr]
     else:
         lin_repr, pure_lin_repr = _parse_lin_repr('array', pure_lin_repr)
-        aa = AbstractArray(sym_repr, lin_repr, shape)
+        aa = AbstractArray(sym_repr, lin_repr, shape, symmetric=symmetric, transposed=transposed)
         aa._pure_lin_repr = pure_lin_repr
         _global_root_arrays[pure_lin_repr] = aa
         return aa
@@ -30,13 +33,15 @@ def _array(sym_repr, pure_lin_repr, shape):
 class AbstractArray(Frozen):
     """"""
 
-    def __init__(self, sym_repr, lin_repr, shape):
+    def __init__(self, sym_repr, lin_repr, shape, symmetric=None, transposed=None):
         """"""
         self._sym_repr = sym_repr
         self._lin_repr = lin_repr
         self._pure_lin_repr = None
         assert isinstance(shape, tuple), f"pls put shape in a tuple."
         self._shape = shape
+        self._symmetric = symmetric    # True or False only for 2-d array
+        self._transposed = transposed  # True or False only for 2-d array
         self._freeze()
 
     def is_root(self):
@@ -52,7 +57,6 @@ class AbstractArray(Frozen):
         else:
             raise NotImplementedError()
 
-
     def __repr__(self):
         """repr"""
         super_repr = super().__repr__().split('object')[1]
@@ -64,18 +68,40 @@ class AbstractArray(Frozen):
 
     @property
     def T(self):
+        """Transpose."""
         assert self.ndim == 2, f"Only 2d array has T property."
-        if self.is_root():
-            sym_repr = r'{' + self._sym_repr + r'}^\mathsf{T}'
-        else:
-            sym_repr = r'{\left(' + self._sym_repr + r'\right)}^\mathsf{T}'
 
-        lin_repr = self._lin_repr + '-transpose'
+        if self._symmetric:
+            return self
+        else:
+            pass
+
+        if self._transposed:
+
+            sym = self._sym_repr
+            trans_text = r'\right)}^\mathsf{T}'
+            if sym[-len(trans_text):] == trans_text:
+                sym_repr = sym[7:-len(trans_text)]
+            else:
+                sym_repr = sym[1:-12]
+
+            lin_repr = self._lin_repr.split('-transpose')[0]
+
+        else:
+
+            if self.is_root():
+                sym_repr = r'{' + self._sym_repr + r'}^\mathsf{T}'
+            else:
+                sym_repr = r'{\left(' + self._sym_repr + r'\right)}^\mathsf{T}'
+
+            lin_repr = self._lin_repr + '-transpose'
+
         shape = (self._shape[1], self._shape[0])
         return AbstractArray(
             sym_repr,
             lin_repr,
             shape,
+            transposed=True,
         )
 
     def _partial_t(self):
@@ -106,3 +132,25 @@ class AbstractArray(Frozen):
 
         else:
             raise NotImplementedError()
+
+    def __rmul__(self, other):
+        """other * self."""
+        if isinstance(other, (int, float)):
+            other = constant_scalar(other)
+        else:
+            pass
+
+        if other == _cs1:
+            return self
+        else:
+            sym = self._sym_repr
+            lin = self._lin_repr
+            osr, olr = other._sym_repr, other._lin_repr
+            if other.is_root():
+                sym = osr + sym
+                lin = olr + lin
+            else:
+                sym = osr + sym
+                lin = _non_root_lin_sep[0] + olr + _non_root_lin_sep[1] + lin
+
+            return self.__class__(sym, lin, self.shape)

@@ -138,7 +138,10 @@ class AlgebraicProxy(Frozen):
                 if t == 0:
                     symbolic += ' &= '
 
-            symbolic += r'\quad &&\forall ' + self.test_vectors[i]._sym_repr + r'\in' + self.test_vectors[i]._shape_text()
+            symbolic += r'\quad &&\forall ' + \
+                        self.test_vectors[i]._sym_repr + \
+                        r'\in' + \
+                        self.test_vectors[i]._shape_text()
 
             if i < number_equations - 1:
                 symbolic += r',\\'
@@ -217,7 +220,7 @@ if __name__ == '__main__':
     #
     # (a3 @ td.ts['k']).ap(r"\vec{\alpha}")
     #
-    wf.pr()
+    # wf.pr()
 
     ap = wf.ap()
 

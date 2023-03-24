@@ -21,7 +21,7 @@ def _parse_l2_inner_product_mass_matrix(s0, s1, d0, d1):
     """"""
     assert s0 == s1, f"spaces do not match."
 
-    if s0.__class__.__name__ == 'ScalarValuedFormSpace' and s1.__class__.__name__ == 'ScalarValuedFormSpace':
+    if s0.__class__.__name__ == 'ScalarValuedFormSpace':
         sym, lin = _default_mass_matrix_reprs['Omega']
         assert d0 is not None and d1 is not None, f"space is not finite."
         sym += rf"^{s0.k}"
@@ -37,10 +37,12 @@ def _parse_l2_inner_product_mass_matrix(s0, s1, d0, d1):
         lin = lin.replace('{k}', str(s0.k))
         lin = lin.replace('{(d0,d1)}', str((d0, d1)))
 
-        return _array(sym, lin, (
-            s0._sym_repr + _default_space_degree_repr + str(d0),
-            s1._sym_repr + _default_space_degree_repr + str(d1)
-        ))
+        return _array(
+            sym, lin, (
+                s0._sym_repr + _default_space_degree_repr + str(d0),
+                s1._sym_repr + _default_space_degree_repr + str(d1)
+            ), symmetric=True,
+        )
 
     else:
         raise NotImplementedError()

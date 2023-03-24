@@ -24,6 +24,10 @@ def constant_scalar(*args):
     if num_args == 1:
         arg = args[0]
         if isinstance(arg, (int, float)):
+            if isinstance(arg, float) and arg % 1 == 0:
+                arg = int(arg)
+            else:
+                pass
             if arg == 0.5:
                 sym_repr, lin_repr = r"\dfrac{1}{2}", str(arg)
             else:
