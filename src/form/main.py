@@ -36,6 +36,7 @@ _global_form_variables = {
     'update_cache': True
 }
 
+
 from src.form.ap import _parse_root_form_ap
 
 
@@ -168,10 +169,14 @@ class Form(Frozen):
             if self.is_root():
                 self._ap = _parse_root_form_ap(self, sym_repr)
             else:
-                self._ap = ''  # pls try to not use this.
+                raise Exception("None root form has no symbolic representation, do not try to access.")
+        else:
+            assert sym_repr is None, f"form {self} already have an algebraic proxy, change its symbolic " \
+                                     f"representation is not allowed (cause it may not be safe)."
         return self._ap
 
     def _ap_shape(self):
+        """ap shape."""
         return self.space._sym_repr + _default_space_degree_repr + str(self._degree)
 
     @property

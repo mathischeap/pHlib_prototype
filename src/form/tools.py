@@ -34,7 +34,9 @@ def _find_form(lin_repr, upon=None):
             We seek the form for which `upon(form)._lin_repr` is equal to `rp`.
 
     """
-    _global_form_variables['update_cache'] = False  # during this process, we do not cache the intermediate forms.
+    # during this process, we do not cache the intermediate forms.
+    _global_form_variables['update_cache'] = False
+
     if upon is None:
         the_one = None
         for form_id in _global_forms:

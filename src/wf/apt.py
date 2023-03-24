@@ -66,7 +66,7 @@ def _inner_simpler_pattern_examiner_scalar_valued_forms(factor, f0, f1):
                 pass
             elif f0.is_root() and bf1.is_root():
                 return _simple_patterns['(,d)'], {
-                    'rsf0': f0,   # root-scalar-form-0
+                    'rsf0': f0,     # root-scalar-form-0
                     'rsf1': bf1,    # root-scalar-form-1
                 }
             else:
@@ -113,7 +113,7 @@ def _dp_simpler_pattern_examiner_scalar_valued_forms(factor, f0, f1):
 from src.tools.frozen import Frozen
 
 
-class TermAlgebraicProxy(Frozen):
+class TermLinearAlgebraicProxy(Frozen):
     """It is basically a wrapper of a (1, 1) abstract array."""
 
     def __init__(self, term):
@@ -136,7 +136,10 @@ class TermAlgebraicProxy(Frozen):
         else:
             raise NotImplementedError()
 
-
+    @staticmethod
+    def _is_linear():
+        """This is a linear term."""
+        return True
 
 
 class _SimplePatternAPParser(Frozen):
@@ -181,7 +184,7 @@ class _SimplePatternAPParser(Frozen):
         pv0 = v0._partial_t()
 
         term = pv0 @ mass_matrix @ v1
-        term = self._wft._factor * TermAlgebraicProxy(term)
+        term = self._wft._factor * TermLinearAlgebraicProxy(term)
         sign = '+'
         return term, sign
 
@@ -196,7 +199,7 @@ class _SimplePatternAPParser(Frozen):
         v0 = f0.ap().T
         v1 = f1.ap()
         term = v0 @ mass_matrix @ v1
-        term = self._wft._factor * TermAlgebraicProxy(term)
+        term = self._wft._factor * TermLinearAlgebraicProxy(term)
         sign = '+'
         return term, sign
 
@@ -215,7 +218,7 @@ class _SimplePatternAPParser(Frozen):
         v1 = self._wft._f1.ap()
 
         term = v0 @ d_matrix.T @ mass_matrix @ v1
-        term = self._wft._factor * TermAlgebraicProxy(term)
+        term = self._wft._factor * TermLinearAlgebraicProxy(term)
         sign = '+'
         return term, sign
 
@@ -235,7 +238,7 @@ class _SimplePatternAPParser(Frozen):
         v1 = bf1.ap()
 
         term = self._wft._factor * v0 @ mass_matrix @ d_matrix @ v1
-        term = TermAlgebraicProxy(term)
+        term = TermLinearAlgebraicProxy(term)
         sign = '+'
         return term, sign
 
@@ -251,8 +254,8 @@ class _SimplePatternAPParser(Frozen):
         boundary_wedge_vector = _parse_wedge_vector(bf0, s1, d1)
         trace_matrix = _parse_trace_matrix(bf1)
 
-        term = boundary_wedge_vector @ trace_matrix @ v1
+        term = boundary_wedge_vector.T @ trace_matrix @ v1
 
-        term = self._wft._factor * TermAlgebraicProxy(term)
+        term = self._wft._factor * TermLinearAlgebraicProxy(term)
         sign = '+'
         return term, sign

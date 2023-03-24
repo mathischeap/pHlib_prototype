@@ -34,7 +34,6 @@ _default_wedge_vector_repr = {
     'Omega': (r"\boldsymbol{b}", "WedgeVec:traceHodge[{f0}]-wedge-d{d}"),
 }
 
-
 _default_trace_matrix_repr = {
     'Omega': (r"\mathsf{N}", "TraceMatOmega-n{n}-k{k}-d{d}"),
 }

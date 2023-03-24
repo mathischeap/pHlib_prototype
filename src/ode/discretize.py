@@ -69,10 +69,6 @@ class OrdinaryDifferentialEquationDiscretize(Frozen):
 
     def differentiate(self, index, ks, ke, degree=1):
         """Differentiate a term at time interval [ati0, ati1] using a Gauss integrator of degree 1."""
-        if isinstance(index, int):
-            index = str(index)
-        else:
-            pass
         term = self._ode[index]
         pattern = term[2]
         ptm = term[1]
@@ -95,10 +91,6 @@ class OrdinaryDifferentialEquationDiscretize(Frozen):
     def average(self, index, f, time_instants):
         """Use average at time instants `time_instants` for form `f` in term indexed `index`
         """
-        if isinstance(index, int):
-            index = str(index)
-        else:
-            pass
         term = self._ode[index][1]
 
         f_ = list()
@@ -202,10 +194,10 @@ if __name__ == '__main__':
     td = ode.discretize
     td.set_time_sequence(ts1)
     td.define_abstract_time_instants('k-1', 'k-1/2', 'k')
-    td.differentiate(0, 'k-1', 'k')
-    td.average(2, f, ['k-1', 'k-1/2', 'k'])
-    td.average(1, P, ['k-1/2'])
-    td.average(3, P, ['k-1/2'])
+    td.differentiate('0', 'k-1', 'k')
+    td.average('2', f, ['k-1', 'k-1/2', 'k'])
+    td.average('1', P, ['k-1/2'])
+    td.average('3', P, ['k-1/2'])
 
     eq = ode.discretize()
     eq.pr()

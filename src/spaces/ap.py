@@ -13,7 +13,7 @@ from src.spaces.main import _default_d_matrix_reprs
 from src.spaces.main import _default_wedge_vector_repr
 from src.spaces.main import _default_trace_matrix_repr
 from src.spaces.main import _default_space_degree_repr
-from src.algebra.array import _global_root_arrays, _array
+from src.algebra.array import _array
 from src.spaces.operators import d, trace
 
 
@@ -25,13 +25,6 @@ def _parse_l2_inner_product_mass_matrix(s0, s1, d0, d1):
         sym, lin = _default_mass_matrix_reprs['Omega']
         assert d0 is not None and d1 is not None, f"space is not finite."
         sym += rf"^{s0.k}"
-        for lr in _global_root_arrays:
-            existing_m = _global_root_arrays[lr]
-            if existing_m._sym_repr == sym:
-                sym += r"_{" + str((d0, d1)) + "}"
-                break
-            else:
-                continue
 
         lin = lin.replace('{n}', str(s0.n))
         lin = lin.replace('{k}', str(s0.k))
@@ -92,7 +85,7 @@ def _parse_wedge_vector(rf0, s1, d1):
 
         sym += rf"_{s0.k}"
 
-        return _array(sym, lin, (1, s1._sym_repr + _default_space_degree_repr + str(d1)))
+        return _array(sym, lin, (s1._sym_repr + _default_space_degree_repr + str(d1), 1))
 
     else:
         raise NotImplementedError()

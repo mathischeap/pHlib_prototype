@@ -18,6 +18,7 @@ plt.rcParams.update({
 matplotlib.use('TkAgg')
 
 from src.tools.frozen import Frozen
+from src.wf.mp import MatrixProxy
 
 
 class AlgebraicProxy(Frozen):
@@ -28,6 +29,8 @@ class AlgebraicProxy(Frozen):
         self._parse_unknowns_test_vectors(wf)
         self._wf = wf
         self._bc = wf._bc
+        self._mp = None
+        self._evs = None
         self._freeze()
 
     def _parse_terms(self, wf):
@@ -38,11 +41,13 @@ class AlgebraicProxy(Frozen):
         sign_dict = dict()   # the signs for the AP equation
         ind_dict = dict()
         indexing = dict()
-
+        linear_dict = dict()
+        self._is_linear = True
         for i in wf_td:
             term_dict[i] = ([], [])
             sign_dict[i] = ([], [])
             ind_dict[i] = ([], [])
+            linear_dict[i] = ([], [])
             k = 0
             for j, terms in enumerate(wf_td[i]):
                 for m, term in enumerate(terms):
@@ -50,21 +55,36 @@ class AlgebraicProxy(Frozen):
                     try:
                         ap, new_sign = term.ap()
                         new_sign = self._parse_sign(new_sign, old_sign)
+
+                        if ap._is_linear():
+                            linear = True
+                        else:
+                            linear = False
+                            self._is_linear = False
+
                     except NotImplementedError:
                         ap = term
                         new_sign = old_sign
+                        linear = 'unknown'
+                        self._is_linear = False
 
                     index = str(i) + '-' + str(k)
                     k += 1
-                    indexing[index] = (ap, new_sign)
+                    indexing[index] = (new_sign, ap)
                     ind_dict[i][j].append(index)
                     term_dict[i][j].append(ap)
                     sign_dict[i][j].append(new_sign)
+                    linear_dict[i][j].append(linear)
 
         self._term_dict = term_dict
         self._sign_dict = sign_dict
         self._indexing = indexing
         self._ind_dict = ind_dict
+        self._linear_dict = linear_dict
+
+    def is_linear(self):
+        """If we have a linear system?"""
+        return self._is_linear
 
     @staticmethod
     def _parse_sign(s0, s1):
@@ -74,7 +94,8 @@ class AlgebraicProxy(Frozen):
     def _parse_unknowns_test_vectors(self, wf):
         """"""
         assert wf.unknowns is not None, f"pls first set unknowns of the weak formulation."
-        assert wf.test_forms is not None, f"trivial check."
+        assert wf.test_forms is not None, f"Weak formulation should have specify test forms."
+
         self._unknowns = list()
         for wfu in wf.unknowns:
             self._unknowns.append(wfu._ap)
@@ -90,6 +111,16 @@ class AlgebraicProxy(Frozen):
     @property
     def test_vectors(self):
         return self._tvs
+
+    @property
+    def elementary_vectors(self):
+        """elementary vectors."""
+        if self._evs is None:
+            self._evs = list()
+            for ef in self._wf.elementary_forms:
+                self._evs.append(ef.ap())
+            self._evs = tuple(self._evs)
+        return self._evs
 
     def pr(self, indexing=True):
         """Print the representations"""
@@ -162,6 +193,12 @@ class AlgebraicProxy(Frozen):
         plt.tight_layout()
         plt.show()
 
+    def mp(self):
+        """matrix proxy"""
+        if self._mp is None:
+            self._mp = MatrixProxy(self)
+        return self._mp
+
 
 if __name__ == '__main__':
     # python src/wf/ap.py
@@ -180,10 +217,10 @@ if __name__ == '__main__':
     td.set_time_sequence()  # initialize a time sequence
 
     td.define_abstract_time_instants('k-1', 'k-1/2', 'k')
-    td.differentiate('0-0', 'k-1', 'k')
+    # td.differentiate('0-0', 'k-1', 'k')
     td.average('0-1', b2, ['k-1', 'k'])
 
-    td.differentiate('1-0', 'k-1', 'k')
+    # td.differentiate('1-0', 'k-1', 'k')
     td.average('1-1', a3, ['k-1', 'k'])
     td.average('1-2', a3, ['k-1/2'])
     dt = td.time_sequence.make_time_interval('k-1', 'k')
@@ -218,11 +255,15 @@ if __name__ == '__main__':
     ph.space.finite(3)
     # ph.list_spaces()
     #
-    # (a3 @ td.ts['k']).ap(r"\vec{\alpha}")
+    (a3 @ td.ts['k']).ap(r"\vec{\alpha}")
     #
     # wf.pr()
 
     ap = wf.ap()
+
+    print(ap.is_linear())
+
+    mp = ap.mp()
 
     ap.pr()
     # print(wf.unknowns, wf.test_forms)
