@@ -219,7 +219,7 @@ class _WeakFormulationTerm(Frozen):
         else:
             raise NotImplementedError()
 
-    def ap(self):
+    def ap(self, **kwargs):
         """Return the algebraic proxy of this term."""
 
         if self._simple_pattern == '':
@@ -228,7 +228,7 @@ class _WeakFormulationTerm(Frozen):
 
         else:
 
-            ap, sign = _SimplePatternAPParser(self)()
+            ap, sign = _SimplePatternAPParser(self)(**kwargs)
 
         return ap, sign
 

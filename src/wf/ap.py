@@ -31,6 +31,7 @@ class AlgebraicProxy(Frozen):
         self._bc = wf._bc
         self._mp = None
         self._evs = None
+        self.___num_known___ = None
         self._freeze()
 
     def _parse_terms(self, wf):
@@ -53,7 +54,7 @@ class AlgebraicProxy(Frozen):
                 for m, term in enumerate(terms):
                     old_sign = wf_sd[i][j][m]
                     try:
-                        ap, new_sign = term.ap()
+                        ap, new_sign = term.ap(test_form=wf.test_forms[i])
                         new_sign = self._parse_sign(new_sign, old_sign)
 
                         if ap._is_linear():
@@ -92,7 +93,7 @@ class AlgebraicProxy(Frozen):
         return '+' if s0 == s1 else '-'
 
     def _parse_unknowns_test_vectors(self, wf):
-        """"""
+        """parse unknowns test vectors."""
         assert wf.unknowns is not None, f"pls first set unknowns of the weak formulation."
         assert wf.test_forms is not None, f"Weak formulation should have specify test forms."
 
@@ -106,11 +107,21 @@ class AlgebraicProxy(Frozen):
 
     @property
     def unknowns(self):
+        """unknowns"""
         return self._unknowns
 
     @property
     def test_vectors(self):
+        """test vectors."""
         return self._tvs
+
+    def _num_unknowns(self):
+        return len(self.unknowns)
+
+    def _num_known(self):
+        if self.___num_known___ is None:
+            self.___num_known___ = len(self.elementary_vectors) - len(self.test_vectors) - len(self.unknowns)
+        return self.___num_known___
 
     @property
     def elementary_vectors(self):
@@ -194,7 +205,7 @@ class AlgebraicProxy(Frozen):
         plt.show()
 
     def mp(self):
-        """matrix proxy"""
+        """matrix proxy."""
         if self._mp is None:
             self._mp = MatrixProxy(self)
         return self._mp
@@ -226,25 +237,42 @@ if __name__ == '__main__':
     dt = td.time_sequence.make_time_interval('k-1', 'k')
 
     wf = td()
+
     # wf.pr()
 
-    wf.unknowns = [a3 @ td.time_sequence['k'], b2 @ td.time_sequence['k']]
-    wf = wf.derive.split('0-0', 'f0',
-                         [a3 @ td.ts['k'], a3 @ td.ts['k-1']],
-                         ['+', '-'],
-                         factors=[1/dt, 1/dt])
-    wf = wf.derive.split('0-2', 'f0',
-                         [ph.d(b2 @ td.ts['k-1']), ph.d(b2 @ td.ts['k'])],
-                         ['+', '+'],
-                         factors=[1/2, 1/2])
-    wf = wf.derive.split('1-0', 'f0',
-                         [b2 @ td.ts['k'], b2 @ td.ts['k-1']],
-                         ['+', '-'],
-                         factors=[1/dt, 1/dt])
-    wf = wf.derive.split('1-2', 'f0',
-                         [a3 @ td.ts['k-1'], a3 @ td.ts['k']],
-                         ['+', '+'],
-                         factors=[1/2, 1/2])
+    wf.unknowns = [
+        a3 @ td.time_sequence['k'],
+        b2 @ td.time_sequence['k'],
+    ]
+
+    wf = wf.derive.split(
+        '0-0', 'f0',
+        [a3 @ td.ts['k'], a3 @ td.ts['k-1']],
+        ['+', '-'],
+        factors=[1/dt, 1/dt],
+    )
+
+    wf = wf.derive.split(
+        '0-2', 'f0',
+        [ph.d(b2 @ td.ts['k-1']), ph.d(b2 @ td.ts['k'])],
+        ['+', '+'],
+        factors=[1/2, 1/2],
+    )
+
+    wf = wf.derive.split(
+        '1-0', 'f0',
+        [b2 @ td.ts['k'], b2 @ td.ts['k-1']],
+        ['+', '-'],
+        factors=[1/dt, 1/dt]
+    )
+
+    wf = wf.derive.split(
+        '1-2', 'f0',
+        [a3 @ td.ts['k-1'], a3 @ td.ts['k']],
+        ['+', '+'],
+        factors=[1/2, 1/2],
+    )
+
     wf = wf.derive.rearrange(
         {
             0: '0, 3 = 1, 2',
@@ -253,15 +281,14 @@ if __name__ == '__main__':
     )
 
     ph.space.finite(3)
+
     # ph.list_spaces()
-    #
-    (a3 @ td.ts['k']).ap(r"\vec{\alpha}")
-    #
+
+    # (a3 @ td.ts['k']).ap(r"\vec{\alpha}")
+
     # wf.pr()
 
     ap = wf.ap()
-
-    print(ap.is_linear())
 
     mp = ap.mp()
 

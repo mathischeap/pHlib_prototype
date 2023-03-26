@@ -50,14 +50,16 @@ class SpaceFiniteSetting(Frozen):
 
         We must define new degree through this method.
         """
-        assert isinstance(degree, (int, float, list, tuple)), f"Can only use int, float, list or tuple for the degree."
+        assert isinstance(degree, (int, float, list, tuple)), \
+            f"Can only use int, float, list or tuple for the degree."
         if isinstance(degree, list):
             degree = tuple(degree)
         else:
             pass
         if isinstance(degree, tuple):
             for i, d in enumerate(degree):
-                assert isinstance(d, (int, float)), f"degree[{i}] = {d} is not valid, must be a int or integer."
+                assert isinstance(d, (int, float)), \
+                    f"degree[{i}] = {d} is not valid, must be a int or integer."
 
         if degree in self:
             pass

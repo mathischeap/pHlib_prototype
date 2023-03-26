@@ -66,6 +66,7 @@ class WeakFormulation(Frozen):
 
     @classmethod
     def _parse_meshes(cls, term_dict):
+        """"""
         meshes = list()
         for i in term_dict:
             for terms in term_dict[i]:

@@ -124,7 +124,7 @@ class OrdinaryDifferentialEquation(Frozen):
         }
 
     def _analyze_terms(self):
-        """"""
+        """analyze terms"""
         _about = list()
         overall_order = list()
         k = 0
@@ -164,14 +164,17 @@ class OrdinaryDifferentialEquation(Frozen):
         self._indexing = indexing
 
     def __repr__(self):
+        """repr"""
         super_repr = super().__repr__().split('object')[1]
         ele_form_repr = set([form._sym_repr for form in self._efs])
         return f"<ODE of {self._about._sym_repr} for {ele_form_repr}" + super_repr
 
     def __contains__(self, index):
+        """contains"""
         return index in self._indexing
 
     def __getitem__(self, index):
+        """getitem"""
         if isinstance(index, int):
             index = str(index)
         else:
@@ -185,7 +188,7 @@ class OrdinaryDifferentialEquation(Frozen):
             yield index
 
     def _parse_index(self, index):
-        """"""
+        """parse index"""
         k = int(index)
         left_terms = self._signs[0]
         number_left_terms = len(left_terms)
@@ -203,7 +206,7 @@ class OrdinaryDifferentialEquation(Frozen):
         return self._efs
 
     def print_representations(self, indexing=True, figsize=(12, 4)):
-        """print_representations"""
+        """print representations"""
         sym = r'\noindent Time derivative of: '
         sym += rf'${self._about._sym_repr}$, '
         if len(self.elementary_forms) > 1:  # as it must contain the `about` form.

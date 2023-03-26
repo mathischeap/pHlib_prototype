@@ -23,7 +23,6 @@ _implemented_spaces = {
 
 _default_mass_matrix_reprs = {
     'Omega': (r"\mathsf{M}", "MassMatOmega-n{n}-k{k}-d{(d0,d1)}"),
-
 }
 
 _default_d_matrix_reprs = {

@@ -54,6 +54,7 @@ class _Derive(Frozen):
         return new_wf
 
     def _parse_new_weak_formulation_dict(self, new_term_dict, new_sign_dict):
+        """parse new weak formulation dict."""
         term_dict = dict()
         sign_dict = dict()
 
@@ -74,6 +75,7 @@ class _Derive(Frozen):
                         else:
                             assert new_sign in ('+', '-'), f"sign must be + or -."
                             sign = new_sign
+
                         term_dict[i][j].append(_t)
                         sign_dict[i][j].append(sign)
 
@@ -208,7 +210,7 @@ class _Derive(Frozen):
 
     @staticmethod
     def _switch_sign(sign):
-        """"""
+        """switch sign."""
         if sign == '+':
             return '-'
         elif sign == '-':

@@ -30,7 +30,7 @@ class MatrixProxy(Frozen):
         elif side == 'right':
             j = 1
         else:
-            raise Exception
+            raise Exception()
         sign_dict = self._ap._sign_dict
         term_dict = self._ap._term_dict
         signs = dict()  # left or right signs
@@ -43,9 +43,14 @@ class MatrixProxy(Frozen):
 
     def _parse_signs_terms(self, signs, terms):
         """"""
+        linear_unknown_blocks = [[list() for _ in range(self._ap._num_unknowns())] for _ in range(len(signs))]
+        linear_known_blocks = [[list() for _ in range(self._ap._num_known())] for _ in range(len(signs))]
+        others = [list() for _ in range(len(signs))]
+        print(linear_known_blocks)
         for i in signs:
             for j, sign in enumerate(signs[i]):
-                print(terms[i][j]._lin_repr)
+                print(i,j, terms[i][j]._lin_repr)
+                print(111)
 
 
 class BlockMatrix(Frozen):
@@ -60,8 +65,3 @@ class BlockColVector(Frozen):
     def __init__(self):
 
         self._freeze()
-
-
-if __name__ == '__main__':
-    # python 
-    import __init__ as ph

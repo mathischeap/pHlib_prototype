@@ -18,7 +18,7 @@ from src.spaces.operators import d, trace
 
 
 def _parse_l2_inner_product_mass_matrix(s0, s1, d0, d1):
-    """"""
+    """parse l2 inner product mass matrix."""
     assert s0 == s1, f"spaces do not match."
 
     if s0.__class__.__name__ == 'ScalarValuedFormSpace':

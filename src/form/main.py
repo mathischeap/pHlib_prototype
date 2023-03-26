@@ -280,7 +280,27 @@ class Form(Frozen):
 
     def __rmul__(self, other):
         """other * self"""
-        raise NotImplementedError()
+        if isinstance(other, (int, tuple)):
+            cs = constant_scalar(other)
+            return cs * self
+        elif other.__class__.__name__ == 'ConstantScalar0Form':
+            operator_lin = _global_operator_lin_repr_setting['multiply']
+            lr = self._lin_repr
+            sr = self._sym_repr
+            cs = other
+            if self.is_root():
+                lr = lr + operator_lin + cs._lin_repr
+                sr = cs._sym_repr + sr
+            else:
+                lr = r'\{' + lr + r'\}' + operator_lin + cs._lin_repr
+                sr = cs._sym_repr + r'\left(' + sr + r'\right)'
+            f = Form(
+                self.space,  # space
+                sr,          # symbolic representation
+                lr,          # linguistic representation
+                False,       # not a root-form anymore.
+            )
+            return f
 
     def __truediv__(self, other):
         """self / other"""
@@ -301,7 +321,7 @@ class Form(Frozen):
             if self.is_root():
                 lr = lr + operator_lin + cs._lin_repr
             else:
-                lr = '[' + lr + ']' + operator_lin + cs._lin_repr
+                lr = r'\{' + lr + r'\}' + operator_lin + cs._lin_repr
             sr = operator_sym[0] + sr + operator_sym[1] + cs._sym_repr + operator_sym[2]
             f = Form(
                 self.space,  # space

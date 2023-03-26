@@ -53,7 +53,7 @@ class OrdinaryDifferentialEquationDiscretize(Frozen):
                 self._at_instants[k] = self.time_sequence[k]
 
     def _get_abstract_time_interval(self, ks, ke):
-        """make time interval [ati0, ati1]"""
+        """make time interval [ati0, ati1]."""
         assert isinstance(ks, str) and isinstance(ke, str), f"must use string for abstract time instant."
         assert ks in self._at_instants, f"time instant {ks} is not defined"
         assert ke in self._at_instants, f"time instant {ke} is not defined"
@@ -89,7 +89,7 @@ class OrdinaryDifferentialEquationDiscretize(Frozen):
             raise NotImplementedError()
 
     def average(self, index, f, time_instants):
-        """Use average at time instants `time_instants` for form `f` in term indexed `index`
+        """Use average at time instants `time_instants` for form `f` in term indexed `index`.
         """
         term = self._ode[index][1]
 
@@ -116,7 +116,7 @@ class OrdinaryDifferentialEquationDiscretize(Frozen):
         self._eq_terms[index] = [(new_term, new_sign), ]
 
     def __call__(self):
-        """return the resulting weak formulation (of one single equation of course.)"""
+        """return the resulting weak formulation (of one single equation of course.)."""
         terms = ([], [])
         signs = ([], [])
         new_term_sign = self._eq_terms
@@ -146,8 +146,9 @@ class OrdinaryDifferentialEquationDiscretize(Frozen):
 
 if __name__ == '__main__':
     # python src/ode/discretize.py
-    import __init__ as ph
-    # import phlib as ph
+
+    import __init__ as ph  # import phlib as ph
+
     manifold = ph.manifold(3)
     mesh = ph.mesh(manifold)
     ph.space.set_mesh(mesh)
