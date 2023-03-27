@@ -43,15 +43,23 @@ class MatrixProxy(Frozen):
 
     def _parse_signs_terms(self, signs, terms):
         """"""
-        linear_unknown_blocks = [[list() for _ in range(self._ap._num_unknowns())] for _ in range(len(signs))]
-        linear_known_blocks = [[list() for _ in range(self._ap._num_known())] for _ in range(len(signs))]
-        others = [list() for _ in range(len(signs))]
-        print(linear_known_blocks)
+        num_unknown_terms = 0
+        num_unknowns = len(self._ap.unknowns)
+        blocks = tuple([tuple([list() for _ in range(num_unknowns)]) for _ in range(len(signs))])
+        others = tuple([list() for _ in range(len(signs))])
+        bs = tuple([tuple([list() for _ in range(num_unknowns)]) for _ in range(len(signs))])
+        os = tuple([list() for _ in range(len(signs))])
+        print(blocks, bs)
         for i in signs:
             for j, sign in enumerate(signs[i]):
-                print(i,j, terms[i][j]._lin_repr)
-                print(111)
+                term = terms[i][j]
+                if term.__class__.__name__ == 'TermLinearAlgebraicProxy':
+                    print(term._lin_repr)
+                else:
+                    others[i].append(term)
+                    os[i].append(sign)
 
+        print(others, os)
 
 class BlockMatrix(Frozen):
     """"""

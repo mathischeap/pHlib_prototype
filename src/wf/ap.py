@@ -31,7 +31,6 @@ class AlgebraicProxy(Frozen):
         self._bc = wf._bc
         self._mp = None
         self._evs = None
-        self.___num_known___ = None
         self._freeze()
 
     def _parse_terms(self, wf):
@@ -114,14 +113,6 @@ class AlgebraicProxy(Frozen):
     def test_vectors(self):
         """test vectors."""
         return self._tvs
-
-    def _num_unknowns(self):
-        return len(self.unknowns)
-
-    def _num_known(self):
-        if self.___num_known___ is None:
-            self.___num_known___ = len(self.elementary_vectors) - len(self.test_vectors) - len(self.unknowns)
-        return self.___num_known___
 
     @property
     def elementary_vectors(self):
