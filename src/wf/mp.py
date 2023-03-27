@@ -45,21 +45,28 @@ class MatrixProxy(Frozen):
         """"""
         num_unknown_terms = 0
         num_unknowns = len(self._ap.unknowns)
+
         blocks = tuple([tuple([list() for _ in range(num_unknowns)]) for _ in range(len(signs))])
         others = tuple([list() for _ in range(len(signs))])
         bs = tuple([tuple([list() for _ in range(num_unknowns)]) for _ in range(len(signs))])
         os = tuple([list() for _ in range(len(signs))])
-        print(blocks, bs)
+
+        # print(num_unknowns, self._ap.unknowns)
+
         for i in signs:
             for j, sign in enumerate(signs[i]):
                 term = terms[i][j]
+                test_vector = self._ap.test_vectors[i]
                 if term.__class__.__name__ == 'TermLinearAlgebraicProxy':
-                    print(term._lin_repr)
+                    tlr = term._lin_repr
+                    assert test_vector.T._lin_repr in tlr, "test vector must be present."
+                    factor_lin_repr = tlr.split(test_vector.T._lin_repr)[0]
+                    print(factor_lin_repr, len(factor_lin_repr))
                 else:
                     others[i].append(term)
                     os[i].append(sign)
 
-        print(others, os)
+        # print(others, os)
 
 
 class BlockMatrix(Frozen):
