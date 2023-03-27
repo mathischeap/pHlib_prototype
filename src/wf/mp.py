@@ -61,6 +61,7 @@ class MatrixProxy(Frozen):
 
         print(others, os)
 
+
 class BlockMatrix(Frozen):
     """"""
     def __init__(self):
