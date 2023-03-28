@@ -62,6 +62,7 @@ class AlgebraicProxy(Frozen):
                             self._is_linear = False
 
                     except NotImplementedError:
+
                         ap = term
                         new_sign = old_sign
                         linear = 'unknown'
@@ -147,6 +148,8 @@ class AlgebraicProxy(Frozen):
                     for j, term in enumerate(terms):
                         sign = self._sign_dict[i][t][j]
                         term = self._term_dict[i][t][j]
+
+                        print(term._lin_repr)
 
                         term_sym_repr = term._sym_repr
 

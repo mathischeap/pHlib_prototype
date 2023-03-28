@@ -8,7 +8,7 @@ import sys
 if './' not in sys.path:
     sys.path.append('./')
 from src.config import _form_evaluate_at_repr_setting, _root_form_ap_vec_setting
-from src.algebra.array import _array
+from src.algebra.array import _root_array
 
 
 def _parse_root_form_ap(f, sym_repr=None):
@@ -28,4 +28,4 @@ def _parse_root_form_ap(f, sym_repr=None):
 
     lr = f._pure_lin_repr + _root_form_ap_vec_setting['lin']
 
-    return _array(sym_repr, lr, (f._ap_shape(), 1))
+    return _root_array(sym_repr, lr, (f._ap_shape(), 1))

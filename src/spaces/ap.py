@@ -13,7 +13,7 @@ from src.spaces.main import _default_d_matrix_reprs
 from src.spaces.main import _default_wedge_vector_repr
 from src.spaces.main import _default_trace_matrix_repr
 from src.spaces.main import _default_space_degree_repr
-from src.algebra.array import _array
+from src.algebra.array import _root_array
 from src.spaces.operators import d, trace
 
 
@@ -30,7 +30,7 @@ def _parse_l2_inner_product_mass_matrix(s0, s1, d0, d1):
         lin = lin.replace('{k}', str(s0.k))
         lin = lin.replace('{(d0,d1)}', str((d0, d1)))
 
-        return _array(
+        return _root_array(
             sym, lin, (
                 s0._sym_repr + _default_space_degree_repr + str(d0),
                 s1._sym_repr + _default_space_degree_repr + str(d1)
@@ -56,7 +56,7 @@ def _parse_d_matrix(f):
         lin = lin.replace('{d}', str(degree))
         sym += r"^{" + str((s.k+1, s.k)) + r"}"
 
-        return _array(sym, lin, (ds._sym_repr + _default_space_degree_repr + str(degree), f._ap_shape()))
+        return _root_array(sym, lin, (ds._sym_repr + _default_space_degree_repr + str(degree), f._ap_shape()))
 
     else:
         raise NotImplementedError()
@@ -85,7 +85,7 @@ def _parse_wedge_vector(rf0, s1, d1):
 
         sym += rf"_{s0.k}"
 
-        return _array(sym, lin, (s1._sym_repr + _default_space_degree_repr + str(d1), 1))
+        return _root_array(sym, lin, (s1._sym_repr + _default_space_degree_repr + str(d1), 1))
 
     else:
         raise NotImplementedError()
@@ -102,7 +102,7 @@ def _parse_trace_matrix(f):
         lin = lin.replace('{d}', str(degree))
         sym += rf'_{s.k}'
         trace_space = trace(s)
-        return _array(sym, lin, (trace_space._sym_repr + _default_space_degree_repr + str(degree), f._ap_shape()))
+        return _root_array(sym, lin, (trace_space._sym_repr + _default_space_degree_repr + str(degree), f._ap_shape()))
 
     else:
         raise NotImplementedError()
