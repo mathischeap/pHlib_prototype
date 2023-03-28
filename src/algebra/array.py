@@ -10,7 +10,7 @@ if './' not in sys.path:
 
 from src.tools.frozen import Frozen
 from src.config import _parse_lin_repr
-from src.config import _non_root_lin_sep
+from src.config import _non_root_lin_sep, _transpose_text
 from src.form.parameters import constant_scalar
 _cs1 = constant_scalar(1)
 
@@ -85,7 +85,7 @@ class AbstractArray(Frozen):
             else:
                 sym_repr = sym[1:-12]
 
-            lin_repr = self._lin_repr.split('-transpose')[0]
+            lin_repr = self._lin_repr.split(_transpose_text)[0]
 
         else:
 
@@ -94,7 +94,7 @@ class AbstractArray(Frozen):
             else:
                 sym_repr = r'{\left(' + self._sym_repr + r'\right)}^\mathsf{T}'
 
-            lin_repr = self._lin_repr + '-transpose'
+            lin_repr = self._lin_repr + _transpose_text
 
         shape = (self._shape[1], self._shape[0])
         return AbstractArray(

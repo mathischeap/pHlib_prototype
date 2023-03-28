@@ -29,7 +29,7 @@ _mesh_default_lin_repr = 'Mesh'
 _global_lin_repr_setting = {
     # objects
     'manifold': [r'\underline{', '}'],
-    'mesh': [r'\textbf{', r'}'],
+    'mesh': [r'\textrm{', r'}'],
     'form': [r'\textsf{', r'}'],
     'scalar_parameter': [r'\textsc{', r'}'],
     'abstract_time_sequence': [r'\textit{', r'}'],
@@ -45,6 +45,15 @@ def _parse_lin_repr(obj, lin_repr):
     assert all([_ not in r"{$\}" for _ in lin_repr]), f"lin_repr={lin_repr} illegal, cannot contain" + r"'{\}'."
     start, end = _global_lin_repr_setting[obj]
     return start + lin_repr + end, lin_repr
+
+
+def _parse_type_and_pure_lin_repr(lin_repr):
+    """"""
+    for what in _global_lin_repr_setting:
+        key = _global_lin_repr_setting[what][0]
+        lk = len(key)
+        if lin_repr[:lk] == key:
+            return what, lin_repr[lk:-1]
 
 
 _manifold_default_sym_repr = r'\mathcal{M}'
@@ -63,13 +72,15 @@ def _check_sym_repr(sym_repr):   # not used for forms as they have their own che
 
 _form_evaluate_at_repr_setting = {
     'sym': [r"\left.", r"\right|^{(", ")}"],
-    'lin': "@",
+    'lin': ">",
 }
 
 _root_form_ap_vec_setting = {
     'sym': [r"\vec{", r"}"],
     'lin': "~vec"
 }
+
+_transpose_text = '-transpose'
 
 
 _non_root_lin_sep = [r'\{', r'\}']

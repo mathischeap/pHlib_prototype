@@ -18,7 +18,7 @@ plt.rcParams.update({
 matplotlib.use('TkAgg')
 
 from src.tools.frozen import Frozen
-from src.wf.mp import MatrixProxy
+# from src.wf.mp import MatrixProxy
 
 
 class AlgebraicProxy(Frozen):
@@ -29,7 +29,6 @@ class AlgebraicProxy(Frozen):
         self._parse_unknowns_test_vectors(wf)
         self._wf = wf
         self._bc = wf._bc
-        self._mp = None
         self._evs = None
         self._freeze()
 
@@ -195,11 +194,11 @@ class AlgebraicProxy(Frozen):
         plt.tight_layout()
         plt.show()
 
-    def mp(self):
-        """matrix proxy."""
-        if self._mp is None:
-            self._mp = MatrixProxy(self)
-        return self._mp
+    # def mp(self):
+    #     """matrix proxy."""
+    #     if self._mp is None:
+    #         self._mp = MatrixProxy(self)
+    #     return self._mp
 
 
 if __name__ == '__main__':
@@ -282,7 +281,11 @@ if __name__ == '__main__':
 
     ap = wf.ap()
 
-    mp = ap.mp()
+    ap.pr()
+
+    # mp = ap.mp()
+    #
+    # mp.pr()
 
     # ap.pr()
     # print(wf.unknowns, wf.test_forms)
