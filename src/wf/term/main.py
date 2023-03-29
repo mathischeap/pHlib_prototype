@@ -25,9 +25,9 @@ from src.config import _wf_term_default_simple_patterns as _simple_patterns
 from src.form.parameters import constant_scalar
 from src.config import _global_operator_sym_repr_setting
 from src.config import _non_root_lin_sep
-from src.wf.apt import _SimplePatternAPParser, \
-    _inner_simpler_pattern_examiner_scalar_valued_forms, \
-    _dp_simpler_pattern_examiner_scalar_valued_forms
+from src.wf.term.ap import _SimplePatternAPParser
+from src.wf.term.pattern import _dp_simpler_pattern_examiner_scalar_valued_forms
+from src.wf.term.pattern import _inner_simpler_pattern_examiner_scalar_valued_forms
 _cs1 = constant_scalar(1)
 
 
@@ -118,7 +118,7 @@ class _WeakFormulationTerm(Frozen):
     def _is_real_number_valued():
         return True
 
-    def print_representations(self):
+    def pr(self):
         """Print the representations of this term."""
         plt.figure(figsize=(5 + len(self._lin_repr)/20, 2))
         plt.axis([0, 1, 0, 1])
@@ -126,10 +126,6 @@ class _WeakFormulationTerm(Frozen):
         plt.text(0, 0.25, 'symbolic : ' + f"${self._sym_repr}$", ha='left', va='center', size=15)
         plt.axis('off')
         plt.show()
-
-    def pr(self):
-        """A wrapper of print_representations"""
-        return self.print_representations()
 
     def replace(self, f, by, which='all', change_sign=False):
         """replace form `f` in this term by `by`,

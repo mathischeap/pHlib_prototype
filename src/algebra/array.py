@@ -20,6 +20,9 @@ _global_root_arrays = dict()  # using lin_repr as cache keys
 
 def _root_array(sym_repr, pure_lin_repr, shape, symmetric=None, transposed=None):
     """"""
+    if pure_lin_repr in _global_root_arrays:
+        return _global_root_arrays[pure_lin_repr]   # can provide lin_repr only for existing array.
+
     lin_repr, pure_lin_repr = _parse_lin_repr('array', pure_lin_repr)
     if lin_repr in _global_root_arrays:
         return _global_root_arrays[lin_repr]
@@ -50,7 +53,6 @@ class AbstractArray(Frozen):
             self.___lin_repr___ = lin_repr
             self._components = (self, )
             self._transposes = (False, )
-            self._factor = _cs1
             assert isinstance(shape, tuple), f"pls put shape in a tuple."
             self.___shape___ = shape
         else:
@@ -60,17 +62,17 @@ class AbstractArray(Frozen):
             self.___lin_repr___ = None
             self._components = components
             self._transposes = transposes
-            if factor is None:
-                factor = _cs1
-            else:
-                pass
-            self._factor = factor
             self.___shape___ = None
-        self._is_root = is_root
 
-        self._pure_lin_repr = None
-        self._symmetric = symmetric    # True or False only for 2-d array
-        self._transposed = transposed  # True or False only for 2-d array
+        if factor is None:
+            factor = _cs1
+        else:
+            pass
+        self._factor = factor
+        self._is_root = is_root
+        self._pure_lin_repr = None     # only root array has it.
+        self._symmetric = symmetric    # True or False only for 2-d array.
+        self._transposed = transposed  # True or False only for 2-d array.
         self._freeze()
 
     @property

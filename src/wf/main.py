@@ -20,7 +20,8 @@ matplotlib.use('TkAgg')
 from src.wf.td import TemporalDiscretization
 from src.bc import BoundaryCondition
 from src.wf.derive import _Derive
-from src.wf.ap import AlgebraicProxy
+from src.wf.ap.main import AlgebraicProxy
+from src.wf.mp.main import MatrixProxy
 
 
 class WeakFormulation(Frozen):
@@ -383,6 +384,10 @@ class WeakFormulation(Frozen):
     def ap(self):
         """Do not cache it. Make it in real time"""
         return AlgebraicProxy(self)
+
+    def mp(self):
+        """Do not cache it. Make it in real time"""
+        return MatrixProxy(self)
 
 
 if __name__ == '__main__':

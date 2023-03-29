@@ -21,7 +21,7 @@ plt.rcParams.update({
 })
 matplotlib.use('TkAgg')
 
-from src.wf.term import inner
+from src.wf.term.main import inner
 from src.wf.main import WeakFormulation
 from src.bc import BoundaryCondition
 

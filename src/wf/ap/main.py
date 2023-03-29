@@ -18,7 +18,6 @@ plt.rcParams.update({
 matplotlib.use('TkAgg')
 
 from src.tools.frozen import Frozen
-# from src.wf.mp import MatrixProxy
 
 
 class AlgebraicProxy(Frozen):
@@ -149,8 +148,6 @@ class AlgebraicProxy(Frozen):
                         sign = self._sign_dict[i][t][j]
                         term = self._term_dict[i][t][j]
 
-                        print(term._lin_repr)
-
                         term_sym_repr = term._sym_repr
 
                         if indexing:
@@ -184,6 +181,10 @@ class AlgebraicProxy(Frozen):
                 symbolic += '.'
 
         symbolic = r"$\left\lbrace\begin{aligned}" + symbolic + r"\end{aligned}\right.$"
+        if self._bc is None or len(self._bc) == 0:
+            bc_text = ''
+        else:
+            bc_text = self._bc._bc_text()
 
         if indexing:
             figsize = (12, 3 * len(self._term_dict))
@@ -193,19 +194,13 @@ class AlgebraicProxy(Frozen):
         plt.figure(figsize=figsize)
         plt.axis([0, 1, 0, 1])
         plt.axis('off')
-        plt.text(0.05, 0.5, seek_text + '\n' + symbolic, ha='left', va='center', size=15)
+        plt.text(0.05, 0.5, seek_text + '\n' + symbolic + bc_text, ha='left', va='center', size=15)
         plt.tight_layout()
         plt.show()
 
-    # def mp(self):
-    #     """matrix proxy."""
-    #     if self._mp is None:
-    #         self._mp = MatrixProxy(self)
-    #     return self._mp
-
 
 if __name__ == '__main__':
-    # python src/wf/ap.py
+    # python src/wf/ap/main.py
     import __init__ as ph
 
     samples = ph.samples
@@ -283,12 +278,9 @@ if __name__ == '__main__':
     # wf.pr()
 
     ap = wf.ap()
-
     ap.pr()
 
-    # mp = ap.mp()
-    #
-    # mp.pr()
+
 
     # ap.pr()
     # print(wf.unknowns, wf.test_forms)

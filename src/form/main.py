@@ -91,13 +91,16 @@ class Form(Frozen):
         self._ap = None
         self._freeze()
 
+    # noinspection PyBroadException
     @staticmethod
     def _parse_is_root(lin_repr):
         """Study is_root through lin_repr."""
         try:
             _parse_lin_repr('form', lin_repr)
+
         except Exception:
             pass
+
         else:
             return True, lin_repr
 
@@ -107,8 +110,10 @@ class Form(Frozen):
 
             try:
                 _parse_lin_repr('form', lin_repr[len(start):-len(end)])
+
             except Exception:
                 return False, lin_repr
+
             else:
                 return True, lin_repr[len(start):-len(end)]
 

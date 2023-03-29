@@ -29,6 +29,10 @@ _default_d_matrix_reprs = {
     'Omega': (r"\mathsf{D}", "dMatOmega-n{n}-k{k}-d{d}"),
 }
 
+_default_d_matrix_transpose_reprs = {
+    'Omega': (r"\mathsf{D}", "dTMatOmega-n{n}-k{k}-d{d}"),
+}
+
 _default_wedge_vector_repr = {
     'Omega': (r"\boldsymbol{b}", "WedgeVec:traceHodge[{f0}]-wedge-d{d}"),
 }

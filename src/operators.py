@@ -21,7 +21,7 @@ exterior_derivative = d   # `exterior_derivative` is equivalent to `d`.
 
 from src.form.operators import codifferential
 
-from src.wf.term import inner
+from src.wf.term.main import inner
 
 from src.form.operators import time_derivative
 
