@@ -18,6 +18,7 @@ matplotlib.use('TkAgg')
 from src.tools.frozen import Frozen
 from src.algebra.array import AbstractArray
 from src.wf.term.ap import TermLinearAlgebraicProxy
+from src.algebra.linear_system import BlockMatrix, BlockColVector
 
 
 class MatrixProxy(Frozen):
@@ -280,148 +281,8 @@ class MatrixProxy(Frozen):
         plt.tight_layout()
         plt.show()
 
-
-class BlockMatrix(Frozen):
-    """"""
-    def __init__(self, shape):
-        self._shape = shape
-        self._entries = dict()
-        self._signs = dict()
-        for i in range(shape[0]):
-            self._entries[i] = list()
-            self._signs[i] = list()
-            for j in range(shape[1]):
-                self._entries[i].append(list())
-                self._signs[i].append(list())
-        self._freeze()
-
-    def _is_empty(self):
-        empty = True
-        for i in self._entries:
-            for en in self._entries[i]:
-                if en != list():
-                    return False
-                else:
-                    pass
-        return empty
-
-    def _add(self, i, j, term, sign):
-        """"""
-        assert sign in ('+', '-'), f"sign={sign} is wrong."
-        if self._entries[i][j] != list():
-            assert term.shape == self._entries[i][j][0].shape, f"shape dis-match."
-        else:
-            pass
-        self._entries[i][j].append(term)
-        self._signs[i][j].append(sign)
-
-    def __call__(self, i, j):
-        """"""
-        return self._entries[i][j], self._signs[i][j]
-
-    def _pr_text(self):
-        """"""
-        symbolic = ''
-        for i in self._entries:
-            entry = self._entries[i]
-            for j, terms in enumerate(entry):
-                if len(terms) == 0:
-                    symbolic += r"\boldsymbol{0}"
-
-                for k, term in enumerate(terms):
-                    sign = self._signs[i][j][k]
-
-                    if k == 0 and sign == '+':
-                        symbolic += term._sym_repr
-
-                    else:
-                        symbolic += sign + term._sym_repr
-
-                if j < len(entry) - 1:
-                    symbolic += '&'
-
-            if i < len(self._entries) - 1:
-                symbolic += r'\\'
-
-        symbolic = r"\begin{bmatrix}" + symbolic + r"\end{bmatrix}"
-        return symbolic
-
-    def pr(self, figsize=(12, 6)):
-        """"""
-        symbolic = r"$" + self._pr_text() + r"$"
-        plt.figure(figsize=figsize)
-        plt.axis([0, 1, 0, 1])
-        plt.axis('off')
-        plt.text(0.05, 0.5, symbolic, ha='left', va='center', size=15)
-        plt.tight_layout()
-        plt.show()
-
-
-class BlockColVector(Frozen):
-    """"""
-
-    def __init__(self, shape):
-        """"""
-        self._shape = shape
-        self._entries = tuple([list() for _ in range(shape)])
-        self._signs = tuple([list() for _ in range(shape)])
-        self._freeze()
-
-    def __call__(self, i):  # work as getitem, use call to make it consistent with `BlockMatrix`.
-        """"""
-        return self._entries[i], self._signs[i]
-
-    def _is_empty(self):
-        empty = True
-        for en in self._entries:
-            if en != list():
-                return False
-            else:
-                pass
-        return empty
-
-    def _add(self, i, term, sign):
-        """"""
-        assert sign in ('+', '-'), f"sign={sign} is wrong."
-        if self._entries[i] != list():
-            assert term.shape == self._entries[i][0].shape, f"shape dis-match."
-        else:
-            pass
-        self._entries[i].append(term)
-        self._signs[i].append(sign)
-
-    def _pr_text(self):
-        """"""
-        symbolic = ''
-        for i, entry in enumerate(self._entries):
-
-            if len(entry) == 0:
-                symbolic += r'\boldsymbol{0}'
-            else:
-                for j, term in enumerate(entry):
-                    sign = self._signs[i][j]
-
-                    if j == 0 and sign == '+':
-                        symbolic += term._sym_repr
-
-                    else:
-                        symbolic += sign + term._sym_repr
-
-            if i < len(self._entries) - 1:
-                symbolic += r'\\'
-
-        symbolic = r"\begin{bmatrix}" + symbolic + r"\end{bmatrix}"
-        return symbolic
-
-    def pr(self, figsize=(8, 6)):
-        """"""
-        symbolic = r"$" + self._pr_text() + r"$"
-        plt.figure(figsize=figsize)
-        plt.axis([0, 1, 0, 1])
-        plt.axis('off')
-        plt.text(0.05, 0.5, symbolic, ha='left', va='center', size=15)
-        plt.tight_layout()
-        plt.show()
+    def ls(self):
+        """convert self to an abstract linear system."""
 
 
 if __name__ == '__main__':
@@ -501,6 +362,5 @@ if __name__ == '__main__':
         a3 @ td.time_sequence['k-1'],
         b2 @ td.time_sequence['k-1']]
     )
-    mp.pr()
-    a = mp['1-0']
-    print(a)
+    # mp.pr()
+    ls = mp.ls()
