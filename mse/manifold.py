@@ -9,6 +9,7 @@ if './' not in sys.path:
     sys.path.append('./')
 from src.tools.frozen import Frozen
 
+
 class MseManifolds(Frozen):
     """"""
 

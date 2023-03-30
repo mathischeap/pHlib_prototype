@@ -178,7 +178,7 @@ class LinearSystem(Frozen):
         for i in x:
             xi = x(i)
             assert len(xi[0]) == 1, f"x[{i}] = {xi} is wrong."
-            # make sure x is not empty and only have one entry on each row
+            # make sure x is not empty and only have one entry on each row.
             entry = xi[0][0]
             assert entry.is_root() and entry.ndim == 2 and entry.shape[1] == 1, \
                 f"x[{i}] is illegal, it must be  a root col vector (abstract array of shape (x,1))."
