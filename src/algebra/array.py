@@ -8,8 +8,17 @@ import sys
 if './' not in sys.path:
     sys.path.append('./')
 
+import matplotlib.pyplot as plt
+import matplotlib
+plt.rcParams.update({
+    "text.usetex": True,
+    "font.family": "DejaVu Sans",
+    "text.latex.preamble": r"\usepackage{amsmath, amssymb}",
+})
+matplotlib.use('TkAgg')
+
 from src.tools.frozen import Frozen
-from src.config import _parse_lin_repr, _non_root_lin_sep
+from src.config import _parse_lin_repr, _abstract_array_factor_sep, _abstract_array_connector
 from src.config import _transpose_text
 from src.form.parameters import constant_scalar
 _cs1 = constant_scalar(1)
@@ -105,7 +114,7 @@ class AbstractArray(Frozen):
             if self._factor == _cs1:
                 lin = ''
             else:
-                lin = _non_root_lin_sep[0] + self._factor._lin_repr + _non_root_lin_sep[1]
+                lin = self._factor._lin_repr + _abstract_array_factor_sep
 
             for i, com in enumerate(self._components):
                 clr = com._lin_repr
@@ -116,7 +125,7 @@ class AbstractArray(Frozen):
                     pass
 
                 if 0 < i:
-                    lin += '@'
+                    lin += _abstract_array_connector
 
                 lin += clr
 
@@ -160,6 +169,17 @@ class AbstractArray(Frozen):
         else:
             raise NotImplementedError()
 
+    def pr(self, figsize=(8, 6)):
+        """print representations."""
+        text = r"$" + self._sym_repr + r"$"
+        text += "\n" + self._lin_repr
+        plt.figure(figsize=figsize)
+        plt.axis([0, 1, 0, 1])
+        plt.axis('off')
+        plt.text(0.05, 0.5, text, ha='left', va='center', size=15)
+        plt.tight_layout()
+        plt.show()
+
     def __repr__(self):
         """repr"""
         super_repr = super().__repr__().split('object')[1]
@@ -193,7 +213,9 @@ class AbstractArray(Frozen):
                 pure_lin_repr = self._components[0]._pure_lin_repr
 
                 return _root_array(   # must return an existing root-array
-                    '', pure_lin_repr, None
+                    '',
+                    pure_lin_repr,
+                    None
                 )
 
             else:
@@ -218,10 +240,23 @@ class AbstractArray(Frozen):
                     transposes=self._transposes + other._transposes,
                 )
 
+            elif self._factor == _cs1 or other._factor == _cs1:
+
+                if self._factor == _cs1:
+                    factor = other._factor
+                else:
+                    factor = self._factor
+
+                return AbstractArray(
+                    factor=factor,   # _cs1
+                    components=self._components + other._components,
+                    transposes=self._transposes + other._transposes,
+                )
+
             else:
                 raise NotImplementedError()
         else:
-            raise NotImplementedError()
+            raise NotImplementedError(f"{other}")
 
     def __rmul__(self, other):
         """other * self."""

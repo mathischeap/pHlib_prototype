@@ -18,7 +18,7 @@ matplotlib.use('TkAgg')
 from src.tools.frozen import Frozen
 from src.algebra.array import AbstractArray
 from src.wf.term.ap import TermLinearAlgebraicProxy
-from src.algebra.linear_system import BlockMatrix, BlockColVector
+from src.algebra.linear_system import BlockMatrix, BlockColVector, LinearSystem
 
 
 class MatrixProxy(Frozen):
@@ -257,7 +257,7 @@ class MatrixProxy(Frozen):
         return symbolic
 
     def pr(self, figsize=(12, 8)):
-        """"""
+        """pr"""
         seek_text = self._wf._mesh.manifold._manifold_text()
         seek_text += r'seek $\left('
         form_sr_list = list()
@@ -283,6 +283,38 @@ class MatrixProxy(Frozen):
 
     def ls(self):
         """convert self to an abstract linear system."""
+        assert self._lbv._is_empty(), f"Format is illegal, must be like Ax=b, do pr() to check!"
+        assert len(self._l_mvs) == 1, f"Format is illegal, must be like Ax=b, do pr() to check!"
+        A, x = self._l_mvs[0]
+        b = BlockColVector(self._rbv._shape)
+        for Mv in self._r_mvs:
+            M, v = Mv
+            for i in range(M._shape[0]):
+                for j in range(M._shape[1]):
+                    vj, sj = v(j)
+                    Mij, Sij = M(i, j)
+
+                    assert len(vj) == len(sj) == 1, f"Format is illegal, must be like Ax=b, do pr() to check!"
+
+                    vj, sj = vj[0], sj[0]
+
+                    for mij, sij in zip(Mij, Sij):
+
+                        if sj == sij:
+                            sign = '+'
+                        else:
+                            sign = '-'
+
+                        mij_at_vj = mij @ vj
+
+                        b._add(i, mij_at_vj, sign)
+
+        for i in range(self._rbv._shape):
+            bi, si = self._rbv(i)
+            for bj, sj in zip(bi, si):
+                b._add(i, bj, sj)
+
+        return LinearSystem(A, x, b)
 
 
 if __name__ == '__main__':
@@ -362,5 +394,5 @@ if __name__ == '__main__':
         a3 @ td.time_sequence['k-1'],
         b2 @ td.time_sequence['k-1']]
     )
-    # mp.pr()
+    mp.pr()
     ls = mp.ls()

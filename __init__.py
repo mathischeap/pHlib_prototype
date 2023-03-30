@@ -28,6 +28,8 @@ __all__ = [
     'ode',
     'time_sequence',
     'constant_scalar',
+
+    'fem',
 ]
 
 import src.config as config
@@ -54,3 +56,5 @@ from src.ode.main import ode
 
 from src.tools.time_sequence import abstract_time_sequence as time_sequence
 from src.form.parameters import constant_scalar
+
+import src.fem as fem

@@ -72,12 +72,12 @@ def _check_sym_repr(sym_repr):   # not used for forms as they have their own che
 
 _form_evaluate_at_repr_setting = {
     'sym': [r"\left.", r"\right|^{(", ")}"],
-    'lin': ">",
+    'lin': "@",
 }
 
 _root_form_ap_vec_setting = {
     'sym': [r"\vec{", r"}"],
-    'lin': "~vec"
+    'lin': "+vec"
 }
 
 _transpose_text = '-transpose'
@@ -85,6 +85,8 @@ _transpose_text = '-transpose'
 
 _non_root_lin_sep = [r'\{', r'\}']
 
+_abstract_array_factor_sep = r'\{*\}'
+_abstract_array_connector = r'\{@\}'
 
 _global_operator_lin_repr_setting = {  # coded operators
     'plus': r" $+$ ",
