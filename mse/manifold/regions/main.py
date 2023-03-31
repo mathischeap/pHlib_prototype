@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 pH-lib@RAM-EEMCS-UT
-created at: 3/30/2023 7:02 PM
+created at: 3/31/2023 2:29 PM
 """
 import sys
 
@@ -10,17 +10,13 @@ if './' not in sys.path:
 from src.tools.frozen import Frozen
 
 
-class MseManifolds(Frozen):
+class MseManifoldRegions(Frozen):
     """"""
 
-    def __init__(self, abstract_manifold):
+    def __init__(self, mf):
         """"""
-        self._abstract = abstract_manifold
+        self._mf = mf
         self._freeze()
-
-    @property
-    def abstract(self):
-        return self._abstract
 
 
 if __name__ == '__main__':

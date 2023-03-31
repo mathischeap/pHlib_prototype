@@ -31,12 +31,12 @@ class Manifold(Frozen):
     """"""
 
     def __init__(
-            self, ndim,
-            sym_repr=None,
-            lin_repr=None,
-            is_periodic=False,
-            udg_repr=None,   # the undirected graph representation of this manifold
-            # add other representations here.
+        self, ndim,
+        sym_repr=None,
+        lin_repr=None,
+        is_periodic=False,
+        udg_repr=None,   # the undirected graph representation of this manifold
+        # add other representations here.
     ):
         """"""
         embedding_space_ndim = get_embedding_space_dim()
@@ -203,7 +203,7 @@ class Manifold(Frozen):
 
     def _manifold_text(self):
         """generate text for printing representations."""
-        return rf'In ${self._sym_repr}\subset\mathbb' + '{R}^{' + str(self.ndim) + '}$, '
+        return rf'In ${self._sym_repr}\subset\mathbb' + '{R}^{' + str(get_embedding_space_dim()) + '}$, '
 
 
 class NullManifold(Frozen):

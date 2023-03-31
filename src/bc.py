@@ -19,6 +19,7 @@ class BoundaryCondition(Frozen):
     def __init__(self, manifold):
         """"""
         self._boundary = manifold.boundary()
+        # keys: boundary_section_sym_repr, values: the given form on this boundary section.
         self._valid_bcs: Dict[str] = dict()
         self._freeze()
 
