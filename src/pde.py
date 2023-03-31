@@ -327,6 +327,10 @@ class PartialDifferentialEquations(Frozen):
                     yield index
 
     @property
+    def mesh(self):
+        return self._mesh
+
+    @property
     def elementary_forms(self):
         """Return a set of root forms that this equation involves."""
         return self._efs

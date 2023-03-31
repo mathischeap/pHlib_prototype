@@ -355,4 +355,3 @@ if __name__ == '__main__':
     # ls.pr()
 
     mse, fem = ph.fem.apply('mse', locals())
-    print(mse.mf_config)

@@ -19,9 +19,13 @@ from src.spaces.main import set_mesh
 _global_meshes = dict()    # all meshes are cached, and all sym_repr and lin_repr are different.
 
 
-def mesh(manifold):
+def mesh(manifold, sym_repr=None, lin_repr=None):
     """A wrapper of the Mesh class."""
-    return Mesh(manifold)
+    return Mesh(
+        manifold,
+        sym_repr=sym_repr,
+        lin_repr=lin_repr,
+    )
 
 
 def _list_meshes():

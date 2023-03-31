@@ -4,6 +4,7 @@
 @contact: zhangyi_aero@hotmail.com
 @time: 11/26/2022 2:56 PM
 """
+
 import sys
 
 if './' not in sys.path:
@@ -11,12 +12,18 @@ if './' not in sys.path:
 from src.tools.frozen import Frozen
 
 
-class MseMesh(Frozen):
+class RegionMapping(Frozen):
     """"""
-    def __init__(self, abstract_mesh):
-        self._abstract = abstract_mesh
+
+    def __init__(self):
+        self._mapping = None
         self._freeze()
 
     @property
-    def abstract(self):
-        return self._abstract
+    def mapping(self):
+        return self._mapping
+
+    @mapping.setter
+    def mapping(self, mp):
+        """"""
+        self._mapping = mp

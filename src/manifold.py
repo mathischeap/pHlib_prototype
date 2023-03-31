@@ -14,17 +14,19 @@ from src.config import _manifold_default_sym_repr
 from src.config import _check_sym_repr
 from src.config import _parse_lin_repr
 from src.config import _manifold_default_lin_repr
+import numpy as np
 
 _global_manifolds = dict()  # all manifolds are cached, and all sym_repr and lin_repr are different.
 
 
 def manifold(
         ndim,
-        is_periodic=False,
-        udg_repr=None
+        sym_repr=None,
+        lin_repr=None,
+        is_periodic=False
 ):
     """A function wrapper of the Manifold class."""
-    return Manifold(ndim, is_periodic=is_periodic, udg_repr=udg_repr)
+    return Manifold(ndim, sym_repr=sym_repr, lin_repr=lin_repr, is_periodic=is_periodic)
 
 
 class Manifold(Frozen):
@@ -35,7 +37,6 @@ class Manifold(Frozen):
         sym_repr=None,
         lin_repr=None,
         is_periodic=False,
-        udg_repr=None,   # the undirected graph representation of this manifold
         # add other representations here.
     ):
         """"""
@@ -82,7 +83,7 @@ class Manifold(Frozen):
         assert isinstance(is_periodic, bool), f"is_periodic must be bool type."
         self._is_periodic = is_periodic
 
-        self._udg_repr = udg_repr  # if it has an udg_repr representation.
+        self._udg = None  # if it has an udg_repr representation.
         self._boundary = None
         self._inclusion = None  # not None for boundary manifold. Will be set when initialize a boundary manifold.
         self._sub_manifolds = {  # the sub-manifolds of the same dimensions. Using sym_repr as cache key.
@@ -94,14 +95,34 @@ class Manifold(Frozen):
         self._freeze()
 
     @property
+    def esd(self):
+        """embedding space dimensions"""
+        return get_embedding_space_dim()
+
+    @property
     def ndim(self):
         """The dimensions of this manifold."""
         return self._ndim
 
     @property
-    def udg_repr(self):
+    def udg(self):
         """the undirected graph representation of this manifold."""
-        return self._udg_repr
+        return self._udg
+
+    @udg.setter
+    def udg(self, g):
+        """udg setter."""
+        if g == 1:
+            g = [[1, ], ]
+        else:
+            assert np.ndim(g) == 2
+            gsp = np.shape(g)
+            assert gsp[0] == gsp[1]
+            for i, gi in enumerate(g):
+                for j, gij in enumerate(gi):
+                    assert gij in (0, 1), \
+                        f"undirected graph must be a topological matrix. Now g[{i}][{j}] = {gij} is not 0 or 1. "
+        self._udg = g
 
     def is_periodic(self):
         """"""

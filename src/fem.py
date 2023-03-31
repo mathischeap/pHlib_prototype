@@ -141,7 +141,12 @@ if __name__ == '__main__':
     ls = mp.ls()
     # wf.pr()
 
+    mesh = oph.mesh
+    mani = oph.mesh.manifold
+    mani.udg = 1
+
+
     mse, obj = ph.fem.apply('mse', locals())
     manifold = obj['base']['manifolds'][r'\mathcal{M}']
 
-    mse.config(manifold)
+    mse.config(manifold, 'crazy')
