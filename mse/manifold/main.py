@@ -14,33 +14,42 @@ from mse.manifold.regions.main import MseManifoldRegions
 from mse.manifold.coordinate_transformation import MseManifoldsCoordinateTransformation
 from mse.manifold.predefined.main import RegionMapping
 
+
 _global_mse_manifolds = dict()  # cache all MseManifolds, keys are sym_repr of abstract manifold.
 
 
 def config(mf, arg, **kwargs):
     """"""
     assert mf.__class__ is MseManifold, f"I can only config MseManifold instance. Now I get {mf}."
+    assert mf._regions is None, f"manifold {mf} already have region configurations. Change it may lead to error."
 
-    if mf.udg is not None:
+    mf._regions = MseManifoldRegions(mf)  # initialize the regions.
 
-        if isinstance(arg, str):   # use predefined mapping
+    if isinstance(arg, str):  # use predefined mappings
 
-            predefined_path = '.'.join(str(RegionMapping).split(' ')[1][1:-2].split('.')[:-2]) + '.' + arg
-            _module = import_module(predefined_path)
-            region_mapping_dict = getattr(_module, arg)(mf, **kwargs)
+        predefined_path = '.'.join(str(RegionMapping).split(' ')[1][1:-2].split('.')[:-2]) + '.' + arg
+        _module = import_module(predefined_path)
+        region_map, region_mapping_dict = getattr(_module, arg)(mf, **kwargs)
 
-        else:   # give particular mappings for each region in a list or tuple.
-            region_mapping_dict = dict()
-            assert isinstance(arg, (list, tuple)), f"pls put region mappings in list or tuple."
-            for i, mapping in enumerate(arg):
-                rmi = RegionMapping()
-                rmi.mapping = mapping
-                region_mapping_dict[i] = rmi
+        for i in region_mapping_dict:
+            assert region_mapping_dict[i].__class__ is RegionMapping, f"{i}th region mapping is not a valid one."
 
-        print(region_mapping_dict)
+        mf.regions._parse_regions_from_region_map_and_mapping_dict(region_map, region_mapping_dict)
 
     else:
         raise NotImplementedError()
+
+        # else:  # give particular mappings for each region in a list or tuple.
+        #
+        #     region_mapping_dict = dict()
+        #     assert isinstance(arg, (list, tuple)), f"pls put region mappings in list or tuple."
+        #     assert len(mf.udg) == len(arg), f"I have {len(mf.udg)} regions, but {len(arg)} mappings provided."
+        #     for i, mapping in enumerate(arg):
+        #         rmi = RegionMapping()
+        #         rmi.mapping = mapping
+        #         region_mapping_dict[i] = rmi
+
+        # at this stage, regions are number named! we will name the region during the initialization of regions.
 
 
 class MseManifold(Frozen):
@@ -53,6 +62,10 @@ class MseManifold(Frozen):
         self._regions = None
         _global_mse_manifolds[abstract_manifold._sym_repr] = self
         self._freeze()
+
+    def __repr__(self):
+        super_repr = super().__repr__().split('object')[1]
+        return f"<MseManifold " + self._abstract._sym_repr + super_repr
 
     @property
     def abstract(self):
@@ -68,7 +81,7 @@ class MseManifold(Frozen):
 
     @property
     def ndim(self):
-        """The dimensions of this manifold"""
+        """The dimensions of this manifold (Not the embedding space dimensions!)"""
         return self._abstract.ndim
 
     @property

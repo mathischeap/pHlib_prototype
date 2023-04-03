@@ -112,6 +112,7 @@ class Manifold(Frozen):
     @udg.setter
     def udg(self, g):
         """udg setter."""
+        assert self._udg is None, f"change udg may lead to error."
         if g == 1:
             g = [[1, ], ]
         else:

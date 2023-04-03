@@ -13,5 +13,10 @@ from src.tools.frozen import Frozen
 class MseManifoldsCoordinateTransformation(Frozen):
     """"""
     def __init__(self, mf):
+        assert mf.regions is not None, f"pls set regions for manifold {mf} before accessing ct."
         self._mf = mf
         self._freeze()
+
+    def __repr__(self):
+        """"""
+        return f"<CT of " + self._mf.__repr__() + ">"

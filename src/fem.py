@@ -143,10 +143,8 @@ if __name__ == '__main__':
 
     mesh = oph.mesh
     mani = oph.mesh.manifold
-    mani.udg = 1
-
 
     mse, obj = ph.fem.apply('mse', locals())
     manifold = obj['base']['manifolds'][r'\mathcal{M}']
 
-    mse.config(manifold, 'crazy')
+    mse.config(manifold)('crazy')

@@ -57,8 +57,17 @@ def _parse(obj):
 from mse.manifold.main import config as _mf_config
 
 
-def config(obj, *args,  **kwargs):
-    if obj.__class__ is MseManifold:
-        return _mf_config(obj, *args, **kwargs)
-    else:
-        raise NotImplementedError()
+def config(obj):
+    return _Config(obj)
+
+
+class _Config():
+    """"""
+    def __init__(self, obj):
+        self._obj = obj
+
+    def __call__(self, *args, **kwargs):
+        if self._obj.__class__ is MseManifold:
+            return _mf_config(self._obj, *args, **kwargs)
+        else:
+            raise NotImplementedError()

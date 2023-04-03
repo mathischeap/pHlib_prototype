@@ -21,9 +21,11 @@ class RegionMapping(Frozen):
 
     @property
     def mapping(self):
+        """A mapping that maps the reference region[0,1]^n to a physical region."""
         return self._mapping
 
     @mapping.setter
     def mapping(self, mp):
-        """"""
+        """Do not change it once it is set."""
+        assert self._mapping is None, f"change a mapping is dangerous."
         self._mapping = mp
