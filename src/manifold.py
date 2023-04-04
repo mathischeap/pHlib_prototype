@@ -14,7 +14,6 @@ from src.config import _manifold_default_sym_repr
 from src.config import _check_sym_repr
 from src.config import _parse_lin_repr
 from src.config import _manifold_default_lin_repr
-import numpy as np
 
 _global_manifolds = dict()  # all manifolds are cached, and all sym_repr and lin_repr are different.
 
@@ -108,22 +107,6 @@ class Manifold(Frozen):
     def udg(self):
         """the undirected graph representation of this manifold."""
         return self._udg
-
-    @udg.setter
-    def udg(self, g):
-        """udg setter."""
-        assert self._udg is None, f"change udg may lead to error."
-        if g == 1:
-            g = [[1, ], ]
-        else:
-            assert np.ndim(g) == 2
-            gsp = np.shape(g)
-            assert gsp[0] == gsp[1]
-            for i, gi in enumerate(g):
-                for j, gij in enumerate(gi):
-                    assert gij in (0, 1), \
-                        f"undirected graph must be a topological matrix. Now g[{i}][{j}] = {gij} is not 0 or 1. "
-        self._udg = g
 
     def is_periodic(self):
         """"""
