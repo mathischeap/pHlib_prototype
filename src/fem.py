@@ -49,9 +49,7 @@ def apply(fe_name, obj_dict):
     }
 
     for obj_name in obj_dict:
-
         obj = obj_dict[obj_name]
-
         particular_obj = finite_element_main._parse(obj)
         if particular_obj is not None:
             new_setup['others'][obj_name] = particular_obj
