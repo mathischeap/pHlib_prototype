@@ -137,7 +137,7 @@ if __name__ == '__main__':
     #     b2 @ td.time_sequence['k-1']]
     # )
     ls = mp.ls()
-    # wf.pr()
+    wf.pr()
 
     mesh = oph.mesh
     mani = oph.mesh.manifold

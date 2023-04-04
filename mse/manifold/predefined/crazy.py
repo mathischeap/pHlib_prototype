@@ -13,12 +13,11 @@ from src.tools.frozen import Frozen
 from mse.manifold.predefined.main import RegionMapping
 import numpy as np
 
-
-class CrazyMeshCurvitureWarning(UserWarning):
-    pass
-
-
 import warnings
+
+
+class CrazyMeshCurvatureWarning(UserWarning):
+    pass
 
 
 def crazy(mf, bounds=None, c=0):
@@ -60,7 +59,7 @@ class _CrazyMapping(Frozen):
         assert isinstance(c, (int, float)), f"={c} is illegal, need to be a int or float. Ideally in [0, 0.3]."
 
         if not (0 <= c <= 0.3):
-            warnings.warn(f"c={c} is not good. Ideally, c in [0, 0.3].", CrazyMeshCurvitureWarning)
+            warnings.warn(f"c={c} is not good. Ideally, c in [0, 0.3].", CrazyMeshCurvatureWarning)
 
         self.bounds = bounds
         self.c = c
