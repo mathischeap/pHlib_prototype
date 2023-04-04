@@ -31,7 +31,7 @@ class MseManifoldRegions(Frozen):
         assert self._regions == dict(), f"Change regions will be dangerous!"
         for i in mapping_dict:
             mp = mapping_dict[i]
-            rn = self._mf.abstract._sym_repr + r':R_{' +  str(i) + r'}'
+            rn = self._mf.abstract._sym_repr + r':R_{' + str(i) + r'}'
             region = MseManifoldRegion(self, i, rn, mp)
             self._regions[i] = region
         self._map = region_map
