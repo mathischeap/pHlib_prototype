@@ -7,10 +7,19 @@
 """
 
 _global_variables = {
-    'embedding_space_dim': 3,
+    'embedding_space_dim': 3,  # default embedding_space_dim is 3.
 }
 
 
+# MPI config
+from mpi4py import MPI
+COMM = MPI.COMM_WORLD
+RANK: int = COMM.Get_rank()
+SIZE: int = COMM.Get_size()
+MASTER_RANK: int = 0  # you can, but you do not need to change this!
+
+
+# space config
 def set_embedding_space_dim(ndim):
     """"""
     _global_variables['embedding_space_dim'] = ndim
@@ -21,6 +30,7 @@ def get_embedding_space_dim():
     return _global_variables['embedding_space_dim']
 
 
+# lib setting config
 _abstract_time_sequence_default_lin_repr = 'Ts'
 _manifold_default_lin_repr = 'Manifold'
 _mesh_default_lin_repr = 'Mesh'
