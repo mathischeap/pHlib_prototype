@@ -7,7 +7,7 @@ import sys
 
 if './' not in sys.path:
     sys.path.append('./')
-
+from src.tools.frozen import Frozen
 from mse.manifold.main import MseManifold, _global_mse_manifolds
 from mse.mesh.main import MseMesh
 
@@ -54,6 +54,7 @@ def _parse_root_forms(abstract_rfs):
 def _parse(obj):
     """"""
 
+
 from mse.manifold.main import config as _mf_config
 
 
@@ -61,7 +62,7 @@ def config(obj):
     return _Config(obj)
 
 
-class _Config():
+class _Config(Frozen):
     """"""
     def __init__(self, obj):
         self._obj = obj
