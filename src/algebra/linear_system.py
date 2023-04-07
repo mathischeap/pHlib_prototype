@@ -354,4 +354,4 @@ if __name__ == '__main__':
     ls = mp.ls()
     # ls.pr()
 
-    mse, fem = ph.fem.apply('mse', locals())
+    mse, fem = ph.fem.apply('msepy', locals())

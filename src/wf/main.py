@@ -27,7 +27,7 @@ from src.wf.mp.main import MatrixProxy
 class WeakFormulation(Frozen):
     """Weak Formulation."""
 
-    def __init__(self, term_sign_dict=None, test_forms=None, expression=None, merge=None):
+    def __init__(self, test_forms, term_sign_dict=None, expression=None, merge=None):
         """
 
         Parameters
@@ -37,20 +37,17 @@ class WeakFormulation(Frozen):
         expression
         """
         if term_sign_dict is not None:
-            assert test_forms is not None
             assert expression is None
             assert merge is None
             self._parse_term_sign_dict(term_sign_dict, test_forms)
 
         elif expression is not None:
             assert term_sign_dict is None
-            assert test_forms is None
             assert merge is None
-            self._parse_expression(expression)
+            self._parse_expression(expression, test_forms)
 
         elif merge is not None:  # merge multiple weak formulations
             assert term_sign_dict is None
-            assert test_forms is not None
             assert expression is None
             self._initialize_through_merging(merge, test_forms)
 
@@ -64,6 +61,65 @@ class WeakFormulation(Frozen):
         self._td = None
         self._bc = None
         self._freeze()
+
+    def _parse_term_sign_dict(self, term_sign_dict, test_forms):
+        """"""
+        term_dict, sign_dict = term_sign_dict
+        ind_dict = dict()
+        indexing = dict()
+        num_eq = len(term_dict)
+        for i in range(num_eq):   # ith equation
+            assert i in term_dict and i in sign_dict, f"numbering of equations must be 0, 1, 2, ..."
+            ind_dict[i] = ([], [])
+            k = 0
+            for j, terms in enumerate(term_dict[i]):
+                for m in range(len(terms)):
+                    index = str(i) + '-' + str(k)
+                    k += 1
+                    indexing[index] = (sign_dict[i][j][m], term_dict[i][j][m])
+                    ind_dict[i][j].append(index)
+
+        self._test_forms = test_forms
+        self._term_dict = term_dict
+        self._sign_dict = sign_dict
+        self._ind_dict = ind_dict
+        self._indexing = indexing
+
+    def _parse_expression(self, expression, test_forms):
+        """"""
+        raise NotImplementedError()
+
+    def _initialize_through_merging(self, merge, test_forms):
+        """"""
+        term_dict = dict()
+        sign_dict = dict()
+        no = 0
+        for i in merge:
+            eqi = merge[i]
+            if eqi.__class__.__name__ == 'PartialDifferentialEquations':
+                tdi, sdi = eqi._term_dict, eqi._sign_dict
+                for j in tdi:
+                    term_dict[no] = tdi[j]
+                    sign_dict[no] = sdi[j]
+                    no += 1
+
+            elif isinstance(eqi, dict):
+                tdi, sdi = eqi['_term_dict'], eqi['_sign_dict']
+                term_dict[no] = tdi
+                sign_dict[no] = sdi
+                no += 1
+
+            else:
+                raise NotImplementedError()
+
+        for i in term_dict:
+            for j, terms in enumerate(term_dict[i]):
+                for k, term in enumerate(terms):
+                    assert term._is_able_to_be_a_weak_term, f"term[{i}][{j}][{k}] = {term} " \
+                                                            f"is not suitable for a weak formulation."
+                    sign = sign_dict[i][j][k]
+                    assert sign in ('+', '-'), f"sign[{i}][{j}][{k}] = {sign} illegal."
+        self._parse_term_sign_dict([term_dict, sign_dict], test_forms)
 
     @classmethod
     def _parse_meshes(cls, term_dict):
@@ -110,65 +166,6 @@ class WeakFormulation(Frozen):
                     raise NotImplementedError()
             else:
                 raise NotImplementedError()
-
-    def _parse_term_sign_dict(self, term_sign_dict, test_forms):
-        """"""
-        term_dict, sign_dict = term_sign_dict
-        ind_dict = dict()
-        indexing = dict()
-        num_eq = len(term_dict)
-        for i in range(num_eq):   # ith equation
-            assert i in term_dict and i in sign_dict, f"numbering of equations must be 0, 1, 2, ..."
-            ind_dict[i] = ([], [])
-            k = 0
-            for j, terms in enumerate(term_dict[i]):
-                for m in range(len(terms)):
-                    index = str(i) + '-' + str(k)
-                    k += 1
-                    indexing[index] = (sign_dict[i][j][m], term_dict[i][j][m])
-                    ind_dict[i][j].append(index)
-
-        self._test_forms = test_forms
-        self._term_dict = term_dict
-        self._sign_dict = sign_dict
-        self._ind_dict = ind_dict
-        self._indexing = indexing
-
-    def _parse_expression(self, expression):
-        """"""
-        raise NotImplementedError()
-
-    def _initialize_through_merging(self, merge, test_forms):
-        """"""
-        term_dict = dict()
-        sign_dict = dict()
-        no = 0
-        for i in merge:
-            eqi = merge[i]
-            if eqi.__class__.__name__ == 'PartialDifferentialEquations':
-                tdi, sdi = eqi._term_dict, eqi._sign_dict
-                for j in tdi:
-                    term_dict[no] = tdi[j]
-                    sign_dict[no] = sdi[j]
-                    no += 1
-
-            elif isinstance(eqi, dict):
-                tdi, sdi = eqi['_term_dict'], eqi['_sign_dict']
-                term_dict[no] = tdi
-                sign_dict[no] = sdi
-                no += 1
-
-            else:
-                raise NotImplementedError()
-
-        for i in term_dict:
-            for j, terms in enumerate(term_dict[i]):
-                for k, term in enumerate(terms):
-                    assert term._is_able_to_be_a_weak_term, f"term[{i}][{j}][{k}] = {term} " \
-                                                            f"is not suitable for a weak formulation."
-                    sign = sign_dict[i][j][k]
-                    assert sign in ('+', '-'), f"sign[{i}][{j}][{k}] = {sign} illegal."
-        self._parse_term_sign_dict([term_dict, sign_dict], test_forms)
 
     def _consistence_checker(self):
         """We do consistence check here and parse properties like mesh and so on."""
@@ -391,7 +388,7 @@ class WeakFormulation(Frozen):
 
 
 if __name__ == '__main__':
-    # python src/wf/main.py
+    # python src/wf/rct.py
 
     import __init__ as ph
     # import phlib as ph

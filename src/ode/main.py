@@ -266,7 +266,7 @@ class OrdinaryDifferentialEquation(Frozen):
 
 
 if __name__ == '__main__':
-    # python src/ode/main.py
+    # python src/ode/rct.py
     import __init__ as ph
     # import phlib as ph
     # ph.config.set_embedding_space_dim(3)

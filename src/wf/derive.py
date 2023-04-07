@@ -47,7 +47,7 @@ class _Derive(Frozen):
 
         new_term_dict, new_sign_dict = self._parse_new_weak_formulation_dict(new_term_dict, new_sign_dict)
 
-        new_wf = self._wf.__class__(term_sign_dict=[new_term_dict, new_sign_dict], test_forms=self._wf._test_forms)
+        new_wf = self._wf.__class__(self._wf._test_forms, term_sign_dict=[new_term_dict, new_sign_dict])
         new_wf.unknowns = self._wf.unknowns  # pass the unknowns
         new_wf._bc = self._wf._bc   # pass the bc
 
@@ -203,7 +203,7 @@ class _Derive(Frozen):
             else:
                 pass
 
-        new_wf = self._wf.__class__(term_sign_dict=[term_dict, sign_dict], test_forms=self._wf._test_forms)
+        new_wf = self._wf.__class__(self._wf._test_forms, term_sign_dict=[term_dict, sign_dict])
         new_wf.unknowns = self._wf.unknowns   # pass the unknowns
         new_wf._bc = self._wf._bc   # pass the bc
         return new_wf

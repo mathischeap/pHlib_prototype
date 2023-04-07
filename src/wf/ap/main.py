@@ -200,7 +200,7 @@ class AlgebraicProxy(Frozen):
 
 
 if __name__ == '__main__':
-    # python src/wf/ap/main.py
+    # python src/wf/ap/rct.py
     import __init__ as ph
 
     samples = ph.samples

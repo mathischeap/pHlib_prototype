@@ -8,6 +8,8 @@ created at: 3/30/2023 5:35 PM
 
 import sys
 
+import numpy as np
+
 if './' not in sys.path:
     sys.path.append('./')
 
@@ -16,11 +18,11 @@ from src.mesh import _global_meshes
 from src.spaces.main import _space_set
 from src.form.main import _global_root_forms_lin_dict
 
-import mse.main as mse
+import msepy.main as msepy
 
 
 _implemented_finite_elements = {
-    'mse': mse   # mimetic spectral elements
+    'msepy': msepy   # mimetic spectral elements
 }
 
 
@@ -33,6 +35,8 @@ def apply(fe_name, obj_dict):
         f"finite element name={fe_name} is wrong, should be one of {_implemented_finite_elements.keys()}"
 
     finite_element_main = _implemented_finite_elements[fe_name]
+
+    finite_element_main._chech_config()
 
     manifolds = finite_element_main._parse_manifolds(_global_manifolds)
     meshes = finite_element_main._parse_meshes(_global_meshes)
@@ -138,12 +142,16 @@ if __name__ == '__main__':
     #     b2 @ td.time_sequence['k-1']]
     # )
     ls = mp.ls()
-    wf.pr()
+    # wf.pr()
 
     mesh = oph.mesh
     mani = oph.mesh.manifold
 
-    mse, obj = ph.fem.apply('mse', locals())
+    msepy, obj = ph.fem.apply('msepy', locals())
     manifold = obj['base']['manifolds'][r'\mathcal{M}']
 
-    mse.config(manifold)('crazy')
+    msepy.config(manifold)('crazy')
+
+    ct = manifold.ct
+    print(ct.mapping(np.array([0,0]),np.array([1,1]),np.array([1,1])))
+    print(ct.Jacobian_matrix(np.array([0,0]),np.array([0,0]),np.array([0,0])))

@@ -67,7 +67,7 @@ class TemporalDiscretization(Frozen):
                 }
             else:
                 pass
-        wf = self._wf.__class__(test_forms=self._wf._test_forms, merge=wfs)
+        wf = self._wf.__class__(self._wf._test_forms, merge=wfs)
         wf._bc = self._wf._bc
         # we get the new weak formulation by combining each pde.
         return wf

@@ -417,7 +417,7 @@ class PartialDifferentialEquations(Frozen):
                     raw_weak_term = inner(term, tfs[i], method=test_method)
                     term_dict[i][j].append(raw_weak_term)
 
-        wf = WeakFormulation(term_sign_dict=(term_dict, self._sign_dict), test_forms=tfs)
+        wf = WeakFormulation(tfs, term_sign_dict=(term_dict, self._sign_dict))
         wf.unknowns = self.unknowns
         wf._bc = self._bc   # send the BC to the weak formulation.
         return wf

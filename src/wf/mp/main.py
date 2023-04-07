@@ -318,7 +318,7 @@ class MatrixProxy(Frozen):
 
 
 if __name__ == '__main__':
-    # python src/wf/mp/main.py
+    # python src/wf/mp/rct.py
     import __init__ as ph
 
     samples = ph.samples
