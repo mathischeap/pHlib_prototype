@@ -17,8 +17,8 @@ class CrazyMeshCurvatureWarning(UserWarning):
 
 def crazy(mf, bounds=None, c=0):
     """"""
+    assert mf.esd == mf.ndim, f"crazy mesh only works for manifold.ndim == embedding space dimensions."
     esd = mf.esd
-
     if bounds is None:
         bounds = [(0, 1) for _ in range(esd)]
     else:
