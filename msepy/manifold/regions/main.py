@@ -8,8 +8,6 @@ import sys
 if './' not in sys.path:
     sys.path.append('./')
 from src.tools.frozen import Frozen
-from msepy.manifold.regions.region import MsePyManifoldRegion
-from msepy.manifold.regions.rct import MsePyRegionCoordinateTransformation
 
 
 class MseManifoldRegions(Frozen):
@@ -20,40 +18,50 @@ class MseManifoldRegions(Frozen):
         # no need to do any check. It should be done already! We only access this class through `config`
         self._mf = mf
         self._regions = dict()
-        self._map = None   # normally, only regions of the highest dimensional manifold has a region map.
+        self._map = None  # normally, only regions of the highest dimensional manifold has a region map.
         self._freeze()
-
-    def _parse_regions_from_region_map(
-            self,
-            region_map,
-            mapping_dict,
-            Jacobian_matrix_dict,
-            mtype_dict
-    ):
-        assert self._regions == dict(), f"Change regions will be dangerous!"
-        for i in region_map:
-
-            mapping = mapping_dict[i]
-            if Jacobian_matrix_dict is None:
-                Jacobian_matrix = None
-            else:
-                Jacobian_matrix = Jacobian_matrix_dict[i]
-            mtype = mtype_dict[i]
-            rct = MsePyRegionCoordinateTransformation(mapping, Jacobian_matrix, mtype)
-            region = MsePyManifoldRegion(self, i, rct)
-            self._regions[i] = region
-
-        self._map = region_map  # ***
 
     @property
     def map(self):
-        """normally, only regions of the highest dimensional manifold has a region map.
-
-        Return `None` if the regions of this manifold has no region map. For example, these boundary manifolds. We
-        can locate these manifolds by access its location indicator, for example. It a boundary manifolds has
-        6 faces of a 3d cube.
+        """{    #x-  #x+, #y-, ...
+            0: [int, int, None, ...],
+            1: [int, None, int, ...],
+            ...
+        }  # this type of region map means it has a structured distribution of regions
+        and int means this interface is in-between region, None means it is at manifold boundary.
+        {
+            0: ""
+        }
         """
         return self._map  # ***
+
+    def _check_map(self, map_type):
+        """check region map."""
+        region_map = self.map
+        assert region_map is not None, f"I have no map."
+        if map_type == 0:  # the first type; indicating the neighbours.
+            for i in self:
+                map_i = region_map[i]
+                for j, mp in enumerate(map_i):
+                    if mp is None:
+                        pass
+                    else:
+                        m = j // 2  # axis index, x -> y -> z ...
+                        n = j % 2  # side index, 0: -, 1: +
+
+                        map_neighbor = region_map[mp]
+                        if n == 0:
+                            _n = 1
+                        else:
+                            _n = 0
+
+                        _j = m * 2 + _n
+
+                        assert map_neighbor[_j] == i, \
+                            f"region maps illegal; map[{i}][{j}] refers to region #{mp}, " \
+                            f"but map[{mp}][{_j}] does not refer to region #{i}."
+        else:
+            raise NotImplementedError()
 
     def __repr__(self):
         """"""

@@ -7,17 +7,15 @@ created at: 3/30/2023 5:35 PM
 """
 
 import sys
-
 import numpy as np
 
 if './' not in sys.path:
     sys.path.append('./')
 
-from src.manifold import _global_manifolds
-from src.mesh import _global_meshes
-from src.spaces.main import _space_set
-from src.form.main import _global_root_forms_lin_dict
-
+from src.manifold import _global_manifolds  # [manifold_sym_repr] -> manifold
+from src.mesh import _global_meshes   # [mesh_sym_repr] -> mesh
+from src.spaces.main import _space_set  # [mesh_sym_repr][space_sym_repr] -> space
+from src.form.main import _global_root_forms_lin_dict  # [root-form_lin_repr] -> root-form
 import msepy.main as msepy
 
 
@@ -34,34 +32,23 @@ def apply(fe_name, obj_dict):
     assert fe_name in _implemented_finite_elements, \
         f"finite element name={fe_name} is wrong, should be one of {_implemented_finite_elements.keys()}"
 
-    finite_element_main = _implemented_finite_elements[fe_name]
+    implementation = _implemented_finite_elements[fe_name]
+    implementation._chech_config()
+    implementation._parse_manifolds(_global_manifolds)
+    implementation._parse_meshes(_global_meshes)
+    implementation._parse_spaces(_space_set)
+    implementation._parse_root_forms(_global_root_forms_lin_dict)
 
-    finite_element_main._chech_config()
-
-    manifolds = finite_element_main._parse_manifolds(_global_manifolds)
-    meshes = finite_element_main._parse_meshes(_global_meshes)
-    spaces = finite_element_main._parse_spaces(_space_set)
-    root_forms = finite_element_main._parse_root_forms(_global_root_forms_lin_dict)
-
-    new_setup = {
-        'base': {
-            'manifolds': manifolds,
-            'meshes': meshes,
-            'spaces': spaces,
-            'root_forms': root_forms
-        },
-        'others': dict()
-    }
-
+    obj_space = dict()
     for obj_name in obj_dict:
         obj = obj_dict[obj_name]
-        particular_obj = finite_element_main._parse(obj)
+        particular_obj = implementation._parse(obj)
         if particular_obj is not None:
-            new_setup['others'][obj_name] = particular_obj
+            obj_space[obj_name] = particular_obj
         else:
             pass
 
-    return finite_element_main, new_setup
+    return implementation, obj_space
 
 
 if __name__ == '__main__':
@@ -148,10 +135,22 @@ if __name__ == '__main__':
     mani = oph.mesh.manifold
 
     msepy, obj = ph.fem.apply('msepy', locals())
-    manifold = obj['base']['manifolds'][r'\mathcal{M}']
 
-    msepy.config(manifold)('crazy')
+    manifold = msepy.base['manifolds'][r'\mathcal{M}']
 
-    ct = manifold.ct
-    print(ct.mapping(np.array([0,0]),np.array([1,1]),np.array([1,1])))
-    print(ct.Jacobian_matrix(np.array([0,0]),np.array([0,0]),np.array([0,0])))
+    msepy.config(manifold)('crazy', c=0., periodic=True)
+
+    # ct = manifold.ct
+    # print(ct.mapping(np.array([0, 0]), np.array([1, 1]), np.array([1, 1])))
+    # print(ct.Jacobian_matrix(np.array([0, 0]), np.array([0, 0]), np.array([0, 0])))
+
+    # print(manifold.regions.map)
+
+    mmh = obj['mesh']
+
+    msepy.config(mmh)(3)
+
+    # print(mmh)
+
+    # ct = mse_mani.ct
+    # print(ct.mapping(np.array([0, 0]), np.array([1, 1]), np.array([1, 1])))

@@ -13,7 +13,10 @@ from src.tools.frozen import Frozen
 class MsePyManifoldRegion(Frozen):
     """"""
 
-    def __init__(self, regions, i, rct):
+    def __init__(
+            self,
+            regions, i, rct
+    ):
         """
         Parameters
         ----------

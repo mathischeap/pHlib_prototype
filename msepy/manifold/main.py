@@ -13,8 +13,8 @@ from src.config import get_embedding_space_dim
 from msepy.manifold.regions.main import MseManifoldRegions
 from msepy.manifold.coordinate_transformation import MsePyManifoldsCoordinateTransformation
 
-
-_global_mse_manifolds = dict()  # cache all MseManifolds, keys are sym_repr of abstract manifold.
+from msepy.manifold.regions.region import MsePyManifoldRegion
+from msepy.manifold.regions.rct import MsePyRegionCoordinateTransformation
 
 
 def config(mf, arg, **kwargs):
@@ -30,19 +30,21 @@ def config(mf, arg, **kwargs):
         _module = import_module(predefined_path)
         region_map, mapping_dict, Jacobian_matrix_dict, mtype_dict = getattr(_module, arg)(mf, **kwargs)
 
-        mf.regions._parse_regions_from_region_map(
+        mf._parse_regions_from_region_map(
             region_map,
             mapping_dict,
             Jacobian_matrix_dict,
             mtype_dict
         )
 
+        map_type = 0
         assert mf.regions.map is not None, f"predefined manifold only config manifold with region map."
 
     else:
         raise NotImplementedError()
 
-    assert mf.regions._regions is not None, f"we need to set regions for the manifold by this `config` function."
+    assert mf.regions._regions != dict(), f"we need to set regions for the manifold by this `config` function."
+    mf.regions._check_map(map_type)
 
 
 class MsePyManifold(Frozen):
@@ -53,8 +55,35 @@ class MsePyManifold(Frozen):
         self._abstract = abstract_manifold
         self._ct = None
         self._regions = None
-        _global_mse_manifolds[abstract_manifold._sym_repr] = self
         self._freeze()
+
+    def _parse_regions_from_region_map(
+            self,
+            region_map,
+            mapping_dict,
+            Jacobian_matrix_dict,
+            mtype_dict
+    ):
+        assert self.regions._regions == dict(), f"Change regions will be dangerous!"
+        for i in region_map:
+
+            mapping = mapping_dict[i]
+
+            if Jacobian_matrix_dict is None:
+                Jacobian_matrix = None
+            else:
+                Jacobian_matrix = Jacobian_matrix_dict[i]
+
+            if mtype_dict is None:
+                mtype = None
+            else:
+                mtype = mtype_dict[i]
+
+            rct = MsePyRegionCoordinateTransformation(mapping, Jacobian_matrix, mtype)
+            region = MsePyManifoldRegion(self, i, rct)
+            self.regions._regions[i] = region
+
+        self.regions._map = region_map  # ***
 
     def __repr__(self):
         super_repr = super().__repr__().split('object')[1]

@@ -57,14 +57,14 @@ class MsePyManifoldsCoordinateTransformation(Frozen):
             assert ri in self._mf.regions, f"region index = {ri} is not a valid one!"
 
             rct = self._mf.regions[ri]._ct
-            rmt = rct.mtype
+            rct_signature = rct.mtype.signature
 
-            if rmt in cache_rmt:
+            if rct_signature in cache_rmt:
                 pass
             else:
                 xyz = rct.Jacobian_matrix(*rst)
-                cache_rmt[rmt] = xyz
+                cache_rmt[rct_signature] = xyz
 
-            _2return[ri] = cache_rmt[rmt]
+            _2return[ri] = cache_rmt[rct_signature]
 
         return _2return

@@ -15,7 +15,7 @@ class CrazyMeshCurvatureWarning(UserWarning):
     pass
 
 
-def crazy(mf, bounds=None, c=0):
+def crazy(mf, bounds=None, c=0, periodic=False):
     """"""
     assert mf.esd == mf.ndim, f"crazy mesh only works for manifold.ndim == embedding space dimensions."
     esd = mf.esd
@@ -26,16 +26,14 @@ def crazy(mf, bounds=None, c=0):
 
     rm0 = _MesPyRegionCrazyMapping(bounds, c, esd)
 
-    if esd == 2:
+    if periodic:
         region_map = {
-            0: ['Upper', 'Down', 'Left', 'Right'],    # region #0
-        }
-    elif esd == 3:
-        region_map = {
-            0: ['North', 'South', 'West', 'East', 'Back', 'Front'],   # region #0
+            0: [0 for _ in range(2 * esd)],    # region #0
         }
     else:
-        raise NotImplementedError()
+        region_map = {
+            0: [None for _ in range(2 * esd)],    # region #0
+        }
 
     mapping_dict = {
         0: rm0.mapping,  # region #0
@@ -46,11 +44,12 @@ def crazy(mf, bounds=None, c=0):
     }
 
     if c == 0:
-        mtype = 'Linear'
+        mtype = {'indicator': 'Linear', 'parameters': []}
         for lb, ub in bounds:
-            mtype += '-{}'.format('%.8f' % (ub-lb))
+            d = round(ub - lb, 5)  # do this to round off the truncation error.
+            mtype['parameters'].append(d)
     else:
-        mtype = None
+        mtype = None  # this is a unique region. Its metric does not like any other.
 
     mtype_dict = {
         0: mtype
@@ -133,10 +132,17 @@ class _MesPyRegionCrazyMapping(Frozen):
             
             a, b = self._bounds[0]
             c, d = self._bounds[1]
-            xr = (b - a) + (b - a) * 2 * pi * 0.5 * self._c * cos(2 * pi * r) * sin(2 * pi * s)
-            xs = (b - a) * 2 * pi * 0.5 * self._c * sin(2 * pi * r) * cos(2 * pi * s)
-            yr = (d - c) * 2 * pi * 0.5 * self._c * cos(2 * pi * r) * sin(2 * pi * s)
-            ys = (d - c) + (d - c) * 2 * pi * 0.5 * self._c * sin(2 * pi * r) * cos(2 * pi * s)
+            if self._c == 0:
+                xr = (b - a) * ones_like(r)
+                xs = 0
+                yr = 0
+                ys = (d - c) * ones_like(r)
+
+            else:
+                xr = (b - a) + (b - a) * 2 * pi * 0.5 * self._c * cos(2 * pi * r) * sin(2 * pi * s)
+                xs = (b - a) * 2 * pi * 0.5 * self._c * sin(2 * pi * r) * cos(2 * pi * s)
+                yr = (d - c) * 2 * pi * 0.5 * self._c * cos(2 * pi * r) * sin(2 * pi * s)
+                ys = (d - c) + (d - c) * 2 * pi * 0.5 * self._c * sin(2 * pi * r) * cos(2 * pi * s)
             return ((xr, xs),
                     (yr, ys))
 
