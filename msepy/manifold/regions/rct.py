@@ -5,6 +5,7 @@ import sys
 if './' not in sys.path:
     sys.path.append('./')
 from src.tools.frozen import Frozen
+import numpy as np
 
 
 class MsePyRegionCoordinateTransformation(Frozen):
@@ -39,7 +40,7 @@ class MsePyRegionCoordinateTransformation(Frozen):
     def mtype(self, mtp):
         """"""
         if mtp is None:
-            indicator = 'unique'
+            indicator = 'Unique'
             parameters = None
         else:
             assert isinstance(mtp, dict), f"mtype must be a dict."
@@ -53,7 +54,7 @@ class _MsePyRegionMtype(Frozen):
     """"""
     def __init__(self, indicator, parameters):
         assert indicator in (
-            'unique',  # `parameters` is a the unique id.
+            'Unique',  # `parameters` is a the unique id.
             'Linear',  # regular box in Cartesian system.
                        # `parameters` is a list of region length along each axis.
         ), f"indicator = {indicator} is illegal."
@@ -77,3 +78,70 @@ class _MsePyRegionMtype(Frozen):
             return False
         else:
             return self.signature == other.signature
+
+    def _distribute_to_element(self, layout, element_numbering):
+        """"""
+        element_mtype_dict = dict()
+
+        if self._indicator == 'Unique':
+            raise Exception(f"Unique region cannot distribute metric type to elements.")
+
+        elif self._indicator == 'Linear':
+
+            assert len(layout) == len(self._parameters), f"layout or parameters dimensions wrong."
+            assert len(layout) == element_numbering.ndim, f"layout or element_numbering dimensions wrong."
+
+            LayOut = [np.round(_, 4) for _ in layout]
+            parameters = self._parameters
+            axis = [_[0] for _ in parameters]
+            para = [float(_[1:]) for _ in parameters]
+
+            if len(LayOut) == 1:
+                for i in range(len(LayOut[0])):
+                    Li = LayOut[0][i]
+                    pi = para[0] * Li
+                    key = 'Linear:' + axis[0] + str(pi)
+
+                    element_number = element_numbering[i, ]
+                    if key in element_mtype_dict:
+                        element_mtype_dict[key].append(element_number)
+                    else:
+                        element_mtype_dict[key] = [element_number, ]
+
+            elif len(LayOut) == 2:
+                for j in range(len(LayOut[1])):
+                    for i in range(len(LayOut[0])):
+
+                        Li, Lj = LayOut[0][i], LayOut[1][j]
+                        pi, pj = para[0] * Li, para[1] * Lj
+                        key = 'Linear:' + axis[0] + str(pi) + axis[1] + str(pj)
+
+                        element_number = element_numbering[i, j]
+                        if key in element_mtype_dict:
+                            element_mtype_dict[key].append(element_number)
+                        else:
+                            element_mtype_dict[key] = [element_number, ]
+
+            elif len(LayOut) == 3:
+                for k in range(len(LayOut[2])):
+                    for j in range(len(LayOut[1])):
+                        for i in range(len(LayOut[0])):
+
+                            Li, Lj, Lk = LayOut[0][i], LayOut[1][j], LayOut[2][k]
+                            pi, pj, pk = para[0] * Li, para[1] * Lj, para[2] * Lk
+                            key = 'Linear:' + axis[0] + str(pi) + axis[1] + str(pj) + axis[2] + str(pk)
+
+                            element_number = element_numbering[i, j, k]
+                            if key in element_mtype_dict:
+                                element_mtype_dict[key].append(element_number)
+                            else:
+                                element_mtype_dict[key] = [element_number, ]
+
+            else:
+                raise NotImplementedError()
+
+
+        else:
+            raise NotImplementedError(f"Not implemented for indicator = {self._indicator}")
+
+        return element_mtype_dict

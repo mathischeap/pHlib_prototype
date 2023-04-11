@@ -57,100 +57,146 @@ if __name__ == '__main__':
 
     samples = ph.samples
 
-    oph = samples.pde_canonical_pH(n=3, p=3)[0]
+    periodic = True
+    oph = samples.pde_canonical_pH(n=3, p=3, periodic=periodic)[0]
     a3, b2 = oph.unknowns
     # oph.pr()
 
     wf = oph.test_with(oph.unknowns, sym_repr=[r'v^3', r'u^2'])
     wf = wf.derive.integration_by_parts('1-1')
     # wf.pr(indexing=True)
+    if periodic is False:
 
-    td = wf.td
-    td.set_time_sequence()  # initialize a time sequence
+        td = wf.td
+        td.set_time_sequence()  # initialize a time sequence
 
-    td.define_abstract_time_instants('k-1', 'k-1/2', 'k')
-    td.differentiate('0-0', 'k-1', 'k')
-    td.average('0-1', b2, ['k-1', 'k'])
+        td.define_abstract_time_instants('k-1', 'k-1/2', 'k')
+        td.differentiate('0-0', 'k-1', 'k')
+        td.average('0-1', b2, ['k-1', 'k'])
 
-    td.differentiate('1-0', 'k-1', 'k')
-    td.average('1-1', a3, ['k-1', 'k'])
-    td.average('1-2', a3, ['k-1/2'])
-    dt = td.time_sequence.make_time_interval('k-1', 'k')
+        td.differentiate('1-0', 'k-1', 'k')
+        td.average('1-1', a3, ['k-1', 'k'])
+        td.average('1-2', a3, ['k-1/2'])
+        dt = td.time_sequence.make_time_interval('k-1', 'k')
 
-    wf = td()
+        wf = td()
 
-    # wf.pr()
+        # wf.pr()
 
-    wf.unknowns = [
-        a3 @ td.time_sequence['k'],
-        b2 @ td.time_sequence['k'],
-    ]
+        wf.unknowns = [
+            a3 @ td.time_sequence['k'],
+            b2 @ td.time_sequence['k'],
+        ]
 
-    wf = wf.derive.split(
-        '0-0', 'f0',
-        [a3 @ td.ts['k'], a3 @ td.ts['k-1']],
-        ['+', '-'],
-        factors=[1/dt, 1/dt],
-    )
+        wf = wf.derive.split(
+            '0-0', 'f0',
+            [a3 @ td.ts['k'], a3 @ td.ts['k-1']],
+            ['+', '-'],
+            factors=[1/dt, 1/dt],
+        )
 
-    wf = wf.derive.split(
-        '0-2', 'f0',
-        [ph.d(b2 @ td.ts['k-1']), ph.d(b2 @ td.ts['k'])],
-        ['+', '+'],
-        factors=[1/2, 1/2],
-    )
+        wf = wf.derive.split(
+            '0-2', 'f0',
+            [ph.d(b2 @ td.ts['k-1']), ph.d(b2 @ td.ts['k'])],
+            ['+', '+'],
+            factors=[1/2, 1/2],
+        )
 
-    wf = wf.derive.split(
-        '1-0', 'f0',
-        [b2 @ td.ts['k'], b2 @ td.ts['k-1']],
-        ['+', '-'],
-        factors=[1/dt, 1/dt]
-    )
+        wf = wf.derive.split(
+            '1-0', 'f0',
+            [b2 @ td.ts['k'], b2 @ td.ts['k-1']],
+            ['+', '-'],
+            factors=[1/dt, 1/dt]
+        )
 
-    wf = wf.derive.split(
-        '1-2', 'f0',
-        [a3 @ td.ts['k-1'], a3 @ td.ts['k']],
-        ['+', '+'],
-        factors=[1/2, 1/2],
-    )
+        wf = wf.derive.split(
+            '1-2', 'f0',
+            [a3 @ td.ts['k-1'], a3 @ td.ts['k']],
+            ['+', '+'],
+            factors=[1/2, 1/2],
+        )
 
-    wf = wf.derive.rearrange(
-        {
-            0: '0, 3 = 2, 1',
-            1: '3, 0 = 2, 1, 4',
-        }
-    )
+        wf = wf.derive.rearrange(
+            {
+                0: '0, 3 = 2, 1',
+                1: '3, 0 = 2, 1, 4',
+            }
+        )
 
-    ph.space.finite(3)
+        ph.space.finite(3)
 
-    mp = wf.mp()
-    # mp.parse([
-    #     a3 @ td.time_sequence['k-1'],
-    #     b2 @ td.time_sequence['k-1']]
-    # )
-    ls = mp.ls()
-    # wf.pr()
+        mp = wf.mp()
+        # mp.parse([
+        #     a3 @ td.time_sequence['k-1'],
+        #     b2 @ td.time_sequence['k-1']]
+        # )
+        ls = mp.ls()
+        wf.pr()
 
-    mesh = oph.mesh
-    mani = oph.mesh.manifold
+    elif periodic:
 
-    msepy, obj = ph.fem.apply('msepy', locals())
+        td = wf.td
+        td.set_time_sequence()  # initialize a time sequence
 
-    manifold = msepy.base['manifolds'][r'\mathcal{M}']
+        td.define_abstract_time_instants('k-1', 'k-1/2', 'k')
+        td.differentiate('0-0', 'k-1', 'k')
+        td.average('0-1', b2, ['k-1', 'k'])
 
-    msepy.config(manifold)('crazy', c=0., periodic=True)
+        td.differentiate('1-0', 'k-1', 'k')
+        td.average('1-1', a3, ['k-1', 'k'])
+        dt = td.time_sequence.make_time_interval('k-1', 'k')
 
-    # ct = manifold.ct
-    # print(ct.mapping(np.array([0, 0]), np.array([1, 1]), np.array([1, 1])))
-    # print(ct.Jacobian_matrix(np.array([0, 0]), np.array([0, 0]), np.array([0, 0])))
+        wf = td()
 
-    # print(manifold.regions.map)
+        # wf.pr()
 
-    mmh = obj['mesh']
+        wf.unknowns = [
+            a3 @ td.time_sequence['k'],
+            b2 @ td.time_sequence['k'],
+            ]
 
-    msepy.config(mmh)(3)
+        wf = wf.derive.split(
+            '0-0', 'f0',
+            [a3 @ td.ts['k'], a3 @ td.ts['k-1']],
+            ['+', '-'],
+            factors=[1/dt, 1/dt],
+        )
 
-    # print(mmh)
+        wf = wf.derive.split(
+            '0-2', 'f0',
+            [ph.d(b2 @ td.ts['k-1']), ph.d(b2 @ td.ts['k'])],
+            ['+', '+'],
+            factors=[1/2, 1/2],
+        )
 
-    # ct = mse_mani.ct
-    # print(ct.mapping(np.array([0, 0]), np.array([1, 1]), np.array([1, 1])))
+        wf = wf.derive.split(
+            '1-0', 'f0',
+            [b2 @ td.ts['k'], b2 @ td.ts['k-1']],
+            ['+', '-'],
+            factors=[1/dt, 1/dt]
+        )
+
+        wf = wf.derive.split(
+            '1-2', 'f0',
+            [a3 @ td.ts['k-1'], a3 @ td.ts['k']],
+            ['+', '+'],
+            factors=[1/2, 1/2],
+        )
+
+        wf = wf.derive.rearrange(
+            {
+                0: '0, 3 = 2, 1',
+                1: '3, 0 = 2, 1',
+            }
+        )
+
+        ph.space.finite(3)
+
+        mp = wf.mp()
+        # mp.parse([
+        #     a3 @ td.time_sequence['k-1'],
+        #     b2 @ td.time_sequence['k-1']]
+        # )
+        ls = mp.ls()
+        ls.pr()
+        print(mp.bc)

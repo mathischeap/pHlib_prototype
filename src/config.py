@@ -22,6 +22,7 @@ MASTER_RANK: int = 0  # you can, but you do not need to change this!
 # space config
 def set_embedding_space_dim(ndim):
     """"""
+    assert ndim % 1 == 0 and ndim > 0, f"ndim={ndim} is wrong, it must be a positive integer."
     _global_variables['embedding_space_dim'] = ndim
 
 

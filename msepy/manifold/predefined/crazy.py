@@ -45,9 +45,11 @@ def crazy(mf, bounds=None, c=0, periodic=False):
 
     if c == 0:
         mtype = {'indicator': 'Linear', 'parameters': []}
-        for lb, ub in bounds:
-            d = round(ub - lb, 5)  # do this to round off the truncation error.
-            mtype['parameters'].append(d)
+        for i, lb_ub in enumerate(bounds):
+            xyz = 'xyz'[i]
+            lb, ub = lb_ub
+            d = str(round(ub - lb, 5))  # do this to round off the truncation error.
+            mtype['parameters'].append(xyz + d)
     else:
         mtype = None  # this is a unique region. Its metric does not like any other.
 

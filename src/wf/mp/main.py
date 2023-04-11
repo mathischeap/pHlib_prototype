@@ -316,6 +316,10 @@ class MatrixProxy(Frozen):
 
         return LinearSystem(A, x, b)
 
+    @property
+    def bc(self):
+        return self._bc
+
 
 if __name__ == '__main__':
     # python src/wf/mp/rct.py

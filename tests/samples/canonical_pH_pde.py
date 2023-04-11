@@ -16,12 +16,15 @@ import src.spaces.main as space
 from src.form.operators import trace, Hodge
 
 
-def pde_canonical_pH(n=3, p=3):
+def pde_canonical_pH(n=3, p=3, periodic=False):
     """Generate pde representations of the canonical port-Hamiltonian systems."""
     set_embedding_space_dim(n)
     q = n + 1 - p
 
-    m = manifold(n)
+    if periodic:
+        m = manifold(n, is_periodic=True)
+    else:
+        m = manifold(n)
     mesh(m)
 
     omega_p = space.new('Omega', p, orientation='outer')
@@ -47,14 +50,17 @@ def pde_canonical_pH(n=3, p=3):
     outer_pde._indi_dict = None  # clear this local expression
     outer_pde.unknowns = [ap, bpm1]
 
-    outer_pde.bc.partition(r"\Gamma_\alpha", r"\Gamma_\beta")
-    alpha, beta = outer_pde.unknowns
-    outer_pde.bc.define_bc(
-        {
-            r"\Gamma_\alpha": trace(Hodge(alpha)),
-            r"\Gamma_\beta": trace(beta),
-        }
-    )
+    if periodic:
+        pass
+    else:
+        outer_pde.bc.partition(r"\Gamma_\alpha", r"\Gamma_\beta")
+        alpha, beta = outer_pde.unknowns
+        outer_pde.bc.define_bc(
+            {
+                r"\Gamma_\alpha": trace(Hodge(alpha)),
+                r"\Gamma_\beta": trace(beta),
+            }
+        )
 
     inner_pde = None   # not implemented yet
     return outer_pde, inner_pde

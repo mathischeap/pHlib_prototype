@@ -107,6 +107,10 @@ class _WeakFormulationTerm(Frozen):
         return self._mesh
 
     @property
+    def manifold(self):
+        return self._mesh.manifold
+
+    @property
     def elementary_forms(self):
         return self._efs
 
@@ -405,13 +409,18 @@ class L2InnerProductTerm(_WeakFormulationTerm):
                                    f"(codifferential of base form = f0)."
             term_manifold = L2InnerProductTerm(bf, d(self._f1))
 
-            trace_form_0 = trace(Hodge(bf))
+            if self.manifold.is_periodic():
+                return [term_manifold, ], ['+', ]
 
-            trace_form_1 = trace(self._f1)
+            else:
 
-            term_boundary = duality_pairing(trace_form_0, trace_form_1)
+                trace_form_0 = trace(Hodge(bf))
 
-            return (term_manifold, term_boundary), ('+', '-')
+                trace_form_1 = trace(self._f1)
+
+                term_boundary = duality_pairing(trace_form_0, trace_form_1)
+
+                return (term_manifold, term_boundary), ('+', '-')
 
         else:
             raise Exception(f"Cannot apply integration by parts to this term.")
