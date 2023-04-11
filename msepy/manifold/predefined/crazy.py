@@ -82,7 +82,13 @@ class _MesPyRegionCrazyMapping(Frozen):
         """ `*rst` be in [0, 1]. """
         assert len(rst) == self._esd, f"amount of inputs wrong."
 
-        if self._esd == 2:
+        if self._esd == 1:
+            r = rst[0]
+            a, b = self._bounds[0]
+            x = (b - a) * (r + 0.5 * self._c * sin(2 * pi * r)) + a
+            return x
+
+        elif self._esd == 2:
 
             r, s = rst
             a, b = self._bounds[0]
@@ -129,7 +135,13 @@ class _MesPyRegionCrazyMapping(Frozen):
         """ r, s, t be in [0, 1]. """
         assert len(rst) == self._esd, f"amount of inputs wrong."
 
-        if self._esd == 2:
+        if self._esd == 1:
+            r = rst[0]
+            a, b = self._bounds[0]
+            xr = (b - a) + (b - a) * 2 * pi * 0.5 * self._c * cos(2 * pi * r)
+            return xr
+
+        elif self._esd == 2:
             r, s = rst
             
             a, b = self._bounds[0]

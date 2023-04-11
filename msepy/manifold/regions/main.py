@@ -70,7 +70,7 @@ class MseManifoldRegions(Frozen):
 
     def __iter__(self):
         """go through all region index. Remember, a region does not have a name."""
-        for ri in self._regions:
+        for ri in range(len(self)):  # do this because we make sure we start with region #0.
             yield ri
 
     def __getitem__(self, ri):

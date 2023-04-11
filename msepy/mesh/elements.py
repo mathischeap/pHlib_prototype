@@ -20,8 +20,10 @@ class MsePyMeshElements(Frozen):
         self._mesh = mesh
         self._origin = None
         self._delta = None
+        self._distribution = None   #
         self._numbering = None
         self._num = None
+        self._num_accumulation = None
         self._index_mapping = None
         self._map = None
         self._freeze()
@@ -39,16 +41,20 @@ class MsePyMeshElements(Frozen):
             origin[i] = list()
             for lyt in layout:
                 origin[i].append([0, ])
-                _lyt_one = lyt[1:]
+                _lyt_one = lyt[0:-1]
                 if len(_lyt_one) == 0:
                     pass
                 else:
                     for j in range(len(_lyt_one)):
                         origin[i][-1].append(np.sum(_lyt_one[0:j+1]))
+
                 assert round(origin[i][-1][-1] + lyt[-1], 9) == 1, f"safety check"
                 origin[i][-1] = np.array(origin[i][-1])
         delta = layouts
-        return origin, delta
+        dis = dict()
+        for i in delta:
+            dis[i] = [len(_) for _ in delta[i]]
+        return origin, delta, dis
 
     def _generate_elements_from_layout(self, layouts):
         """
@@ -56,35 +62,34 @@ class MsePyMeshElements(Frozen):
         Parameters
         ----------
         layouts
-        enm
 
         Returns
         -------
 
         """
-        self._origin, self._delta = self._parse_origin_and_delta_from_layout(layouts)
-        self._numbering, self._num = self._generate_element_numbering_from_layout(layouts)
+        self._origin, self._delta, self._distribution = self._parse_origin_and_delta_from_layout(layouts)
+        self._numbering, self._num, self._num_accumulation = self._generate_element_numbering_from_layout(layouts)
         self._index_mapping = self._generate_indices_mapping_from_layout(layouts)
         self._map = self._generate_element_map(layouts)
 
-    def _generate_element_numbering_from_layout(self, layouts, enm=None):
+    def _generate_element_numbering_from_layout(self, layouts):
         """"""
         regions = self._mesh.manifold.regions
         element_numbering = dict()
-        if enm is None:  # a naive way of numbering elements.
-            current_number = 0
-            for i in regions:
-                layout_of_region = layouts[i]
-                element_distribution = [len(_) for _ in layout_of_region]
-                number_local_elements = np.prod(element_distribution)
-                element_numbering[i] = np.arange(
-                    current_number, current_number+number_local_elements
-                ).reshape(element_distribution, order='F')
-                current_number += number_local_elements
-            amount_of_elements = int(current_number)
-        else:
-            raise NotImplementedError()
-        return element_numbering, amount_of_elements
+        # a naive way of numbering elements.
+        current_number = 0
+        num_accumulation = list()
+        for i in regions:
+            layout_of_region = layouts[i]
+            element_distribution = [len(_) for _ in layout_of_region]
+            number_local_elements = np.prod(element_distribution)
+            element_numbering[i] = np.arange(
+                current_number, current_number+number_local_elements
+            ).reshape(element_distribution, order='F')
+            num_accumulation.append(current_number)
+            current_number += number_local_elements
+        amount_of_elements = int(current_number)
+        return element_numbering, amount_of_elements, num_accumulation
 
     def _generate_indices_mapping_from_layout(self, layouts):
         """"""
@@ -101,28 +106,91 @@ class MsePyMeshElements(Frozen):
                 pass
 
         if existing_unique:
-            return MsePyMeshElementsIndexMapping(self._num)
+            mip = MsePyMeshElementsIndexMapping(self._num)
         else:
-            pass
 
-        element_mtype_dict = dict()
+            element_mtype_dict = dict()
 
-        for i in regions:
-            layout_of_region = layouts[i]
-            element_numbering_of_region = self._numbering[i]
-            region = regions[i]
-            ctm = region._ct.mtype
-            r_emd = ctm._distribute_to_element(layout_of_region, element_numbering_of_region)
-            for key in r_emd:
-                if key in element_mtype_dict:
-                    element_mtype_dict[key].extend(r_emd[key])
+            for i in regions:
+                layout_of_region = layouts[i]
+                element_numbering_of_region = self._numbering[i]
+                region = regions[i]
+                ctm = region._ct.mtype
+                r_emd = ctm._distribute_to_element(layout_of_region, element_numbering_of_region)
+                for key in r_emd:
+                    if key in element_mtype_dict:
+                        element_mtype_dict[key].extend(r_emd[key])
+                    else:
+                        element_mtype_dict[key] = r_emd[key]
+
+            for key in element_mtype_dict:
+                element_mtype_dict[key].sort()
+
+            mip = MsePyMeshElementsIndexMapping(element_mtype_dict, self._num)
+
+        reference_delta = list()
+        for ce in mip._reference_elements:
+            in_region, local_indices = self._find_region_and_local_indices_of_element(ce)
+            delta_s = self._delta[in_region]
+            rd = list()
+            for i, index in enumerate(local_indices):
+                rd.append(delta_s[i][index])
+            reference_delta.append(rd)
+            mip._reference_delta = np.array(reference_delta)
+
+        return mip
+
+    def _find_region_and_local_indices_of_element(self, i):
+        """
+
+        Parameters
+        ----------
+        i
+
+        Returns
+        -------
+
+        """
+        assert 0 <= i < self._num, f"i={i} wrong, I have {self._num} elements, i must be in [0, {self._num}]."
+        assert i % 1 == 0, f"i must be integer."
+        in_region = -1
+        num_regions = len(self._mesh.manifold.regions)
+        for j, na in enumerate(self._num_accumulation):
+            if j == num_regions - 1:  # the last region.
+                in_region = j
+                break
+            else:
+                if na <= i < self._mesh.manifold.regions[j+1]:
+                    in_region = j
+                    break
                 else:
-                    element_mtype_dict[key] = r_emd[key]
+                    pass
 
-        for key in element_mtype_dict:
-            element_mtype_dict[key].sort()
+        assert in_region != -1, f"must have found a region."
 
-        return MsePyMeshElementsIndexMapping(element_mtype_dict, self._num)
+        local_numbering = i - self._num_accumulation[in_region]
+        # numbering = self._numbering[in_region]
+        dis = self._distribution[in_region]
+
+        ndim = len(dis)
+
+        indices = list()
+        for _ in range(ndim-1):
+            n = ndim - 1 - _
+
+            section = dis[:n]
+
+            num_layer = np.prod(section)
+
+            indices.append(local_numbering // num_layer)
+
+            local_numbering = local_numbering % num_layer
+
+        indices.append(local_numbering)
+
+        indices = indices[::-1]
+
+        return in_region, indices
 
     def _generate_element_map(self, layouts):
         """"""
@@ -218,10 +286,9 @@ class MsePyMeshElements(Frozen):
 
         Parameters
         ----------
+        numbering
         axis
-            0, 1, 2, ...
-        direction:
-            + or -
+        layer
 
         Returns
         -------
@@ -265,6 +332,12 @@ class MsePyMeshElementsIndexMapping(Frozen):
 
         self._c2e = ci_ei_map
         self._e2c = csr_matrix(ei_ci_map).T
+
+        self._reference_elements = list()
+        for ce in self._c2e:
+            self._reference_elements.append(ce[0])
+        self._reference_elements = np.array(self._reference_elements)
+        self._reference_delta = None
         self._freeze()
 
 
