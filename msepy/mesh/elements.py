@@ -178,9 +178,7 @@ class MsePyMeshElements(Frozen):
         for _ in range(ndim-1):
             n = ndim - 1 - _
 
-            section = dis[:n]
-
-            num_layer = np.prod(section)
+            num_layer = np.prod(dis[:n])
 
             indices.append(local_numbering // num_layer)
 

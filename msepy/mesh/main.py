@@ -13,6 +13,7 @@ from src.tools.frozen import Frozen
 from msepy.manifold.main import MsePyManifold
 from msepy.mesh.elements import MsePyMeshElements
 from msepy.mesh.coordinate_transformation import MsePyMeshCoordinateTransformation
+from msepy.mesh.visualize.main import MsePyMeshVisualize
 
 
 def config(mesh, manifold, element_layout):
@@ -39,6 +40,7 @@ class MsePyMesh(Frozen):
         self._manifold = None
         self._elements = None
         self._ct = MsePyMeshCoordinateTransformation(self)
+        self._visualize = None
         self._freeze()
 
     @property
@@ -121,11 +123,17 @@ class MsePyMesh(Frozen):
     def ct(self):
         return self._ct
 
+    @property
+    def visualize(self):
+        if self._visualize is None:
+            self._visualize = MsePyMeshVisualize(self)
+        return self._visualize
+
 
 if __name__ == '__main__':
-    # python msepy/mesh/elements.py
+    # python msepy/mesh/main.py
     import __init__ as ph
-    space_dim = 0
+    space_dim = 2
     ph.config.set_embedding_space_dim(space_dim)
 
     manifold = ph.manifold(space_dim)
@@ -138,3 +146,6 @@ if __name__ == '__main__':
 
     msepy.config(mnf)('crazy', c=0., periodic=True, bounds=[[0, 2] for _ in range(space_dim)])
     msepy.config(msh)([3 for _ in range(space_dim)])
+
+    msh.visualize()
+
