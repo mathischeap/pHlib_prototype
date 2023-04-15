@@ -13,7 +13,6 @@ from msepy.mesh.visualize.matplot import MsePyMeshVisualizeMatplot
 from msepy.mesh.visualize.vtk_ import MsePyMeshVisualizeVTK
 
 
-
 class MsePyMeshVisualize(Frozen):
     """"""
 

@@ -200,7 +200,6 @@ class MsePyMeshElements(Frozen):
             structured_regions.append(
                 isinstance(Rmap, list) and all([isinstance(_, int) or _ is None for _ in Rmap])
             )
-
         structured_regions = all(structured_regions)
 
         if structured_regions:  # `map_type = 0` region map. See `_check_map` of `regions`.

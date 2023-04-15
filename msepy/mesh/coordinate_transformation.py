@@ -35,30 +35,24 @@ class MsePyMeshCoordinateTransformation(Frozen):
             if self._mesh.ndim == 1:   # 1-d mapping
                 ox = oi[0]
                 dx = di[0]
-
-                ori = [ox, ]
-                dta = [dx, ]
+                ori = [ox]
+                dta = [dx]
             elif self._mesh.ndim == 2:   # 2-d mapping
                 ox = np.tile(oi[0], length[1])
                 dx = np.tile(di[0], length[1])
                 oy = np.repeat(oi[1], length[0])
                 dy = np.repeat(di[1], length[0])
-
                 ori = [ox, oy]
                 dta = [dx, dy]
             elif self._mesh.ndim == 3:    # 3-d mapping
                 ox = np.tile(np.tile(oi[0], length[1]), length[2])
                 dx = np.tile(np.tile(di[0], length[1]), length[2])
-
                 oy = np.tile(np.repeat(oi[1], length[0]), length[2])
                 dy = np.tile(np.repeat(di[1], length[0]), length[2])
-
-                oz = np.repeat(np.repeat(oi[2], length[0]), length[1])
-                dz = np.repeat(np.repeat(di[2], length[0]), length[1])
-
+                oz = np.repeat(np.repeat(oi[2], length[1]), length[0])
+                dz = np.repeat(np.repeat(di[2], length[1]), length[0])
                 ori = [ox, oy, oz]
                 dta = [dx, dy, dz]
-
             else:
                 raise NotImplementedError()
 
@@ -98,10 +92,10 @@ if __name__ == '__main__':
 
     msepy.config(mnf)('crazy', c=0., periodic=False, bounds=[[0, 2] for _ in range(space_dim)])
     # msepy.config(msh)([5 for _ in range(space_dim)])
-    msepy.config(msh)(([1,2,1], [2,3], [1,2,2,4]))
+    msepy.config(msh)(([1, 2, 1], [2, 3], [1, 2, 2, 4]))
 
     # xi_et_sg = [np.array([-0.5, 0, 0.25, 0.5]) for _ in range(space_dim)]
-    xi_et_sg = [np.linspace(-1,1,3) for _ in range(space_dim)]
+    xi_et_sg = [np.linspace(-1, 1, 3) for _ in range(space_dim)]
 
     xyz = msh.ct.mapping(*xi_et_sg)
     print(np.shape(xyz))

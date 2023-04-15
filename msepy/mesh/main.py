@@ -148,4 +148,3 @@ if __name__ == '__main__':
     msepy.config(msh)([3 for _ in range(space_dim)])
 
     msh.visualize()
-
