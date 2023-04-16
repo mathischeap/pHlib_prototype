@@ -50,6 +50,8 @@ class Mesh(Frozen):   # Mesh -
         """
         assert manifold.__class__.__name__ == 'Manifold', f"I need a manifold."
         self._manifold = manifold
+        assert manifold._covered_by_mesh is None, f"we already made an abstract mesh for this manifold."
+        manifold._covered_by_mesh = self
 
         if sym_repr is None:
             number_existing_meshes = len(_global_meshes)
@@ -82,7 +84,7 @@ class Mesh(Frozen):   # Mesh -
 
         self._sym_repr = sym_repr
         self._lin_repr = lin_repr
-        self._pure_pure_lin_repr = pure_lin_repr
+        self._pure_lin_repr = pure_lin_repr
         _global_meshes[sym_repr] = self
         if len(_global_meshes) == 1:  # we just initialize the first mesh
             set_mesh(self)  # we set it as the default mesh
@@ -107,6 +109,7 @@ class Mesh(Frozen):   # Mesh -
         """The manifold this mesh is based on."""
         return self._manifold
 
+    # it is regarded as an operator, so do not use @property
     def boundary(self):
         """Give a mesh of dimensions (n-1) on the boundary manifold."""
         if self._boundary is None:
@@ -115,7 +118,7 @@ class Mesh(Frozen):   # Mesh -
                 self._boundary = Mesh(
                     manifold_boundary,
                     sym_repr=r'\eth' + self._sym_repr,
-                    lin_repr=r'boundary-of-' + self._pure_pure_lin_repr
+                    lin_repr=r'boundary-of-' + self._pure_lin_repr
                 )
                 self._boundary._inclusion = self
             elif manifold_boundary.__class__.__name__ == 'NullManifold':

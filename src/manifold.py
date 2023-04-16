@@ -14,6 +14,7 @@ from src.config import _manifold_default_sym_repr
 from src.config import _check_sym_repr
 from src.config import _parse_lin_repr
 from src.config import _manifold_default_lin_repr
+from src.config import _manifold_partition_lin_repr
 
 _global_manifolds = dict()  # all manifolds are cached, and all sym_repr and lin_repr are different.
 
@@ -91,6 +92,7 @@ class Manifold(Frozen):
         self._partitions = {
             '0': (self, )
         }
+        self._covered_by_mesh = None  # if we have generated an abstract mesh for it, return the mesh
         self._freeze()
 
     @property
@@ -164,7 +166,7 @@ class Manifold(Frozen):
             else:
                 j = len(self._sub_manifolds)
                 while 1:
-                    lin_repr = self._pure_lin_repr + f'-sub{str(j)}'
+                    lin_repr = self._pure_lin_repr + _manifold_partition_lin_repr + f'{str(j)}'
                     occupied = False
                     for _sub_sym_repr in self._sub_manifolds:
                         if lin_repr == self._sub_manifolds[_sub_sym_repr]:
@@ -196,15 +198,17 @@ class Manifold(Frozen):
 
         partitions_set = set(partitions)
         existing = False
+        existing_config = None
         for existing_config in self._partitions:
             existing_partitions = set(self._partitions[existing_config])
             if partitions_set == existing_partitions:
                 existing = True
                 break
         if existing:
-            pass
+            return self._partitions[existing_config]
         else:
             self._partitions[config_name] = partitions
+            return partitions
 
     def _manifold_text(self):
         """generate text for printing representations."""

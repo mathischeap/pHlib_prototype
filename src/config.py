@@ -73,6 +73,12 @@ _abstract_time_sequence_default_sym_repr = r'\mathtt{T}^S'
 _abstract_time_interval_default_sym_repr = r'\Delta t'
 
 
+_mesh_partition_sym_repr = [r"M_{sh}\left(", r"\right)"]
+_mesh_partition_lin_repr = r"mesh-over: "
+
+_manifold_partition_lin_repr = "=sub"
+
+
 def _check_sym_repr(sym_repr):   # not used for forms as they have their own checker.
     """"""
     assert isinstance(sym_repr, str), f"sym_repr = {sym_repr} illegal, must be a string."

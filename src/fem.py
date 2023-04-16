@@ -7,7 +7,6 @@ created at: 3/30/2023 5:35 PM
 """
 
 import sys
-import numpy as np
 
 if './' not in sys.path:
     sys.path.append('./')
@@ -20,7 +19,7 @@ import msepy.main as msepy
 
 
 _implemented_finite_elements = {
-    'msepy': msepy   # mimetic spectral elements
+    'msepy': msepy,   # mimetic spectral elements
 }
 
 
@@ -33,7 +32,7 @@ def apply(fe_name, obj_dict):
         f"finite element name={fe_name} is wrong, should be one of {_implemented_finite_elements.keys()}"
 
     implementation = _implemented_finite_elements[fe_name]
-    implementation._chech_config()
+    implementation._check_config()
     implementation._parse_manifolds(_global_manifolds)
     implementation._parse_meshes(_global_meshes)
     implementation._parse_spaces(_space_set)
@@ -42,7 +41,7 @@ def apply(fe_name, obj_dict):
     obj_space = dict()
     for obj_name in obj_dict:
         obj = obj_dict[obj_name]
-        particular_obj = implementation._parse(obj)
+        particular_obj = _parse_obj(implementation, obj)
         if particular_obj is not None:
             obj_space[obj_name] = particular_obj
         else:
@@ -51,18 +50,38 @@ def apply(fe_name, obj_dict):
     return implementation, obj_space
 
 
+def _parse_obj(implementation, obj):
+    """"""
+    base = implementation.base
+    if hasattr(obj, "_sym_repr"):   # manifolds, meshes, spaces and (root-)forms are produced anyway!
+        sym_repr = obj._sym_repr
+        if sym_repr in base['manifolds']:
+            return base['manifolds'][sym_repr]
+        elif sym_repr in base['meshes']:
+            return base['meshes'][sym_repr]
+        elif sym_repr in base['spaces']:
+            return base['spaces'][sym_repr]
+        elif sym_repr in base['forms']:
+            return base['forms'][sym_repr]
+        else:
+            return implementation._parse(obj)
+    else:
+        return implementation._parse(obj)
+
+
 if __name__ == '__main__':
     # python src/fem.py
     import __init__ as ph
 
     samples = ph.samples
 
-    periodic = True
+    periodic = False
     oph = samples.pde_canonical_pH(n=3, p=3, periodic=periodic)[0]
     a3, b2 = oph.unknowns
     # oph.pr()
 
     wf = oph.test_with(oph.unknowns, sym_repr=[r'v^3', r'u^2'])
+
     wf = wf.derive.integration_by_parts('1-1')
     # wf.pr(indexing=True)
     if periodic is False:
@@ -131,9 +150,8 @@ if __name__ == '__main__':
         #     b2 @ td.time_sequence['k-1']]
         # )
         ls = mp.ls()
-        wf.pr()
 
-    elif periodic:
+    else:
 
         td = wf.td
         td.set_time_sequence()  # initialize a time sequence
@@ -198,5 +216,9 @@ if __name__ == '__main__':
         #     b2 @ td.time_sequence['k-1']]
         # )
         ls = mp.ls()
-        ls.pr()
-        print(mp.bc)
+
+    # ls.pr()
+    mesh = oph.mesh
+    msepy, obj = ph.fem.apply('msepy', locals())
+
+    print(obj)

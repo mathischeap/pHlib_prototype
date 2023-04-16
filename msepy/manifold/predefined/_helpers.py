@@ -4,6 +4,7 @@
 @contact: zhangyi_aero@hotmail.com
 """
 from src.tools.frozen import Frozen
+from numpy import ones_like
 
 
 class _LinearTransformation(Frozen):
@@ -26,12 +27,7 @@ class _LinearTransformation(Frozen):
             assert ub > lb, f"lb={lb}, ub={ub} of {i}th axis is wrong. Must have lb < up."
             self._low_bounds.append(lb)
             self._delta.append(ub - lb)
-        J = tuple()
-        for i in range(len(self._low_bounds)):
-            xr = list(0 for _ in range(len(self._low_bounds)))
-            xr[i] = self._delta[i]
-            J += (xr, )
-        self._J = J
+
         self._freeze()
 
     def mapping(self, *rst):
@@ -45,5 +41,10 @@ class _LinearTransformation(Frozen):
         return x
 
     def Jacobian_matrix(self, *rst):
-        assert len(rst) == len(self._low_bounds), f"rst dimensions wrong."
-        return self._J
+        I = len(self._low_bounds)
+        assert len(rst) == I, f"rst dimensions wrong."
+        J = [[0 for _ in range(I)] for _ in range(I)]
+        r = rst[0]
+        for i in range(I):
+            J[i][i] = self._delta[i] * ones_like(r)   # important, must do ones_like.
+        return tuple(J)

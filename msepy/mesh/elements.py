@@ -9,7 +9,6 @@ if './' not in sys.path:
 
 import numpy as np
 from src.tools.frozen import Frozen
-from scipy.sparse import csr_matrix
 
 
 class MsePyMeshElements(Frozen):
@@ -21,7 +20,7 @@ class MsePyMeshElements(Frozen):
         self._origin = None
         self._nodes = None   # like _origin, but have 1 at the ends. So it means the distribution of grid lines.
         self._delta = None
-        self._distribution = None   #
+        self._distribution = None   # how many elements along each axis?
         self._numbering = None
         self._num = None
         self._num_accumulation = None
@@ -107,7 +106,7 @@ class MsePyMeshElements(Frozen):
                         origin[i][-1].append(np.sum(_lyt_one[0:j+1]))
 
                 assert round(origin[i][-1][-1] + lyt[-1], 9) == 1, f"safety check"
-                nodes[i].append(origin[i][-1] + [1,])
+                nodes[i].append(origin[i][-1] + [1])
                 origin[i][-1] = np.array(origin[i][-1])
                 nodes[i][-1] = np.array(nodes[i][-1])
         delta = layouts
@@ -173,14 +172,23 @@ class MsePyMeshElements(Frozen):
             mip = MsePyMeshElementsIndexMapping(element_mtype_dict, self._num)
 
         reference_delta = list()
+        reference_origin = list()
+        reference_regions = list()
         for ce in mip._reference_elements:
             in_region, local_indices = self._find_region_and_local_indices_of_element(ce)
+            reference_regions.append(in_region)
             delta_s = self._delta[in_region]
+            origin_s = self._origin[in_region]
             rd = list()
+            ro = list()
             for i, index in enumerate(local_indices):
                 rd.append(delta_s[i][index])
+                ro.append(origin_s[i][index])
             reference_delta.append(rd)
-            mip._reference_delta = np.array(reference_delta)
+            reference_origin.append(ro)
+        mip._reference_delta = tuple(reference_delta)   # not need to convert to array
+        mip._reference_origin = tuple(reference_origin)   # not need to convert to array
+        mip._reference_regions = tuple(reference_regions)  # not need to convert to array
 
         return mip
 
@@ -364,15 +372,76 @@ class MsePyMeshElementsIndexMapping(Frozen):
             raise NotImplementedError()
 
         self._c2e = ci_ei_map
-        self._e2c = csr_matrix(ei_ci_map).T
+        self._e2c = ei_ci_map
 
         # these elements as representatives will be used to compute the metric for groups.
         self._reference_elements = list()
         for ce in self._c2e:
             self._reference_elements.append(ce[0])
         self._reference_elements = np.array(self._reference_elements)
-        self._reference_delta = None   # the delta of the representative elements
+        self._reference_origin = None   # the origin of the representative elements, it is initialized!
+        self._reference_delta = None   # the delta of the representative elements, it is initialized!
+        self._reference_regions = None
+        self.___involved_regions___ = None
         self._freeze()
+
+    @property
+    def _involved_regions(self):
+        """The involved regions."""
+        if self.___involved_regions___ is None:
+            self.___involved_regions___ = list(set(self._reference_regions))
+        return self.___involved_regions___
+
+    def distribute_according_to_reference_elements_dict(self, data_dict):
+        """We make a distributor from a dict of data whose keys are the reference elements.
+
+        Parameters
+        ----------
+        data_dict
+
+        Returns
+        -------
+
+        """
+        assert len(self._reference_elements) == len(data_dict)
+        for re in self._reference_elements:
+            assert re in data_dict, f"data_dict miss data for reference element {re}."
+        return _DataDictDistributor(self, data_dict)
+
+
+class _DataDictDistributor(Frozen):
+    """"""
+
+    def __init__(self, index_mapping, data_dict):
+        """"""
+        self._mp = index_mapping
+        self._dd = data_dict
+        self._freeze()
+
+    def get_data_of_element(self, i):
+        """return the data for element #i."""
+        return self._dd[
+            self._mp._reference_elements[
+                self._mp._e2c[i]
+            ]
+        ]
+
+    def __call__(self, i):
+        """return the data for element #i."""
+        return self.get_data_of_element(i)
+
+    def __getitem__(self, re):
+        """return the data for reference element #i."""
+        return self._dd[re]
+
+    def __iter__(self):
+        """Go through all reference elements."""
+        for re in self._dd:
+            return re
+
+    def __len__(self):
+        """How many reference element/data."""
+        return len(self._dd)
 
 
 if __name__ == '__main__':

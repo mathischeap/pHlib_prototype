@@ -41,7 +41,7 @@ class MsePyMeshVisualize(Frozen):
         """"""
         if refining_factor <= 0.1:
             refining_factor = 0.1
-        samples = 20000 * refining_factor
+        samples = 2 ** self._mesh.esd * 50000 * refining_factor
         samples = int((np.ceil(samples / self._mesh.elements._num))**(1/self._mesh.esd))
         if samples >= 100:
             samples = 100
@@ -49,6 +49,7 @@ class MsePyMeshVisualize(Frozen):
             samples = 2
         else:
             pass
+
         ndim = self._mesh.ndim
         linspace = np.linspace(0, 1, samples)
         Nodes = self._mesh.elements._nodes

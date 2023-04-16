@@ -10,6 +10,7 @@ if './' not in sys.path:
 from src.tools.frozen import Frozen
 from msepy.manifold.main import MsePyManifold
 from msepy.mesh.main import MsePyMesh
+from msepy.spaces.main import MsePySpace
 from src.config import SIZE   # MPI.SIZE
 
 
@@ -32,7 +33,7 @@ base = {
 }
 
 
-def _chech_config():
+def _check_config():
     """"""
     assert SIZE == 1, f"msepy only works for single thread call (MPI.SIZE=1), now MPI.size = {SIZE}"
 
@@ -48,35 +49,37 @@ def _parse_manifolds(abstract_manifolds):
 
 def _parse_meshes(abstract_meshes):
     """"""
-    meshes = dict()
+    mesh_dict = {}
     for sym in abstract_meshes:
         am = abstract_meshes[sym]
         m = MsePyMesh(am)
-        meshes[sym] = m
-    base['meshes'] = meshes
+        mesh_dict[sym] = m
+    base['meshes'] = mesh_dict
 
 
 def _parse_spaces(abstract_spaces):
     """"""
+    space_dict = {}
+    for ab_msh_sym_repr in abstract_spaces:
+        ab_sps = abstract_spaces[ab_msh_sym_repr]
 
+        for ab_sp_sym_repr in ab_sps:
+            ab_sp = ab_sps[ab_sp_sym_repr]
+
+            if ab_sp.orientation != 'unknown':
+                space = MsePySpace(ab_sp)
+                space_dict[ab_sp_sym_repr] = space
+            else:
+                pass
+    base['spaces'] = space_dict
 
 def _parse_root_forms(abstract_rfs):
     """"""
 
 
 def _parse(obj):
-    """"""
-    if hasattr(obj, "_sym_repr"):
-        sym_repr = obj._sym_repr
-        if sym_repr in base['manifolds']:
-            return base['manifolds'][sym_repr]
-        elif sym_repr in base['meshes']:
-            return base['meshes'][sym_repr]
-        else:
-            pass
+    """The object that other than manifolds, meshes, spaces, root-forms will be parsed here!"""
 
-    else:
-        pass
 
 
 from msepy.manifold.main import config as _mf_config

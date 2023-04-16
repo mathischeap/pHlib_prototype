@@ -203,6 +203,11 @@ class Form(Frozen):
         """The mesh this form is on."""
         return self.space.mesh
 
+    @property
+    def manifold(self):
+        """The manifold this form is on."""
+        return self.mesh.manifold
+
     def wedge(self, other):
         """Return a form representing `self` wedge `other`."""
         return wedge(self, other)

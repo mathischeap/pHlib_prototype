@@ -8,9 +8,11 @@ if './' not in sys.path:
 
 from scipy.sparse import csr_matrix
 
+
 def delete_from_csr(mat, _rows, _cols):
-    """
-    Remove the rows (denoted by ``row_indices``) and columns (denoted by ``col_indices``) from the CSR sparse matrix ``mat``.
+    """Remove the rows (denoted by ``row_indices``) and columns (denoted by ``col_indices``)
+    from the CSR sparse matrix ``mat``.
+
     WARNING: Indices of altered axes are reset in the returned matrix
     """
     if not isinstance(mat, csr_matrix):

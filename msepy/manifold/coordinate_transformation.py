@@ -41,13 +41,17 @@ class MsePyManifoldsCoordinateTransformation(Frozen):
 
     def Jacobian_matrix(self, *rst, regions=None):
         """"""
-        if regions is None:
-            regions = range(len(self._mf.regions))
+        if isinstance(regions, int):
+            assert regions in self._mf.regions, f"region index = {regions} is not a valid one!"
+            rct = self._mf.regions[regions]._ct
+            xyz = rct.Jacobian_matrix(*rst)
+            return {regions: xyz}  # just to make the output consistent.
+
         else:
-            if isinstance(regions, int):
-                regions = [regions, ]
+            if regions is None:
+                regions = range(len(self._mf.regions))
             else:
-                pass
+                raise Exception()
 
         cache_rmt = dict()  # a cache whose keys are region mtypes.
 

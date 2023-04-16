@@ -9,6 +9,7 @@ if './' not in sys.path:
 
 from src.tools.frozen import Frozen
 import numpy as np
+from typing import Dict
 
 
 class MsePyMeshCoordinateTransformation(Frozen):
@@ -17,10 +18,12 @@ class MsePyMeshCoordinateTransformation(Frozen):
     def __init__(self, mesh):
         """"""
         self._mesh = mesh
+        self.___cache_mapping_od___ = dict()  # cache #1 for mapping.
+        self.___cache_JM_od___ = dict()  # cache #1 for mapping.
         self._freeze()
 
     def mapping(self, *xi_et_sg, regions=None):
-        """"""
+        """The mapping for elements in regions."""
         if regions is None:
             regions = range(0, len(self._mesh.manifold.regions))
         elif isinstance(regions, int):
@@ -33,18 +36,17 @@ class MsePyMeshCoordinateTransformation(Frozen):
         delta = elements._delta
         _xyz = dict()
 
-        _layout_cache_key = elements._layout_cache_key
-        cache = dict()
+        assert len(xi_et_sg) == self._mesh.ndim, f"I need {self._mesh.ndim} reference coordinates."
 
         for i in regions:
-            key = _layout_cache_key[i]
-            if key in cache:
-                ori, dta, num_local_elements = cache[key]
+            key = elements._layout_cache_key[i]
+            if key in self.___cache_mapping_od___:
+                ori, dta, num_local_elements = self.___cache_mapping_od___[key]
             else:
                 oi = origin[i]
                 di = delta[i]
-                assert len(xi_et_sg) == len(oi) == self._mesh.ndim, f"I need {len(oi)} reference coordinates."
                 length = [len(_) for _ in oi]
+
                 if self._mesh.ndim == 1:   # 1-d mapping
                     ox = oi[0]
                     dx = di[0]
@@ -68,8 +70,9 @@ class MsePyMeshCoordinateTransformation(Frozen):
                     dta = [dx, dy, dz]
                 else:
                     raise NotImplementedError()
+
                 num_local_elements = np.prod(length)
-                cache[key] = ori, dta, num_local_elements
+                self.___cache_mapping_od___[key] = ori, dta, num_local_elements
 
             md_ref_coo = list()
             for j, ref_coo in enumerate(xi_et_sg):
@@ -93,12 +96,80 @@ class MsePyMeshCoordinateTransformation(Frozen):
 
             return xyz
 
+    def Jacobian_matrix(self, *xi_et_sg):
+        """The Jacobian matrix for each element.
+
+        As it is computed through element index mapping, it will be computed for all elements.
+        """
+        eim = self._mesh.elements._index_mapping
+        reference_elements = eim._reference_elements
+        reference_delta = eim._reference_delta
+        reference_origin = eim._reference_origin
+        reference_regions = eim._reference_regions
+
+        elements: Dict[int] = dict()  # Dict keys: region index
+        origin: Dict[int] = dict()    # Dict keys: region index
+        delta: Dict[int] = dict()     # Dict keys: region index
+        for i, re in enumerate(reference_elements):
+            region = reference_regions[i]
+            if region not in origin:
+                elements[region] = list()
+                origin[region] = list()
+                delta[region] = list()
+            else:
+                pass
+
+            elements[region].append(re)
+            origin[region].append(reference_origin[i])
+            delta[region].append(reference_delta[i])
+
+        for r in origin:
+            origin[r] = np.array(origin[r]).T
+            delta[r] = np.array(delta[r]).T
+
+        JM = dict()
+        for r in elements:
+            ele = elements[r]
+
+            ori = origin[r]
+            dta = delta[r]
+
+            jm = list()
+            for j, ref_coo in enumerate(xi_et_sg):
+                _ = ref_coo[..., np.newaxis].repeat(len(ele), axis=-1)
+                _ = (_ + 1) * 0.5 * dta[j] + ori[j]
+                jm.append(_)
+
+            jm = self._mesh.manifold.ct.Jacobian_matrix(*jm, regions=r)[r]
+
+            ref_Jacobian = dta / 2
+            s0 = len(jm)
+            s1 = len(jm[0])
+            for e in ele:
+                assert e not in JM, f"trivial check, a reference element must appear once."
+                JM[e] = tuple([[0 for _ in range(s0)] for _ in range(s1)])
+
+            for i in range(s0):
+                for j in range(s1):
+                    jm_ij = jm[i][j]
+                    if isinstance(jm_ij, int) and jm_ij == 0:
+
+                        pass
+
+                    else:
+                        assert jm_ij.__class__.__name__ == 'ndarray', 'Trivial check. Make sure we use ones_like.'
+                        jm_ij *= ref_Jacobian[j]
+                        for k, e in enumerate(ele):
+                            JM[e][i][j] = jm_ij[..., k]
+
+        return self._mesh.elements._index_mapping.distribute_according_to_reference_elements_dict(JM)
+
 
 if __name__ == '__main__':
     # python msepy/mesh/coordinate_transformation.py
     import __init__ as ph
 
-    space_dim = 2
+    space_dim = 3
     ph.config.set_embedding_space_dim(space_dim)
 
     manifold = ph.manifold(space_dim)
@@ -109,13 +180,18 @@ if __name__ == '__main__':
     mnf = obj['manifold']
     msh = obj['mesh']
 
-    # msepy.config(mnf)('crazy', c=0., periodic=False, bounds=[[0, 2] for _ in range(space_dim)])
-    msepy.config(mnf)('backward_step')
+    msepy.config(mnf)('crazy', c=0.3, periodic=False, bounds=[[0, 2] for _ in range(space_dim)])
+    # msepy.config(mnf)('backward_step')
     msepy.config(msh)([5 for _ in range(space_dim)])
     # msepy.config(msh)(([1, 2, 1], [2, 3], [1, 2, 2, 4]))
+    # msepy.config(msh)(([1, 2, 2], [2, 3]))
 
     # xi_et_sg = [np.array([-0.5, 0, 0.25, 0.5]) for _ in range(space_dim)]
-    xi_et_sg = [np.linspace(-1, 1, 4) for _ in range(space_dim)]
+    # xi_et_sg = [np.linspace(-1, 1, 4) for _ in range(space_dim)]
+    xi_et_sg = [np.random.rand(7, 11) for _ in range(space_dim)]
 
     xyz = msh.ct.mapping(*xi_et_sg)
-    print(np.shape(xyz))
+    jm = msh.ct.Jacobian_matrix(*xi_et_sg)
+    print(jm(2))
+
+    # msh.visualize(refining_factor=1)

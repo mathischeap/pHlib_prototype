@@ -368,7 +368,7 @@ class WeakFormulation(Frozen):
     def bc(self):
         """The boundary condition of pde class."""
         if self._bc is None:
-            self._bc = BoundaryCondition(self._mesh.manifold)
+            self._bc = BoundaryCondition(self._mesh)
         return self._bc
 
     @property

@@ -5,7 +5,7 @@
 @time: 11/26/2022 2:56 PM
 """
 
-from numpy import sin, pi, cos
+from numpy import sin, pi, cos, ones_like
 
 import warnings
 from src.tools.frozen import Frozen
@@ -137,7 +137,10 @@ class _MesPyRegionCrazyMapping(Frozen):
         if self._esd == 1:
             r = rst[0]
             a, b = self._bounds[0]
-            xr = (b - a) + (b - a) * 2 * pi * 0.5 * self._c * cos(2 * pi * r)
+            if self._c == 0:
+                xr = (b - a) * ones_like(r)
+            else:
+                xr = (b - a) + (b - a) * 2 * pi * 0.5 * self._c * cos(2 * pi * r)
             return [[xr]]
 
         elif self._esd == 2:
@@ -146,10 +149,10 @@ class _MesPyRegionCrazyMapping(Frozen):
             a, b = self._bounds[0]
             c, d = self._bounds[1]
             if self._c == 0:
-                xr = (b - a)
+                xr = (b - a) * ones_like(r)
                 xs = 0
                 yr = 0
-                ys = (d - c)
+                ys = (d - c) * ones_like(r)
 
             else:
                 xr = (b - a) + (b - a) * 2 * pi * 0.5 * self._c * cos(2 * pi * r) * sin(2 * pi * s)
@@ -167,17 +170,17 @@ class _MesPyRegionCrazyMapping(Frozen):
             e, f = self._bounds[2]
 
             if self._c == 0:
-                xr = (b - a)
+                xr = (b - a) * ones_like(r)
                 xs = 0  # np.zeros_like(r)
                 xt = 0
     
                 yr = 0
-                ys = (d - c)
+                ys = (d - c) * ones_like(r)
                 yt = 0
     
                 zr = 0
                 zs = 0
-                zt = (f - e)
+                zt = (f - e) * ones_like(r)
             else:
                 xr = (b - a) + (b - a) * 2 * pi * 0.5 * self._c * cos(2 * pi * r) * sin(2 * pi * s) * sin(
                     2 * pi * t)
