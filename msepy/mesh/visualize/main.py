@@ -24,12 +24,7 @@ class MsePyMeshVisualize(Frozen):
 
     def __call__(self, *args, **kwargs):
         """"""
-        if self._mesh.esd in (1, 2):
-            return self.matplot(*args, **kwargs)
-        elif self._mesh.esd == 3:
-            return self.vtk(*args, **kwargs)
-        else:
-            raise NotImplementedError()
+        return self.matplot(*args, **kwargs)
 
     @property
     def matplot(self):
@@ -48,11 +43,75 @@ class MsePyMeshVisualize(Frozen):
             refining_factor = 0.1
         samples = 20000 * refining_factor
         samples = int((np.ceil(samples / self._mesh.elements._num))**(1/self._mesh.esd))
-        if samples >= 200:
-            samples = 200
+        if samples >= 100:
+            samples = 100
+        elif samples < 2:
+            samples = 2
+        else:
+            pass
         ndim = self._mesh.ndim
-        xi_et_sg = [np.linspace(-1, 1, samples) for _ in range(ndim)]
-        region_map = self._mesh.manifold.regions.map
-        xi_et_sg = np.meshgrid(*xi_et_sg, indexing='ij')
-        xyz = self._mesh.manifold.ct.mapping(*xi_et_sg)
-        return xyz, region_map
+        linspace = np.linspace(0, 1, samples)
+        Nodes = self._mesh.elements._nodes
+        Lines = dict()
+        for i in Nodes:  # region #i
+            nodes = Nodes[i]
+            assert ndim == len(nodes), f"trivial check."
+            Lines[i] = list()    # the lines in region #i,
+            if len(nodes) == 1:   # mesh ndim == 1
+                # we do not use region mapping for this because we want to see the line segments.
+                linspace_segment = np.array([-1, 1])
+                coo_lines = self._mesh.ct.mapping(linspace_segment, regions=i)
+                Lines[i].append(coo_lines)
+
+            elif len(nodes) == 2:   # mesh ndim == 2
+
+                nodes0, nodes1 = nodes
+
+                axis0_rst = np.meshgrid(linspace, nodes1, indexing='ij')
+                axis1_rst = np.meshgrid(nodes0, linspace, indexing='ij')
+
+                axis0_lines = self._mesh.manifold.ct.mapping(*axis0_rst, regions=i)[i]
+                axis1_lines = self._mesh.manifold.ct.mapping(*axis1_rst, regions=i)[i]
+
+                Lines[i].append(axis0_lines)
+                Lines[i].append(axis1_lines)
+
+            elif len(nodes) == 3:   # mesh ndim == 3
+                nodes0, nodes1, nodes2 = nodes
+
+                axis0_rst = np.meshgrid(linspace, nodes1, nodes2, indexing='ij')
+                axis1_rst = np.meshgrid(nodes0, linspace, nodes2, indexing='ij')
+                axis2_rst = np.meshgrid(nodes0, nodes1, linspace, indexing='ij')
+
+                axis0_lines = self._mesh.manifold.ct.mapping(*axis0_rst, regions=i)[i]
+                axis1_lines = self._mesh.manifold.ct.mapping(*axis1_rst, regions=i)[i]
+                axis2_lines = self._mesh.manifold.ct.mapping(*axis2_rst, regions=i)[i]
+
+                Lines[i].append(axis0_lines)
+                Lines[i].append(axis1_lines)
+                Lines[i].append(axis2_lines)
+
+        return Lines
+
+
+if __name__ == '__main__':
+    # python msepy/mesh/visualize/main.py
+    import __init__ as ph
+    space_dim = 2
+    ph.config.set_embedding_space_dim(space_dim)
+
+    manifold = ph.manifold(space_dim)
+    mesh = ph.mesh(manifold)
+
+    msepy, obj = ph.fem.apply('msepy', locals())
+
+    mnf = obj['manifold']
+    msh = obj['mesh']
+
+    # msepy.config(mnf)('crazy', c=0., periodic=True, bounds=[[0, 2] for _ in range(space_dim)])
+    msepy.config(mnf)('backward_step')
+    msepy.config(msh)([3 for _ in range(space_dim)])
+
+    # msh.visualize()
+    # print(msh.elements._layout_cache_key)
+    msh.visualize()

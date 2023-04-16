@@ -87,11 +87,11 @@ class _MsePyRegionMtype(Frozen):
             raise Exception(f"Unique region cannot distribute metric type to elements.")
 
         elif self._indicator == 'Linear':
-
+            # parameters are for example: ['x1.33333', 'y1.666666', ...]
             assert len(layout) == len(self._parameters), f"layout or parameters dimensions wrong."
             assert len(layout) == element_numbering.ndim, f"layout or element_numbering dimensions wrong."
 
-            LayOut = [np.round(_, 4) for _ in layout]
+            LayOut = [np.round(_, 5) for _ in layout]
             parameters = self._parameters
             axis = [_[0] for _ in parameters]
             para = [float(_[1:]) for _ in parameters]
@@ -100,6 +100,7 @@ class _MsePyRegionMtype(Frozen):
                 for i in range(len(LayOut[0])):
                     Li = LayOut[0][i]
                     pi = para[0] * Li
+                    pi = round(pi, 5)
                     key = 'Linear:' + axis[0] + str(pi)
 
                     element_number = element_numbering[i, ]
@@ -114,6 +115,8 @@ class _MsePyRegionMtype(Frozen):
 
                         Li, Lj = LayOut[0][i], LayOut[1][j]
                         pi, pj = para[0] * Li, para[1] * Lj
+                        pi = round(pi, 5)
+                        pj = round(pj, 5)
                         key = 'Linear:' + axis[0] + str(pi) + axis[1] + str(pj)
 
                         element_number = element_numbering[i, j]
@@ -129,6 +132,9 @@ class _MsePyRegionMtype(Frozen):
 
                             Li, Lj, Lk = LayOut[0][i], LayOut[1][j], LayOut[2][k]
                             pi, pj, pk = para[0] * Li, para[1] * Lj, para[2] * Lk
+                            pi = round(pi, 5)
+                            pj = round(pj, 5)
+                            pk = round(pk, 5)
                             key = 'Linear:' + axis[0] + str(pi) + axis[1] + str(pj) + axis[2] + str(pk)
 
                             element_number = element_numbering[i, j, k]
@@ -139,7 +145,6 @@ class _MsePyRegionMtype(Frozen):
 
             else:
                 raise NotImplementedError()
-
 
         else:
             raise NotImplementedError(f"Not implemented for indicator = {self._indicator}")

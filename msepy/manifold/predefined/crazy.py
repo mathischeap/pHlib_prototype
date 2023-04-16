@@ -5,7 +5,7 @@
 @time: 11/26/2022 2:56 PM
 """
 
-from numpy import sin, pi, cos, ones_like
+from numpy import sin, pi, cos
 
 import warnings
 from src.tools.frozen import Frozen
@@ -63,7 +63,6 @@ def crazy(mf, bounds=None, c=0, periodic=False):
 class _MesPyRegionCrazyMapping(Frozen):
 
     def __init__(self, bounds, c, esd):
-        super().__init__()
         for i, bs in enumerate(bounds):
             assert len(bs) == 2 and all([isinstance(_, (int, float)) for _ in bs]), f"bounds[{i}]={bs} is illegal."
             lb, up = bs
@@ -86,7 +85,7 @@ class _MesPyRegionCrazyMapping(Frozen):
             r = rst[0]
             a, b = self._bounds[0]
             x = (b - a) * (r + 0.5 * self._c * sin(2 * pi * r)) + a
-            return x
+            return [x]
 
         elif self._esd == 2:
 
@@ -139,7 +138,7 @@ class _MesPyRegionCrazyMapping(Frozen):
             r = rst[0]
             a, b = self._bounds[0]
             xr = (b - a) + (b - a) * 2 * pi * 0.5 * self._c * cos(2 * pi * r)
-            return xr
+            return [[xr]]
 
         elif self._esd == 2:
             r, s = rst
@@ -147,10 +146,10 @@ class _MesPyRegionCrazyMapping(Frozen):
             a, b = self._bounds[0]
             c, d = self._bounds[1]
             if self._c == 0:
-                xr = (b - a) * ones_like(r)
+                xr = (b - a)
                 xs = 0
                 yr = 0
-                ys = (d - c) * ones_like(r)
+                ys = (d - c)
 
             else:
                 xr = (b - a) + (b - a) * 2 * pi * 0.5 * self._c * cos(2 * pi * r) * sin(2 * pi * s)
@@ -168,17 +167,17 @@ class _MesPyRegionCrazyMapping(Frozen):
             e, f = self._bounds[2]
 
             if self._c == 0:
-                xr = (b - a) * ones_like(r)  # have to do this to make it an array.
+                xr = (b - a)
                 xs = 0  # np.zeros_like(r)
                 xt = 0
     
                 yr = 0
-                ys = (d - c) * ones_like(r)
+                ys = (d - c)
                 yt = 0
     
                 zr = 0
                 zs = 0
-                zt = (f - e) * ones_like(r)
+                zt = (f - e)
             else:
                 xr = (b - a) + (b - a) * 2 * pi * 0.5 * self._c * cos(2 * pi * r) * sin(2 * pi * s) * sin(
                     2 * pi * t)

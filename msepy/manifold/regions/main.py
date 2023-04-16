@@ -19,6 +19,7 @@ class MseManifoldRegions(Frozen):
         self._mf = mf
         self._regions = dict()
         self._map = None  # normally, only regions of the highest dimensional manifold has a region map.
+        self._is_structured_regions = None
         self._freeze()
 
     @property
@@ -62,6 +63,22 @@ class MseManifoldRegions(Frozen):
                             f"but map[{mp}][{_j}] does not refer to region #{i}."
         else:
             raise NotImplementedError()
+
+    def is_structured(self):
+        """Return True if we have a structured region map; `map_type=0` in `_check_map`;
+        map is a 2d-array of integers and None.
+
+        Else, return False.
+        """
+        if self._is_structured_regions is None:   # map_type = 0, see `_check_map`.
+            is_structured_regions = list()
+            for i in self:
+                Rmap = self.map[i]
+                is_structured_regions.append(
+                    isinstance(Rmap, list) and all([isinstance(_, int) or _ is None for _ in Rmap])
+                )
+            self._is_structured_regions = all(is_structured_regions)
+        return self._is_structured_regions
 
     def __repr__(self):
         """"""

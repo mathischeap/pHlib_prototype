@@ -19,6 +19,7 @@ class MsePyMeshElements(Frozen):
         """"""
         self._mesh = mesh
         self._origin = None
+        self._nodes = None   # like _origin, but have 1 at the ends. So it means the distribution of grid lines.
         self._delta = None
         self._distribution = None   #
         self._numbering = None
@@ -26,35 +27,25 @@ class MsePyMeshElements(Frozen):
         self._num_accumulation = None
         self._index_mapping = None
         self._map = None
+        self.___layout_cache_key___ = None
         self._freeze()
 
     @property
     def map(self):
         return self._map
 
-    def _parse_origin_and_delta_from_layout(self, layouts):
-        """"""
-        origin = dict()
-        for i in layouts:
-            assert i in self._mesh.manifold.regions
-            layout = layouts[i]
-            origin[i] = list()
-            for lyt in layout:
-                origin[i].append([0, ])
-                _lyt_one = lyt[0:-1]
-                if len(_lyt_one) == 0:
-                    pass
-                else:
-                    for j in range(len(_lyt_one)):
-                        origin[i][-1].append(np.sum(_lyt_one[0:j+1]))
+    @property
+    def _layout_cache_key(self):
+        """If the `layout_cache_key` of two regions are the same, we think their element layouts are the same.
 
-                assert round(origin[i][-1][-1] + lyt[-1], 9) == 1, f"safety check"
-                origin[i][-1] = np.array(origin[i][-1])
-        delta = layouts
-        dis = dict()
-        for i in delta:
-            dis[i] = [len(_) for _ in delta[i]]
-        return origin, delta, dis
+        Remember, regions of the same layout_cache_key only means their layouts are the same, but their region
+        metric can be totally different.
+        """
+        if self.___layout_cache_key___ is None:
+            self.___layout_cache_key___ = dict()
+            for i in self._delta:
+                self.___layout_cache_key___[i] = hash(str(self._delta[i]))
+        return self.___layout_cache_key___
 
     def _generate_elements_from_layout(self, layouts):
         """
@@ -67,10 +58,63 @@ class MsePyMeshElements(Frozen):
         -------
 
         """
-        self._origin, self._delta, self._distribution = self._parse_origin_and_delta_from_layout(layouts)
+        self._check_layouts(layouts)
+        self._origin, self._delta, self._distribution, self._nodes = self._parse_origin_and_delta_from_layout(layouts)
         self._numbering, self._num, self._num_accumulation = self._generate_element_numbering_from_layout(layouts)
         self._index_mapping = self._generate_indices_mapping_from_layout(layouts)
         self._map = self._generate_element_map(layouts)
+
+    def _check_layouts(self, layouts):
+        """"""
+        assert len(layouts) == len(self._mesh.manifold.regions), f"layout length wrong."
+        if len(layouts) == 1:
+            pass
+        else:
+            if self._mesh.manifold.regions.is_structured():
+                region_map = self._mesh.manifold.regions.map
+                for i in region_map:
+                    layout_i = layouts[i]
+                    for j, target in enumerate(region_map[i]):
+                        if target is not None:
+                            axis = j // 2
+                            layout_j = layouts[target]
+                            ly_i_axis = layout_i[axis]
+                            ly_j_axis = layout_j[axis]
+                            try:
+                                np.testing.assert_array_almost_equal(ly_i_axis, ly_j_axis, decimal=5)
+                            except AssertionError:
+                                raise Exception(f"layout along {axis}-axis for "
+                                                f"region #{i} and region #{target} does not match.")
+            else:
+                pass
+
+    def _parse_origin_and_delta_from_layout(self, layouts):
+        """"""
+        origin = dict()
+        nodes = dict()
+        for i in layouts:
+            assert i in self._mesh.manifold.regions
+            layout = layouts[i]
+            origin[i] = list()
+            nodes[i] = list()
+            for lyt in layout:
+                origin[i].append([0, ])
+                _lyt_one = lyt[0:-1]
+                if len(_lyt_one) == 0:
+                    pass
+                else:
+                    for j in range(len(_lyt_one)):
+                        origin[i][-1].append(np.sum(_lyt_one[0:j+1]))
+
+                assert round(origin[i][-1][-1] + lyt[-1], 9) == 1, f"safety check"
+                nodes[i].append(origin[i][-1] + [1,])
+                origin[i][-1] = np.array(origin[i][-1])
+                nodes[i][-1] = np.array(nodes[i][-1])
+        delta = layouts
+        dis = dict()
+        for i in delta:
+            dis[i] = [len(_) for _ in delta[i]]
+        return origin, delta, dis, nodes
 
     def _generate_element_numbering_from_layout(self, layouts):
         """"""
@@ -160,7 +204,7 @@ class MsePyMeshElements(Frozen):
                 in_region = j
                 break
             else:
-                if na <= i < self._mesh.manifold.regions[j+1]:
+                if na <= i < self._num_accumulation[j+1]:
                     in_region = j
                     break
                 else:
@@ -192,15 +236,7 @@ class MsePyMeshElements(Frozen):
 
     def _generate_element_map(self, layouts):
         """"""
-        regions = self._mesh.manifold.regions
-        region_map = regions.map
-        structured_regions = list()
-        for i in regions:
-            Rmap = region_map[i]
-            structured_regions.append(
-                isinstance(Rmap, list) and all([isinstance(_, int) or _ is None for _ in Rmap])
-            )
-        structured_regions = all(structured_regions)
+        structured_regions = self._mesh.manifold.regions.is_structured()
 
         if structured_regions:  # `map_type = 0` region map. See `_check_map` of `regions`.
 
@@ -330,11 +366,12 @@ class MsePyMeshElementsIndexMapping(Frozen):
         self._c2e = ci_ei_map
         self._e2c = csr_matrix(ei_ci_map).T
 
+        # these elements as representatives will be used to compute the metric for groups.
         self._reference_elements = list()
         for ce in self._c2e:
             self._reference_elements.append(ce[0])
         self._reference_elements = np.array(self._reference_elements)
-        self._reference_delta = None
+        self._reference_delta = None   # the delta of the representative elements
         self._freeze()
 
 
@@ -352,6 +389,7 @@ if __name__ == '__main__':
     mnf = obj['manifold']
     msh = obj['mesh']
 
-    msepy.config(mnf)('crazy', c=0.1, periodic=False, bounds=[[0, 2] for _ in range(space_dim)])
+    # msepy.config(mnf)('crazy', c=0.1, periodic=False, bounds=[[0, 2] for _ in range(space_dim)])
+    msepy.config(mnf)('backward_step')
     msepy.config(msh)([3 for _ in range(space_dim)])
-    print(msh.elements.map)
+    # print(msh.elements.map)
