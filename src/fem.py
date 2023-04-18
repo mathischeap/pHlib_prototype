@@ -11,8 +11,13 @@ import sys
 if './' not in sys.path:
     sys.path.append('./')
 
+from src.manifold import Manifold
+from src.mesh import Mesh
+from src.spaces.base import SpaceBase
+from src.form.main import Form
+
 from src.manifold import _global_manifolds  # [manifold_sym_repr] -> manifold
-from src.mesh import _global_meshes   # [mesh_sym_repr] -> mesh
+from src.mesh import _global_meshes  # [mesh_sym_repr] -> mesh
 from src.spaces.main import _space_set  # [mesh_sym_repr][space_sym_repr] -> space
 from src.form.main import _global_root_forms_lin_dict  # [root-form_lin_repr] -> root-form
 import msepy.main as msepy
@@ -52,19 +57,23 @@ def apply(fe_name, obj_dict):
 
 def _parse_obj(implementation, obj):
     """"""
-    base = implementation.base
-    if hasattr(obj, "_sym_repr"):   # manifolds, meshes, spaces and (root-)forms are produced anyway!
-        sym_repr = obj._sym_repr
-        if sym_repr in base['manifolds']:
-            return base['manifolds'][sym_repr]
-        elif sym_repr in base['meshes']:
-            return base['meshes'][sym_repr]
-        elif sym_repr in base['spaces']:
-            return base['spaces'][sym_repr]
-        elif sym_repr in base['forms']:
-            return base['forms'][sym_repr]
+    if obj.__class__ is Manifold:
+        return implementation.base['manifolds'][obj._sym_repr]
+    elif obj.__class__ is Mesh:
+        return implementation.base['meshes'][obj._sym_repr]
+    elif issubclass(obj.__class__, SpaceBase):
+        if obj._sym_repr in implementation.base['spaces']:
+            return implementation.base['spaces'][obj._sym_repr]
         else:
-            return implementation._parse(obj)
+            pass  # for those spaces have no particular counterparts, we simply skip them.
+    elif obj.__class__ is Form:
+        if obj.is_root():
+            if obj._lin_repr in implementation.base['forms']:
+                return implementation.base['forms'][obj._lin_repr]
+            else:
+                pass  # for those spaces have no particular counterparts, we simply skip them.
+        else:
+            pass  # non-root-form has no counterpart.
     else:
         return implementation._parse(obj)
 
@@ -219,6 +228,7 @@ if __name__ == '__main__':
 
     # ls.pr()
     mesh = oph.mesh
+    space = a3.space
     msepy, obj = ph.fem.apply('msepy', locals())
 
     print(obj)

@@ -34,7 +34,7 @@ class MsePyMeshVisualize(Frozen):
     def vtk(self):
         return self._vtk
 
-    def _mesh_data(
+    def _generate_mesh_grid_data(
             self,
             refining_factor=1,
     ):

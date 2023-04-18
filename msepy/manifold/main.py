@@ -12,6 +12,7 @@ from src.tools.frozen import Frozen
 from src.config import get_embedding_space_dim
 from msepy.manifold.regions.main import MseManifoldRegions
 from msepy.manifold.coordinate_transformation import MsePyManifoldsCoordinateTransformation
+from msepy.manifold.visualize.main import MsePyManifoldVisualize
 
 from msepy.manifold.regions.region import MsePyManifoldRegion
 from msepy.manifold.regions.rct import MsePyRegionCoordinateTransformation
@@ -55,6 +56,7 @@ class MsePyManifold(Frozen):
         self._abstract = abstract_manifold
         self._ct = None
         self._regions = None
+        self._visualize = None
         self._freeze()
 
     def _parse_regions_from_region_map(
@@ -114,6 +116,12 @@ class MsePyManifold(Frozen):
         """"""
         assert self._regions is not None, f"regions of {self} is not configured, config it through `msepy.config`"
         return self._regions
+
+    @property
+    def visualize(self):
+        if self._visualize is None:
+            self._visualize = MsePyManifoldVisualize(self)
+        return self._visualize
 
 
 if __name__ == '__main__':

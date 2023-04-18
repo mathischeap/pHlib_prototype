@@ -1,24 +1,26 @@
 # -*- coding: utf-8 -*-
 """
-@author: Yi Zhang
-@contact: zhangyi_aero@hotmail.com
+pH-lib@RAM-EEMCS-UT
+Yi Zhang
+Created at 1:55 PM on 4/17/2023
 """
 import numpy as np
 import sys
+
 if './' not in sys.path:
     sys.path.append('./')
-
 from src.tools.frozen import Frozen
 import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('TkAgg')
 
 
-class MsePyMeshVisualizeMatplot(Frozen):
+class MsePyManifoldVisualizeMatplot(Frozen):
     """"""
 
-    def __init__(self, mesh):
-        self._mesh = mesh
+    def __init__(self, manifold):
+        """"""
+        self._manifold = manifold
         self._freeze()
 
     def __call__(
@@ -35,13 +37,12 @@ class MsePyMeshVisualizeMatplot(Frozen):
             color='k',
 
     ):
-        """Default matplot method."""
-
-        mesh_data_Lines = self._mesh.visualize._generate_mesh_grid_data(refining_factor=refining_factor)
+        """"""
+        manifold_data_lines = self._manifold.visualize._generate_manifold_grid_data(refining_factor=refining_factor)
         plt.rc('text', usetex=usetex)
 
-        ndim = self._mesh.ndim
-        esd = self._mesh.esd
+        ndim = self._manifold.ndim
+        esd = self._manifold.esd
 
         if esd in (1, 2):  # we use 2-d plot.
             fig, ax = plt.subplots(figsize=figsize)
@@ -59,26 +60,17 @@ class MsePyMeshVisualizeMatplot(Frozen):
                 plt.ylim(ylim)
 
             if ndim == esd == 1:
-                for i in mesh_data_Lines:  # region # i
-                    lines = mesh_data_Lines[i]
-                    for j, axis_lines in enumerate(lines):
-
-                        _1d_segments = axis_lines[0].transpose()
-                        for segment in _1d_segments:
-                            plt.plot(segment, [0, 0], linewidth=linewidth, color=color)
-                            plt.scatter(segment, [0, 0], color='k')
+                for i in manifold_data_lines:  # region # i
+                    lines = manifold_data_lines[i][0][0]
+                    plt.plot(lines, [0, 0], linewidth=linewidth, color=color)
+                    plt.scatter(lines, [0, 0], color='k')
 
             elif ndim == esd == 2:
-                for i in mesh_data_Lines:  # region # i
-                    lines = mesh_data_Lines[i]
-                    for j, axis_lines in enumerate(lines):
-                        axis0, axis1 = axis_lines
-                        if j == 0:
-                            plt.plot(axis0, axis1, linewidth=linewidth, color=color)
-                        elif j == 1:
-                            plt.plot(axis0.T, axis1.T, linewidth=linewidth, color=color)
-                        else:
-                            raise Exception
+                for i in manifold_data_lines:  # region # i
+                    lines = manifold_data_lines[i]
+                    for j, line in enumerate(lines):
+                        axis0, axis1 = line
+                        plt.plot(axis0, axis1, linewidth=linewidth, color=color)
             else:
                 raise NotImplementedError(f"not implemented for {ndim}-d mesh in {esd}-d space.")
 
@@ -100,43 +92,20 @@ class MsePyMeshVisualizeMatplot(Frozen):
             x_lim, y_lim, z_lim = [list() for _ in range(3)]
 
             if ndim == 3:  # plot a 3d mesh in a 3d space.
-                for i in mesh_data_Lines:  # region # i
-                    lines = mesh_data_Lines[i]
-                    for j, axis_lines in enumerate(lines):
-                        axis0, axis1, axis2 = axis_lines
+                for i in manifold_data_lines:  # region # i
+                    lines = manifold_data_lines[i]
+                    for line in lines:
+                        axis0, axis1, axis2 = line
                         if aspect == 'equal':
                             x_lim.extend([np.min(axis0), np.max(axis0)])
                             y_lim.extend([np.min(axis1), np.max(axis1)])
                             z_lim.extend([np.min(axis2), np.max(axis2)])
                         else:
                             pass
-                        if j == 0:
-                            S1, S2 = np.shape(axis0)[1:]
-                            for m in range(S1):
-                                for n in range(S2):
-                                    plt.plot(
-                                        axis0[:, m, n], axis1[:, m, n], axis2[:, m, n],
-                                        color=color, linewidth=linewidth
-                                    )
-                        elif j == 1:
-                            S0, S2 = np.shape(axis0)[0], np.shape(axis0)[2]
-                            for m in range(S0):
-                                for n in range(S2):
-                                    plt.plot(
-                                        axis0[m, :, n], axis1[m, :, n], axis2[m, :, n],
-                                        color=color, linewidth=linewidth
-                                    )
-                        elif j == 2:
-                            S0, S1 = np.shape(axis0)[:2]
-                            for m in range(S0):
-                                for n in range(S1):
-                                    plt.plot(
-                                        axis0[m, n, :], axis1[m, n, :], axis2[m, n, :],
-                                        color=color, linewidth=linewidth
-                                    )
-                        else:
-                            raise Exception()
-
+                        plt.plot(
+                            axis0, axis1, axis2,
+                            color=color, linewidth=linewidth
+                        )
             else:
                 raise NotImplementedError()
 
@@ -161,7 +130,7 @@ class MsePyMeshVisualizeMatplot(Frozen):
 
 
 if __name__ == '__main__':
-    # python msepy/mesh/visualize/matplot.py
+    # python msepy/manifold/visualize/matplot.py
     import __init__ as ph
     space_dim = 3
     ph.config.set_embedding_space_dim(space_dim)
@@ -174,11 +143,8 @@ if __name__ == '__main__':
     mnf = obj['manifold']
     msh = obj['mesh']
 
-    # msepy.config(mnf)('crazy', c=0.3, periodic=True, bounds=[[0, 2] for _ in range(space_dim)])
+    # msepy.config(mnf)('crazy', c=0., periodic=True, bounds=[[0, 2] for _ in range(space_dim)])
     msepy.config(mnf)('backward_step')
     msepy.config(msh)([3 for _ in range(space_dim)])
-    # msepy.config(msh)([(1,2,2,1), (3,3,2,1,2)])
 
-    # msh.visualize()
-    # print(msh.elements._layout_cache_key)
-    msh.visualize()
+    mnf.visualize()
